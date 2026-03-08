@@ -96,7 +96,16 @@ async function loadLocalesDir(dir: string) {
 }
 
 if (currentLocalesDir) {
-	await loadLocalesDir(currentLocalesDir);
+	try {
+		await loadLocalesDir(currentLocalesDir);
+	} catch (err) {
+		console.error(`Failed to load locales from "${currentLocalesDir}":`, err);
+		// Invalid path — clear it so the app shows the folder picker
+		currentLocalesDir = "";
+		store = new TranslationFileStore("");
+		// Also clear the bad setting so it doesn't crash again on next launch
+		await settings.update({ defaultLocalesDir: null });
+	}
 }
 
 async function getMainViewUrl(): Promise<string> {
@@ -156,6 +165,22 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 					for (const locale of store.getStore().locales) {
 						connector.broadcastReload(params.namespace, locale);
 					}
+				}
+				return { ok };
+			},
+
+			createNamespace: async (params) => {
+				const ok = await store.createNamespace(params.namespace);
+				if (ok) {
+					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+				}
+				return { ok };
+			},
+
+			deleteNamespace: async (params) => {
+				const ok = await store.deleteNamespace(params.namespace);
+				if (ok) {
+					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
 				}
 				return { ok };
 			},

@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import type { KeyUpdate, ReviewToggle } from "../../shared/types";
 import { EditableCell } from "./EditableCell";
+import { ExpandedRow } from "./ExpandedRow";
 
 interface EditorTableProps {
 	locales: string[];
@@ -25,6 +26,20 @@ export function EditorTable({
 	onUpdateKey,
 	onToggleReview,
 }: EditorTableProps) {
+	const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+
+	const toggleExpand = useCallback((key: string) => {
+		setExpandedKeys((prev) => {
+			const next = new Set(prev);
+			if (next.has(key)) {
+				next.delete(key);
+			} else {
+				next.add(key);
+			}
+			return next;
+		});
+	}, []);
+
 	const filteredKeys = useMemo(() => {
 		let keys = Object.keys(entries).sort();
 
@@ -71,6 +86,8 @@ export function EditorTable({
 		);
 	}
 
+	const colCount = locales.length + 1;
+
 	return (
 		<table className="editor-table">
 			<thead>
@@ -82,27 +99,61 @@ export function EditorTable({
 				</tr>
 			</thead>
 			<tbody>
-				{filteredKeys.map((key) => (
-					<tr key={key}>
-						<td>
-							<div className="key-cell">{key}</div>
-						</td>
-						{locales.map((locale) => (
-							<EditableCell
-								key={`${key}-${locale}`}
-								value={entries[key]?.[locale]}
-								locale={locale}
-								reviewed={reviews?.[key]?.[locale] === true}
-								onSave={(value) => onUpdateKey({ namespace, key, locale, value })}
-								onToggleReview={
-									onToggleReview
-										? (reviewed) => onToggleReview({ namespace, key, locale, reviewed })
-										: undefined
-								}
-							/>
-						))}
-					</tr>
-				))}
+				{filteredKeys.map((key) => {
+					const isExpanded = expandedKeys.has(key);
+					return (
+						<Fragment key={key}>
+							<tr className={isExpanded ? "row-expanded" : ""}>
+								<td>
+									<div
+										className="key-cell"
+										onClick={() => toggleExpand(key)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												e.preventDefault();
+												toggleExpand(key);
+											}
+										}}
+										role="button"
+										tabIndex={0}
+									>
+										<span className={`expand-chevron${isExpanded ? " open" : ""}`}>&#9656;</span>
+										{key}
+									</div>
+								</td>
+								{locales.map((locale) => (
+									<EditableCell
+										key={`${key}-${locale}`}
+										value={entries[key]?.[locale]}
+										locale={locale}
+										reviewed={reviews?.[key]?.[locale] === true}
+										onSave={(value) => onUpdateKey({ namespace, key, locale, value })}
+										onToggleReview={
+											onToggleReview
+												? (reviewed) => onToggleReview({ namespace, key, locale, reviewed })
+												: undefined
+										}
+									/>
+								))}
+							</tr>
+							{isExpanded && (
+								<tr className="expanded-detail-row">
+									<td colSpan={colCount}>
+										<ExpandedRow
+											translationKey={key}
+											locales={locales}
+											values={entries[key] ?? {}}
+											reviews={reviews?.[key] ?? {}}
+											namespace={namespace}
+											onUpdateKey={onUpdateKey}
+											onToggleReview={onToggleReview}
+										/>
+									</td>
+								</tr>
+							)}
+						</Fragment>
+					);
+				})}
 			</tbody>
 		</table>
 	);

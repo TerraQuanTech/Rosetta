@@ -114,7 +114,7 @@ export function EditableCell({ value, locale: _locale, reviewed, onSave, onToggl
 					}}
 					aria-label={reviewed ? "Mark as unreviewed" : "Mark as reviewed"}
 				>
-					{reviewed ? "\u2713" : "\u25CB"}
+					{reviewed ? "\u2713" : ""}
 				</button>
 			)}
 		</td>

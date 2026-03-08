@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { flatten, unflatten } from "../shared/json";
 import type {
@@ -239,6 +239,49 @@ export class TranslationFileStore {
 		return ok;
 	}
 
+	/** Create a new empty namespace (creates empty JSON files for all locales) */
+	async createNamespace(namespace: string): Promise<boolean> {
+		if (this.store.translations[namespace]) return false; // already exists
+
+		this.store.translations[namespace] = {};
+
+		let ok = true;
+		for (const locale of this.store.locales) {
+			if (!(await this.writeNamespaceLocale(namespace, locale))) {
+				ok = false;
+			}
+		}
+
+		// Rebuild namespace tree
+		const nsPaths = Object.keys(this.store.translations).sort();
+		this.store.namespaces = this.buildNamespaceTree(nsPaths);
+
+		return ok;
+	}
+
+	/** Delete a namespace (removes JSON files for all locales) */
+	async deleteNamespace(namespace: string): Promise<boolean> {
+		if (!this.store.translations[namespace]) return false;
+
+		delete this.store.translations[namespace];
+
+		let ok = true;
+		for (const locale of this.store.locales) {
+			const filePath = join(this.localesDir, locale, `${namespace}.json`);
+			try {
+				await rm(filePath);
+			} catch {
+				// File may not exist for all locales
+			}
+		}
+
+		// Rebuild namespace tree
+		const nsPaths = Object.keys(this.store.translations).sort();
+		this.store.namespaces = this.buildNamespaceTree(nsPaths);
+
+		return ok;
+	}
+
 	/** Write the in-memory state for one namespace+locale back to its JSON file */
 	private async writeNamespaceLocale(namespace: string, locale: string): Promise<boolean> {
 		const filePath = join(this.localesDir, locale, `${namespace}.json`);
@@ -282,6 +325,7 @@ export class TranslationFileStore {
 
 	/** Find all locale directories (en, ru, de, ...) */
 	private async discoverLocales(): Promise<string[]> {
+		if (!this.localesDir) return [];
 		const entries = await readdir(this.localesDir, { withFileTypes: true });
 		return entries
 			.filter((e) => e.isDirectory() && !e.name.startsWith("."))

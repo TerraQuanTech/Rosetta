@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS: RosettaSettings = {
 	visibleLocales: null,
 	connectorPort: 4871,
 	connectorEnabled: true,
-	theme: "auto",
+	theme: "system",
 };
 
 export class SettingsManager {

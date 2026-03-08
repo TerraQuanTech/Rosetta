@@ -57,6 +57,16 @@ export interface KeyRename {
 	newKey: string;
 }
 
+/** Request to create a new namespace */
+export interface NamespaceCreate {
+	namespace: string;
+}
+
+/** Request to delete a namespace */
+export interface NamespaceDelete {
+	namespace: string;
+}
+
 /** Review status map: namespace -> key -> locale -> reviewed */
 export type ReviewMap = Record<string, Record<string, Record<string, boolean>>>;
 
@@ -74,7 +84,7 @@ export interface RosettaSettings {
 	visibleLocales: string[] | null;
 	connectorPort: number;
 	connectorEnabled: boolean;
-	theme: "auto" | "dark" | "light";
+	theme: "system" | "dark" | "light";
 }
 
 /** RPC schema for Electrobun communication */
@@ -86,6 +96,8 @@ export type RosettaRPC = {
 			createKey: { params: KeyCreate; response: { ok: boolean } };
 			deleteKey: { params: KeyDelete; response: { ok: boolean } };
 			renameKey: { params: KeyRename; response: { ok: boolean } };
+			createNamespace: { params: NamespaceCreate; response: { ok: boolean } };
+			deleteNamespace: { params: NamespaceDelete; response: { ok: boolean } };
 			openLocalesDir: { params: Record<string, never>; response: { path: string | null } };
 			getConnectorStatus: {
 				params: Record<string, never>;

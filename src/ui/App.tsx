@@ -12,7 +12,7 @@ import { useTranslationStore } from "./hooks/useStore";
 type ViewMode = "editor" | "settings";
 
 export default function App() {
-	const { store, loading, updateKey, createKey, toggleReview, openFolder } = useTranslationStore();
+	const { store, loading, updateKey, createKey, createNamespace, deleteNamespace, toggleReview, openFolder } = useTranslationStore();
 	const { settings, updateSettings } = useSettings();
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
@@ -25,7 +25,7 @@ export default function App() {
 	const theme = settings?.theme;
 	useEffect(() => {
 		if (!theme) return;
-		if (theme === "auto") {
+		if (theme === "system") {
 			document.documentElement.removeAttribute("data-theme");
 		} else {
 			document.documentElement.setAttribute("data-theme", theme);
@@ -151,6 +151,11 @@ export default function App() {
 				activeNamespace={view === "settings" ? null : effectiveNamespace}
 				onSelect={handleSelectNamespace}
 				onOpenSettings={() => setView("settings")}
+				onCreateNamespace={(ns) => createNamespace({ namespace: ns })}
+				onDeleteNamespace={(ns) => {
+					if (effectiveNamespace === ns) setActiveNamespace(null);
+					deleteNamespace({ namespace: ns });
+				}}
 				isSettingsActive={view === "settings"}
 			/>
 

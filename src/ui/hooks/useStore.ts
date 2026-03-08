@@ -4,6 +4,8 @@ import type {
 	KeyDelete,
 	KeyRename,
 	KeyUpdate,
+	NamespaceCreate,
+	NamespaceDelete,
 	ReviewToggle,
 	TranslationStore,
 } from "../../shared/types";
@@ -148,6 +150,22 @@ export function useTranslationStore() {
 		[refresh],
 	);
 
+	const createNamespace = useCallback(
+		async (ns: NamespaceCreate) => {
+			await callRpc("createNamespace", ns);
+			// Store update pushed via storeUpdated message
+		},
+		[],
+	);
+
+	const deleteNamespace = useCallback(
+		async (ns: NamespaceDelete) => {
+			await callRpc("deleteNamespace", ns);
+			// Store update pushed via storeUpdated message
+		},
+		[],
+	);
+
 	const openFolder = useCallback(async () => {
 		await callRpc<{ path: string | null }>("openLocalesDir");
 		// The bun side will push the updated store via storeUpdated message
@@ -165,6 +183,8 @@ export function useTranslationStore() {
 		createKey,
 		deleteKey,
 		renameKey,
+		createNamespace,
+		deleteNamespace,
 		toggleReview,
 		openFolder,
 	};

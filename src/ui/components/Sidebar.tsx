@@ -6,6 +6,8 @@ interface SidebarProps {
 	activeNamespace: string | null;
 	onSelect: (path: string) => void;
 	onOpenSettings: () => void;
+	onCreateNamespace: (namespace: string) => void;
+	onDeleteNamespace: (namespace: string) => void;
 	isSettingsActive: boolean;
 }
 
@@ -14,8 +16,21 @@ export function Sidebar({
 	activeNamespace,
 	onSelect,
 	onOpenSettings,
+	onCreateNamespace,
+	onDeleteNamespace,
 	isSettingsActive,
 }: SidebarProps) {
+	const [showNewNs, setShowNewNs] = useState(false);
+	const [newNsName, setNewNsName] = useState("");
+
+	const handleCreate = useCallback(() => {
+		const name = newNsName.trim();
+		if (!name) return;
+		onCreateNamespace(name);
+		setNewNsName("");
+		setShowNewNs(false);
+	}, [newNsName, onCreateNamespace]);
+
 	return (
 		<div className="sidebar">
 			<div className="sidebar-header">
@@ -28,9 +43,42 @@ export function Sidebar({
 						node={node}
 						activeNamespace={activeNamespace}
 						onSelect={onSelect}
+						onDelete={onDeleteNamespace}
 						depth={0}
 					/>
 				))}
+				{showNewNs ? (
+					<div className="new-namespace-input">
+						<input
+							type="text"
+							placeholder="e.g. pages/dashboard"
+							value={newNsName}
+							onChange={(e) => setNewNsName(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") handleCreate();
+								if (e.key === "Escape") {
+									setShowNewNs(false);
+									setNewNsName("");
+								}
+							}}
+							onBlur={() => {
+								if (!newNsName.trim()) {
+									setShowNewNs(false);
+								}
+							}}
+							autoFocus
+						/>
+					</div>
+				) : (
+					<button
+						type="button"
+						className="tree-item add-namespace-btn"
+						onClick={() => setShowNewNs(true)}
+					>
+						<span style={{ width: 14, textAlign: "center", fontSize: 13 }}>+</span>
+						<span>Add namespace</span>
+					</button>
+				)}
 			</div>
 			<div className="sidebar-footer">
 				<button
@@ -55,14 +103,16 @@ interface TreeNodeProps {
 	node: NamespaceNode;
 	activeNamespace: string | null;
 	onSelect: (path: string) => void;
+	onDelete: (namespace: string) => void;
 	depth: number;
 }
 
-function TreeNode({ node, activeNamespace, onSelect, depth }: TreeNodeProps) {
+function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNodeProps) {
 	const [expanded, setExpanded] = useState(true);
 	const hasChildren = node.children && node.children.length > 0;
 	const isFolder = hasChildren && !node.path.includes(".");
 	const isActive = activeNamespace === node.path;
+	const isLeaf = !hasChildren;
 
 	const handleClick = useCallback(() => {
 		if (hasChildren) {
@@ -71,27 +121,50 @@ function TreeNode({ node, activeNamespace, onSelect, depth }: TreeNodeProps) {
 		onSelect(node.path);
 	}, [hasChildren, node.path, onSelect]);
 
+	const handleDelete = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			if (confirm(`Delete namespace "${node.path}"? This will remove the JSON files from all locales.`)) {
+				onDelete(node.path);
+			}
+		},
+		[node.path, onDelete],
+	);
+
 	return (
 		<div>
-			<button
-				type="button"
-				className={`tree-item ${isActive ? "active" : ""} ${isFolder ? "folder" : ""}`}
-				onClick={handleClick}
-				style={{ paddingLeft: `${8 + depth * 12}px` }}
-			>
-				{hasChildren && (
-					<svg
-						className={`tree-chevron ${expanded ? "open" : ""}`}
-						viewBox="0 0 16 16"
-						fill="currentColor"
-						aria-hidden="true"
+			<div className="tree-item-row">
+				<button
+					type="button"
+					className={`tree-item ${isActive ? "active" : ""} ${isFolder ? "folder" : ""}`}
+					onClick={handleClick}
+					style={{ paddingLeft: `${8 + depth * 12}px` }}
+				>
+					{hasChildren && (
+						<svg
+							className={`tree-chevron ${expanded ? "open" : ""}`}
+							viewBox="0 0 16 16"
+							fill="currentColor"
+							aria-hidden="true"
+						>
+							<path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+						</svg>
+					)}
+					{!hasChildren && <span style={{ width: 14 }} />}
+					<span>{node.name}</span>
+				</button>
+				{isLeaf && (
+					<button
+						type="button"
+						className="tree-item-delete"
+						onClick={handleDelete}
+						title={`Delete ${node.path}`}
+						aria-label={`Delete namespace ${node.path}`}
 					>
-						<path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" />
-					</svg>
+						&times;
+					</button>
 				)}
-				{!hasChildren && <span style={{ width: 14 }} />}
-				<span>{node.name}</span>
-			</button>
+			</div>
 			{hasChildren && expanded && (
 				<div className="tree-children">
 					{node.children!.map((child) => (
@@ -100,6 +173,7 @@ function TreeNode({ node, activeNamespace, onSelect, depth }: TreeNodeProps) {
 							node={child}
 							activeNamespace={activeNamespace}
 							onSelect={onSelect}
+							onDelete={onDelete}
 							depth={depth + 1}
 						/>
 					))}

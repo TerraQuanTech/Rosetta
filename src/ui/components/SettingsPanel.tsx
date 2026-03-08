@@ -33,7 +33,7 @@ export function SettingsPanel({
 							{settings.defaultLocalesDir || "Not set — will show file picker on launch"}
 						</div>
 					</div>
-					<div style={{ display: "flex", gap: 8 }}>
+					<div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
 						<button type="button" className="toolbar-btn" onClick={onBrowseFolder}>
 							Browse
 						</button>
@@ -67,10 +67,10 @@ export function SettingsPanel({
 					<div className="segmented-control">
 						<button
 							type="button"
-							className={settings.theme === "auto" ? "active" : ""}
-							onClick={() => setTheme("auto")}
+							className={settings.theme === "system" ? "active" : ""}
+							onClick={() => setTheme("system")}
 						>
-							Auto
+							System
 						</button>
 						<button
 							type="button"
