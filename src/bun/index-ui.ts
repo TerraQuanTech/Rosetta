@@ -268,22 +268,33 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 				try {
 					const { execSync } = await import("node:child_process");
 					const { platform } = await import("node:os");
-					const scriptDir = new URL("../../scripts", import.meta.url).pathname;
+					const { dirname, join } = await import("node:path");
+
+					// Get the executable path and work backwards to find scripts
+					// process.execPath: /path/to/App.app/Contents/MacOS/bun
+					// We need: /path/to/App.app/Contents/Resources/app/scripts
+					const macosDir = dirname(process.execPath); // .../Contents/MacOS
+					const contentsDir = dirname(macosDir); // .../Contents
+					const scriptDir = join(contentsDir, "Resources", "app", "scripts");
 
 					if (platform() === "win32") {
 						// Windows
 						execSync(`powershell -Command "Start-Process cmd.exe -ArgumentList '/c', 'call \\"${scriptDir}\\install-cli.bat\\"' -Verb RunAs -Wait"`, {
-							stdio: "inherit",
+							stdio: "pipe",
 						});
 					} else {
 						// macOS/Linux
-						execSync(`bash "${scriptDir}/install-cli.sh"`, { stdio: "inherit" });
+						execSync(`bash "${scriptDir}/install-cli.sh"`, { stdio: "pipe" });
 					}
 
 					return { success: true, message: "CLI installed successfully. You can now use 'rosetta' in your terminal." };
 				} catch (err) {
 					const msg = err instanceof Error ? err.message : String(err);
-					return { success: false, message: `Failed to install CLI: ${msg}` };
+					// Extract the actual error message
+					const errorMsg = typeof err === "object" && err !== null && "stderr" in err
+						? (err as any).stderr?.toString() || msg
+						: msg;
+					return { success: false, message: `Failed to install CLI: ${errorMsg}` };
 				}
 			},
 		},
@@ -307,16 +318,22 @@ const mainWindow = new BrowserWindow({
 });
 
 ApplicationMenu.on("application-menu-clicked", async (event: any) => {
+	console.log("Menu action:", event.action);
 	if (event.action === "openFolder") {
-		const paths = await Utils.openFileDialog({
-			startingFolder: currentLocalesDir || "~/",
-			canChooseFiles: false,
-			canChooseDirectory: true,
-			allowsMultipleSelection: false,
-		});
-		const selected = paths[0];
-		if (selected && selected !== "") {
-			await loadLocalesDir(selected);
+		try {
+			console.log("Opening folder dialog...");
+			const paths = await Utils.openFileDialog({
+				startingFolder: currentLocalesDir || "~/",
+				canChooseFiles: false,
+				canChooseDirectory: true,
+				allowsMultipleSelection: false,
+			});
+			const selected = paths[0];
+			if (selected && selected !== "") {
+				await loadLocalesDir(selected);
+			}
+		} catch (err) {
+			console.error("Failed to open folder dialog:", err);
 		}
 	}
 });
