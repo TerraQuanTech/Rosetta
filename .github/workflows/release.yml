@@ -1,0 +1,134 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Bump version
+        id: version
+        run: |
+          # Read current version from electrobun config
+          CURRENT=$(grep -oP 'version:\s*"\K[^"]+' electrobun.config.ts)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "${{ inputs.bump }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=${NEW}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${NEW}" >> "$GITHUB_OUTPUT"
+
+          # Update electrobun.config.ts
+          sed -i "s/version: \"${CURRENT}\"/version: \"${NEW}\"/" electrobun.config.ts
+
+          # Update package.json
+          sed -i "s/\"version\": \"${CURRENT}\"/\"version\": \"${NEW}\"/" package.json
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add electrobun.config.ts package.json
+          git commit -m "Release ${{ steps.version.outputs.tag }}"
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin HEAD --tags
+
+  build:
+    needs: bump
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            artifact: rosetta-mac
+          - os: ubuntu-latest
+            platform: linux
+            artifact: rosetta-linux
+          - os: windows-latest
+            platform: win
+            artifact: rosetta-win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump.outputs.tag }}
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Find build output
+        id: artifact
+        shell: bash
+        run: |
+          # Electrobun outputs to build/ directory
+          if [ -d "build" ]; then
+            echo "path=build" >> "$GITHUB_OUTPUT"
+          elif [ -d "dist" ]; then
+            echo "path=dist" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ steps.artifact.outputs.path }}
+
+  release:
+    needs: [bump, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Package artifacts
+        run: |
+          cd artifacts
+          for dir in */; do
+            name="${dir%/}"
+            tar -czf "../${name}-${{ needs.bump.outputs.version }}.tar.gz" -C "$dir" .
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.bump.outputs.tag }}
+          name: Rosetta ${{ needs.bump.outputs.version }}
+          generate_release_notes: true
+          files: "*.tar.gz"
