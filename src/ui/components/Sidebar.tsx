@@ -22,6 +22,7 @@ export function Sidebar({
 }: SidebarProps) {
 	const [showNewNs, setShowNewNs] = useState(false);
 	const [newNsName, setNewNsName] = useState("");
+	const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
 	const handleCreate = useCallback(() => {
 		const name = newNsName.trim();
@@ -43,7 +44,7 @@ export function Sidebar({
 						node={node}
 						activeNamespace={activeNamespace}
 						onSelect={onSelect}
-						onDelete={onDeleteNamespace}
+						onDelete={(path) => setConfirmDelete(path)}
 						depth={0}
 					/>
 				))}
@@ -95,6 +96,41 @@ export function Sidebar({
 					</svg>
 				</button>
 			</div>
+
+			{confirmDelete !== null && (
+				<div
+					className="dialog-overlay"
+					onClick={(e) => {
+						if (e.target === e.currentTarget) setConfirmDelete(null);
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Escape") setConfirmDelete(null);
+					}}
+				>
+					<div className="dialog">
+						<h3>Delete namespace</h3>
+						<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
+							Delete <strong>{confirmDelete}</strong>? This will remove the JSON files from all locales.
+						</p>
+						<div className="dialog-actions">
+							<button type="button" className="toolbar-btn" onClick={() => setConfirmDelete(null)}>
+								Cancel
+							</button>
+							<button
+								type="button"
+								className="toolbar-btn"
+								style={{ color: "var(--missing)" }}
+								onClick={() => {
+									onDeleteNamespace(confirmDelete);
+									setConfirmDelete(null);
+								}}
+							>
+								Delete
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -120,16 +156,6 @@ function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNode
 		}
 		onSelect(node.path);
 	}, [hasChildren, node.path, onSelect]);
-
-	const handleDelete = useCallback(
-		(e: React.MouseEvent) => {
-			e.stopPropagation();
-			if (confirm(`Delete namespace "${node.path}"? This will remove the JSON files from all locales.`)) {
-				onDelete(node.path);
-			}
-		},
-		[node.path, onDelete],
-	);
 
 	return (
 		<div>
@@ -157,7 +183,10 @@ function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNode
 					<button
 						type="button"
 						className="tree-item-delete"
-						onClick={handleDelete}
+						onClick={(e) => {
+							e.stopPropagation();
+							onDelete(node.path);
+						}}
 						title={`Delete ${node.path}`}
 						aria-label={`Delete namespace ${node.path}`}
 					>

@@ -12,7 +12,10 @@ import { useTranslationStore } from "./hooks/useStore";
 type ViewMode = "editor" | "settings";
 
 export default function App() {
-	const { store, loading, updateKey, createKey, createNamespace, deleteNamespace, toggleReview, openFolder } = useTranslationStore();
+	const {
+		store, loading, updateKey, createKey, createNamespace, deleteNamespace,
+		toggleReview, openFolder, pendingChanges, saveAll, discardChanges, setSaveMode,
+	} = useTranslationStore();
 	const { settings, updateSettings } = useSettings();
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
@@ -20,6 +23,40 @@ export default function App() {
 	const [visibleLocales, setVisibleLocales] = useState<string[] | null>(null);
 	const [view, setView] = useState<ViewMode>("editor");
 	const [showAddKey, setShowAddKey] = useState(false);
+	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+	const [searchScope, setSearchScope] = useState<"current" | "all">("current");
+
+	const saveMode = settings?.saveMode ?? "auto";
+	const pendingCount = pendingChanges.size;
+	const hasUnsaved = pendingCount > 0;
+
+	// Keep saveMode ref in sync
+	useEffect(() => {
+		setSaveMode(saveMode);
+	}, [saveMode, setSaveMode]);
+
+	// Warn on close/refresh with unsaved changes
+	useEffect(() => {
+		if (!hasUnsaved) return;
+		const handler = (e: BeforeUnloadEvent) => {
+			e.preventDefault();
+		};
+		window.addEventListener("beforeunload", handler);
+		return () => window.removeEventListener("beforeunload", handler);
+	}, [hasUnsaved]);
+
+	// Cmd+S / Ctrl+S to save in manual mode
+	useEffect(() => {
+		if (saveMode !== "manual") return;
+		const handler = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+				e.preventDefault();
+				if (hasUnsaved) saveAll();
+			}
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [saveMode, hasUnsaved, saveAll]);
 
 	// Apply theme
 	const theme = settings?.theme;
@@ -42,28 +79,8 @@ export default function App() {
 	const effectiveNamespace = activeNamespace ?? findFirstLeaf(store?.namespaces ?? []);
 	const effectiveLocales = visibleLocales ?? store?.locales ?? [];
 
-	// Global search: search across ALL namespaces
-	const globalSearchResults = useMemo(() => {
-		if (!store || !search) return null;
-		const q = search.toLowerCase();
-		const results: { namespace: string; key: string }[] = [];
-
-		for (const [ns, keys] of Object.entries(store.translations)) {
-			for (const [key, localeMap] of Object.entries(keys)) {
-				if (key.toLowerCase().includes(q)) {
-					results.push({ namespace: ns, key });
-					continue;
-				}
-				if (Object.values(localeMap).some((v) => v.toLowerCase().includes(q))) {
-					results.push({ namespace: ns, key });
-				}
-			}
-		}
-		return results;
-	}, [store, search]);
-
-	// When searching, show results from matching namespaces
-	const isGlobalSearch = search.length > 0;
+	// Global view: show all namespaces when scope is "all"
+	const isGlobalView = searchScope === "all";
 
 	const entries = useMemo(() => {
 		if (!store || !effectiveNamespace) return {};
@@ -75,19 +92,35 @@ export default function App() {
 		return store.reviews?.[effectiveNamespace] ?? {};
 	}, [store, effectiveNamespace]);
 
-	// Entries for global search (merged from all namespaces)
 	const globalEntries = useMemo(() => {
-		if (!store || !globalSearchResults) return {};
-		const grouped: Record<string, Record<string, Record<string, string>>> = {};
-		for (const { namespace, key } of globalSearchResults) {
-			if (!grouped[namespace]) grouped[namespace] = {};
-			grouped[namespace][key] = store.translations[namespace]?.[key] ?? {};
-		}
-		return grouped;
-	}, [store, globalSearchResults]);
+		if (!store || !isGlobalView) return {};
+		return store.translations;
+	}, [store, isGlobalView]);
 
 	const stats = useMemo(() => {
-		if (!store || !effectiveNamespace) return { total: 0, missing: 0, unreviewed: 0 };
+		if (!store) return { total: 0, missing: 0, unreviewed: 0 };
+
+		if (searchScope === "all") {
+			let total = 0;
+			let missing = 0;
+			let unreviewed = 0;
+			for (const [ns, keys] of Object.entries(store.translations)) {
+				const nsKeys = Object.keys(keys);
+				total += nsKeys.length;
+				for (const key of nsKeys) {
+					for (const locale of effectiveLocales) {
+						if (keys[key]?.[locale] === undefined) {
+							missing++;
+						} else if (!store.reviews?.[ns]?.[key]?.[locale]) {
+							unreviewed++;
+						}
+					}
+				}
+			}
+			return { total, missing, unreviewed };
+		}
+
+		if (!effectiveNamespace) return { total: 0, missing: 0, unreviewed: 0 };
 
 		const keys = Object.keys(entries);
 		let missing = 0;
@@ -104,7 +137,7 @@ export default function App() {
 		}
 
 		return { total: keys.length, missing, unreviewed };
-	}, [entries, store, effectiveNamespace, effectiveLocales, nsReviews]);
+	}, [entries, store, effectiveNamespace, effectiveLocales, nsReviews, searchScope]);
 
 	const handleSelectNamespace = useCallback((path: string) => {
 		setActiveNamespace(path);
@@ -171,6 +204,13 @@ export default function App() {
 				allLocales={store.locales}
 				visibleLocales={effectiveLocales}
 				onVisibleLocalesChange={setVisibleLocales}
+				saveMode={saveMode}
+				pendingCount={pendingCount}
+				onSave={saveAll}
+				onDiscard={() => setShowUnsavedDialog(true)}
+				hidden={view === "settings"}
+				searchScope={searchScope}
+				onSearchScopeChange={setSearchScope}
 			/>
 
 			<div className="editor-area">
@@ -181,7 +221,7 @@ export default function App() {
 						onBrowseFolder={openFolder}
 						currentDir={store?.localesDir ?? null}
 					/>
-				) : isGlobalSearch ? (
+				) : isGlobalView ? (
 					<GlobalSearchResults
 						results={globalEntries}
 						reviews={store.reviews}
@@ -211,10 +251,12 @@ export default function App() {
 			</div>
 
 			<StatusBar
-				totalKeys={isGlobalSearch ? (globalSearchResults?.length ?? 0) : stats.total}
+				totalKeys={stats.total}
 				missingCount={stats.missing}
 				connectorConnected={false}
-				activeNamespace={isGlobalSearch ? `Search: "${search}"` : effectiveNamespace}
+				activeNamespace={isGlobalView ? "All namespaces" : effectiveNamespace}
+				saveMode={saveMode}
+				pendingCount={pendingCount}
 			/>
 
 			{showAddKey && effectiveNamespace && (
@@ -225,6 +267,64 @@ export default function App() {
 					onClose={() => setShowAddKey(false)}
 				/>
 			)}
+
+			{showUnsavedDialog && (
+				<UnsavedDialog
+					pendingCount={pendingCount}
+					onSave={async () => {
+						await saveAll();
+						setShowUnsavedDialog(false);
+					}}
+					onDiscard={() => {
+						discardChanges();
+						setShowUnsavedDialog(false);
+					}}
+					onCancel={() => setShowUnsavedDialog(false)}
+				/>
+			)}
+		</div>
+	);
+}
+
+function UnsavedDialog({
+	pendingCount,
+	onSave,
+	onDiscard,
+	onCancel,
+}: {
+	pendingCount: number;
+	onSave: () => void;
+	onDiscard: () => void;
+	onCancel: () => void;
+}) {
+	return (
+		<div
+			className="dialog-overlay"
+			onClick={(e) => {
+				if (e.target === e.currentTarget) onCancel();
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Escape") onCancel();
+			}}
+		>
+			<div className="dialog">
+				<h3>Unsaved changes</h3>
+				<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
+					You have {pendingCount} unsaved {pendingCount === 1 ? "change" : "changes"}.
+					What would you like to do?
+				</p>
+				<div className="dialog-actions">
+					<button type="button" className="toolbar-btn" onClick={onDiscard}>
+						Discard
+					</button>
+					<button type="button" className="toolbar-btn" onClick={onCancel}>
+						Cancel
+					</button>
+					<button type="button" className="toolbar-btn primary" onClick={onSave}>
+						Save All
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -252,8 +352,8 @@ function GlobalSearchResults({
 	if (namespaces.length === 0) {
 		return (
 			<div className="empty-state">
-				<h2>No matches</h2>
-				<p>No translation keys match &ldquo;{search}&rdquo; across any namespace.</p>
+				<h2>No keys</h2>
+				<p>{search ? `No translation keys match "${search}" across any namespace.` : "No translation keys found."}</p>
 			</div>
 		);
 	}

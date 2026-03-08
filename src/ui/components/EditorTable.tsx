@@ -118,7 +118,7 @@ export function EditorTable({
 										tabIndex={0}
 									>
 										<span className={`expand-chevron${isExpanded ? " open" : ""}`}>&#9656;</span>
-										{key}
+										{breakByDot(key)}
 									</div>
 								</td>
 								{locales.map((locale) => (
@@ -157,4 +157,9 @@ export function EditorTable({
 			</tbody>
 		</table>
 	);
+}
+
+/** Insert zero-width spaces after dots so the browser can line-break there */
+function breakByDot(text: string): string {
+	return text.replaceAll(".", ".\u200B");
 }

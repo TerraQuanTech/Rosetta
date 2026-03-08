@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: RosettaSettings = {
 	connectorPort: 4871,
 	connectorEnabled: true,
 	theme: "system",
+	saveMode: "auto",
 };
 
 export class SettingsManager {

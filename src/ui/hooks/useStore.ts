@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
 	KeyCreate,
 	KeyDelete,
@@ -40,6 +40,9 @@ export function setMessageHandler(register: (handler: StoreUpdateCallback) => vo
 export function useTranslationStore() {
 	const [store, setStore] = useState<TranslationStore | null>(null);
 	const [loading, setLoading] = useState(true);
+	/** Pending changes in manual save mode: "ns\0key\0locale" -> KeyUpdate */
+	const [pendingChanges, setPendingChanges] = useState<Map<string, KeyUpdate>>(new Map());
+	const saveModeRef = useRef<"auto" | "manual">("auto");
 
 	const refresh = useCallback(async () => {
 		try {
@@ -88,7 +91,37 @@ export function useTranslationStore() {
 			return next;
 		});
 
-		await callRpc("updateKey", update);
+		if (saveModeRef.current === "manual") {
+			// Buffer change locally
+			const changeKey = `${update.namespace}\0${update.key}\0${update.locale}`;
+			setPendingChanges((prev) => {
+				const next = new Map(prev);
+				next.set(changeKey, update);
+				return next;
+			});
+		} else {
+			await callRpc("updateKey", update);
+		}
+	}, []);
+
+	const saveAll = useCallback(async () => {
+		const changes = Array.from(pendingChanges.values());
+		if (changes.length === 0) return;
+
+		// Send all pending changes to backend
+		for (const update of changes) {
+			await callRpc("updateKey", update);
+		}
+		setPendingChanges(new Map());
+	}, [pendingChanges]);
+
+	const discardChanges = useCallback(async () => {
+		setPendingChanges(new Map());
+		await refresh();
+	}, [refresh]);
+
+	const setSaveMode = useCallback((mode: "auto" | "manual") => {
+		saveModeRef.current = mode;
 	}, []);
 
 	const toggleReview = useCallback(async (toggle: ReviewToggle) => {
@@ -153,7 +186,6 @@ export function useTranslationStore() {
 	const createNamespace = useCallback(
 		async (ns: NamespaceCreate) => {
 			await callRpc("createNamespace", ns);
-			// Store update pushed via storeUpdated message
 		},
 		[],
 	);
@@ -161,14 +193,12 @@ export function useTranslationStore() {
 	const deleteNamespace = useCallback(
 		async (ns: NamespaceDelete) => {
 			await callRpc("deleteNamespace", ns);
-			// Store update pushed via storeUpdated message
 		},
 		[],
 	);
 
 	const openFolder = useCallback(async () => {
 		await callRpc<{ path: string | null }>("openLocalesDir");
-		// The bun side will push the updated store via storeUpdated message
 	}, []);
 
 	useEffect(() => {
@@ -187,5 +217,9 @@ export function useTranslationStore() {
 		deleteNamespace,
 		toggleReview,
 		openFolder,
+		pendingChanges,
+		saveAll,
+		discardChanges,
+		setSaveMode,
 	};
 }

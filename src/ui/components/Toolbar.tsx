@@ -1,6 +1,7 @@
 import { LocalePicker } from "./LocalePicker";
 
 type FilterType = "all" | "missing" | "empty" | "unreviewed";
+type SearchScope = "current" | "all";
 
 interface ToolbarProps {
 	search: string;
@@ -14,6 +15,13 @@ interface ToolbarProps {
 	allLocales: string[];
 	visibleLocales: string[];
 	onVisibleLocalesChange: (locales: string[]) => void;
+	saveMode: "auto" | "manual";
+	pendingCount: number;
+	onSave: () => void;
+	onDiscard: () => void;
+	hidden?: boolean;
+	searchScope: SearchScope;
+	onSearchScopeChange: (scope: SearchScope) => void;
 }
 
 export function Toolbar({
@@ -28,16 +36,49 @@ export function Toolbar({
 	allLocales,
 	visibleLocales,
 	onVisibleLocalesChange,
+	saveMode,
+	pendingCount,
+	onSave,
+	onDiscard,
+	hidden,
+	searchScope,
+	onSearchScopeChange,
 }: ToolbarProps) {
+	const hasUnsaved = saveMode === "manual" && pendingCount > 0;
+
+	if (hidden) {
+		return <div className="toolbar" />;
+	}
+
 	return (
 		<div className="toolbar">
-			<input
-				className="search-input"
-				type="text"
-				placeholder="Search all keys and values..."
-				value={search}
-				onChange={(e) => onSearchChange(e.target.value)}
-			/>
+			<div className="search-group">
+				<input
+					className="search-input"
+					type="text"
+					placeholder={searchScope === "all" ? "Search all namespaces..." : "Search current namespace..."}
+					value={search}
+					onChange={(e) => onSearchChange(e.target.value)}
+				/>
+				<div className="scope-toggle">
+					<button
+						type="button"
+						className={searchScope === "current" ? "active" : ""}
+						onClick={() => onSearchScopeChange("current")}
+						title="Search current namespace"
+					>
+						Current
+					</button>
+					<button
+						type="button"
+						className={searchScope === "all" ? "active" : ""}
+						onClick={() => onSearchScopeChange("all")}
+						title="Search all namespaces"
+					>
+						All
+					</button>
+				</div>
+			</div>
 
 			<div className="filter-group">
 				<button
@@ -66,6 +107,17 @@ export function Toolbar({
 			</div>
 
 			<div className="toolbar-spacer" />
+
+			{hasUnsaved && (
+				<div className="save-group">
+					<button type="button" className="toolbar-btn" onClick={onDiscard}>
+						Discard
+					</button>
+					<button type="button" className="toolbar-btn primary" onClick={onSave}>
+						Save ({pendingCount})
+					</button>
+				</div>
+			)}
 
 			{allLocales.length > 1 && (
 				<LocalePicker

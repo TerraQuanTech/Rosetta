@@ -9,8 +9,8 @@
 	--border-focus: #5b6abf;
 
 	--text-primary: #e4e4e8;
-	--text-secondary: #9ca0b0;
-	--text-muted: #636678;
+	--text-secondary: #b0b4c4;
+	--text-muted: #808499;
 
 	--accent: #6c7ae0;
 	--accent-hover: #7d8ae8;
@@ -315,9 +315,22 @@ body {
 	border-bottom: 1px solid var(--border);
 }
 
-.search-input {
+.search-group {
+	display: flex;
+	align-items: center;
+	gap: 0;
 	flex: 1;
-	max-width: 360px;
+	max-width: 420px;
+}
+
+.search-group .search-input {
+	flex: 1;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-right: none;
+}
+
+.search-input {
 	padding: 6px 10px;
 	background: var(--bg-tertiary);
 	border: 1px solid var(--border);
@@ -335,6 +348,43 @@ body {
 
 .search-input::placeholder {
 	color: var(--text-muted);
+}
+
+.scope-toggle {
+	display: flex;
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+	border-radius: 0 var(--radius-md) var(--radius-md) 0;
+	overflow: hidden;
+	background: var(--bg-tertiary);
+	height: 30px;
+}
+
+.scope-toggle button {
+	padding: 0 8px;
+	background: none;
+	border: none;
+	border-left: 1px solid var(--border);
+	color: var(--text-muted);
+	font-size: 11px;
+	cursor: pointer;
+	font-family: var(--font-sans);
+	transition: all 0.15s;
+	white-space: nowrap;
+}
+
+.scope-toggle button:first-child {
+	border-left: none;
+}
+
+.scope-toggle button.active {
+	background: var(--accent-subtle);
+	color: var(--accent);
+}
+
+.scope-toggle button:hover:not(.active) {
+	color: var(--text-primary);
+	background: var(--bg-hover);
 }
 
 .toolbar-btn {
@@ -366,6 +416,11 @@ body {
 
 .toolbar-spacer {
 	flex: 1;
+}
+
+.save-group {
+	display: flex;
+	gap: 4px;
 }
 
 .filter-group {
@@ -513,7 +568,9 @@ body {
 	font-family: var(--font-mono);
 	font-size: 12px;
 	color: var(--text-secondary);
-	word-break: break-all;
+	word-break: break-word;
+	overflow-wrap: break-word;
+	word-spacing: -0.5px;
 	cursor: pointer;
 	user-select: none;
 }
@@ -755,7 +812,7 @@ body {
 	background: var(--bg-secondary);
 	border-top: 1px solid var(--border);
 	font-size: 11px;
-	color: var(--text-muted);
+	color: var(--text-secondary);
 }
 
 .statusbar-item {
@@ -768,6 +825,7 @@ body {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
+	flex-shrink: 0;
 }
 
 .status-dot.green {

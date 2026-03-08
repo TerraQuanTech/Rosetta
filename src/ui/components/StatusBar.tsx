@@ -3,6 +3,8 @@ interface StatusBarProps {
 	missingCount: number;
 	connectorConnected: boolean;
 	activeNamespace: string | null;
+	saveMode: "auto" | "manual";
+	pendingCount: number;
 }
 
 export function StatusBar({
@@ -10,6 +12,8 @@ export function StatusBar({
 	missingCount,
 	connectorConnected,
 	activeNamespace,
+	saveMode,
+	pendingCount,
 }: StatusBarProps) {
 	return (
 		<div className="statusbar">
@@ -32,6 +36,29 @@ export function StatusBar({
 			)}
 
 			<div style={{ flex: 1 }} />
+
+			{saveMode === "manual" && (
+				<div className="statusbar-item">
+					{pendingCount > 0 ? (
+						<>
+							<span className="status-dot yellow" />
+							{pendingCount} unsaved
+						</>
+					) : (
+						<>
+							<span className="status-dot green" />
+							Saved
+						</>
+					)}
+				</div>
+			)}
+
+			{saveMode === "auto" && (
+				<div className="statusbar-item">
+					<span className="status-dot green" />
+					Auto-save
+				</div>
+			)}
 
 			<div className="statusbar-item">
 				<span className={`status-dot ${connectorConnected ? "green" : "yellow"}`} />

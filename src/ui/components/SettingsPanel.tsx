@@ -91,6 +91,37 @@ export function SettingsPanel({
 			</div>
 
 			<div className="settings-section">
+				<h3>Editor</h3>
+
+				<div className="settings-field">
+					<div>
+						<div className="settings-field-label">Save mode</div>
+						<div className="settings-field-desc">
+							{settings.saveMode === "auto"
+								? "Changes are written to disk immediately"
+								: "Changes are buffered until you save manually"}
+						</div>
+					</div>
+					<div className="segmented-control">
+						<button
+							type="button"
+							className={settings.saveMode === "auto" ? "active" : ""}
+							onClick={() => onUpdate({ saveMode: "auto" })}
+						>
+							Auto
+						</button>
+						<button
+							type="button"
+							className={settings.saveMode === "manual" ? "active" : ""}
+							onClick={() => onUpdate({ saveMode: "manual" })}
+						>
+							Manual
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div className="settings-section">
 				<h3>Live Preview Connector</h3>
 
 				<div className="settings-field">

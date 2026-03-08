@@ -85,6 +85,7 @@ export interface RosettaSettings {
 	connectorPort: number;
 	connectorEnabled: boolean;
 	theme: "system" | "dark" | "light";
+	saveMode: "auto" | "manual";
 }
 
 /** RPC schema for Electrobun communication */
