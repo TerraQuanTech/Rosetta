@@ -1,5 +1,5 @@
 {
-	"name": "rosetta-connect",
+	"name": "@terraquantech/rosetta-connect",
 	"version": "0.1.0",
 	"description": "Connect your Electron/i18next app to Rosetta for live translation preview",
 	"main": "dist/index.js",
@@ -10,6 +10,14 @@
 	},
 	"files": ["dist/"],
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/TerraQuanTech/rosetta.git",
+		"directory": "packages/rosetta-connect"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
 	"peerDependencies": {
 		"i18next": ">=21.0.0"
 	},
