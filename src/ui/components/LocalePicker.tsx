@@ -4,10 +4,13 @@ interface LocalePickerProps {
 	allLocales: string[];
 	visibleLocales: string[];
 	onChange: (locales: string[]) => void;
+	onAddLocale?: (locale: string) => void;
 }
 
-export function LocalePicker({ allLocales, visibleLocales, onChange }: LocalePickerProps) {
+export function LocalePicker({ allLocales, visibleLocales, onChange, onAddLocale }: LocalePickerProps) {
 	const [open, setOpen] = useState(false);
+	const [showAddInput, setShowAddInput] = useState(false);
+	const [newLocale, setNewLocale] = useState("");
 	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -74,6 +77,46 @@ export function LocalePicker({ allLocales, visibleLocales, onChange }: LocalePic
 							{locale.toUpperCase()}
 						</button>
 					))}
+					{onAddLocale && (
+						<>
+							<div className="locale-picker-divider" />
+							{showAddInput ? (
+								<div style={{ padding: "4px 8px" }}>
+									<input
+										type="text"
+										className="search-input"
+										placeholder="e.g. de"
+										value={newLocale}
+										onChange={(e) => setNewLocale(e.target.value.toLowerCase())}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												const code = newLocale.trim();
+												if (code && !allLocales.includes(code)) {
+													onAddLocale(code);
+													setNewLocale("");
+													setShowAddInput(false);
+												}
+											}
+											if (e.key === "Escape") {
+												setShowAddInput(false);
+												setNewLocale("");
+											}
+										}}
+										style={{ width: "100%", height: 24, fontSize: 12 }}
+										autoFocus
+									/>
+								</div>
+							) : (
+								<button
+									type="button"
+									className="locale-picker-action"
+									onClick={() => setShowAddInput(true)}
+								>
+									+ Add language
+								</button>
+							)}
+						</>
+					)}
 				</div>
 			)}
 		</div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyUpdate, ReviewToggle } from "../../shared/types";
+import { isRtlLocale } from "../utils/rtl";
 
 interface ExpandedRowProps {
 	translationKey: string;
@@ -65,6 +66,7 @@ function ExpandedEntry({
 
 	const isMissing = value === undefined;
 	const isEmpty = value === "";
+	const isRtl = isRtlLocale(locale);
 
 	useEffect(() => {
 		if (editing && inputRef.current) {
@@ -125,6 +127,7 @@ function ExpandedEntry({
 					<textarea
 						ref={inputRef}
 						className="expanded-entry-input"
+						dir={isRtl ? "rtl" : "ltr"}
 						value={draft}
 						onChange={(e) => {
 							setDraft(e.target.value);
@@ -148,7 +151,7 @@ function ExpandedEntry({
 						role="button"
 						tabIndex={0}
 					>
-						{isMissing ? "missing" : isEmpty ? "empty" : value}
+						<span dir={isRtl ? "rtl" : "ltr"}>{isMissing ? "missing" : isEmpty ? "empty" : value}</span>
 					</div>
 				)}
 			</div>

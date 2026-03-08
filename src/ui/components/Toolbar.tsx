@@ -15,6 +15,7 @@ interface ToolbarProps {
 	allLocales: string[];
 	visibleLocales: string[];
 	onVisibleLocalesChange: (locales: string[]) => void;
+	onAddLocale?: (locale: string) => void;
 	saveMode: "auto" | "manual";
 	pendingCount: number;
 	onSave: () => void;
@@ -36,6 +37,7 @@ export function Toolbar({
 	allLocales,
 	visibleLocales,
 	onVisibleLocalesChange,
+	onAddLocale,
 	saveMode,
 	pendingCount,
 	onSave,
@@ -119,13 +121,12 @@ export function Toolbar({
 				</div>
 			)}
 
-			{allLocales.length > 1 && (
-				<LocalePicker
+			<LocalePicker
 					allLocales={allLocales}
 					visibleLocales={visibleLocales}
 					onChange={onVisibleLocalesChange}
+					onAddLocale={onAddLocale}
 				/>
-			)}
 
 			{onAddKey && (
 				<button type="button" className="toolbar-btn primary" onClick={onAddKey}>

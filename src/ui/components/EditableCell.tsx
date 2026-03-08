@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isRtlLocale } from "../utils/rtl";
 
 interface EditableCellProps {
 	value: string | undefined;
@@ -8,7 +9,8 @@ interface EditableCellProps {
 	onToggleReview?: (reviewed: boolean) => void;
 }
 
-export function EditableCell({ value, locale: _locale, reviewed, onSave, onToggleReview }: EditableCellProps) {
+export function EditableCell({ value, locale, reviewed, onSave, onToggleReview }: EditableCellProps) {
+	const isRtl = isRtlLocale(locale);
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(value ?? "");
 	const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -71,6 +73,7 @@ export function EditableCell({ value, locale: _locale, reviewed, onSave, onToggl
 				<textarea
 					ref={inputRef}
 					className="value-input"
+					dir={isRtl ? "rtl" : "ltr"}
 					value={draft}
 					onChange={(e) => {
 						setDraft(e.target.value);
@@ -101,7 +104,7 @@ export function EditableCell({ value, locale: _locale, reviewed, onSave, onToggl
 			) : isEmpty ? (
 				<div className="value-display placeholder empty-placeholder">empty</div>
 			) : (
-				<div className="value-display">{value}</div>
+				<div className="value-display" dir={isRtl ? "rtl" : "ltr"}>{value}</div>
 			)}
 			{onToggleReview && !isMissing && (
 				<button

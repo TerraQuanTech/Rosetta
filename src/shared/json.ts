@@ -26,13 +26,16 @@ export function flatten(obj: Record<string, unknown>, prefix = ""): Record<strin
  *
  *   { "a.b": 1, "a.c.d": 2 }  =>  { a: { b: 1, c: { d: 2 } } }
  */
-export function unflatten(flat: Record<string, string>): Record<string, unknown> {
+export function unflatten(flat: Record<string, string>, keyOrder?: string[]): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
-	// Sort keys to ensure parent paths are created before children
-	const sortedKeys = Object.keys(flat).sort();
+	// Use provided key order, or fall back to insertion order
+	const keys = keyOrder
+		? [...keyOrder, ...Object.keys(flat).filter((k) => !keyOrder.includes(k))]
+		: Object.keys(flat);
 
-	for (const key of sortedKeys) {
+	for (const key of keys) {
+		if (!(key in flat)) continue;
 		const parts = key.split(".");
 		let current = result;
 

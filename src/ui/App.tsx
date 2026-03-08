@@ -14,7 +14,7 @@ type ViewMode = "editor" | "settings";
 
 export default function App() {
 	const {
-		store, loading, updateKey, createKey, createNamespace, deleteNamespace,
+		store, loading, updateKey, createKey, createNamespace, deleteNamespace, addLocale,
 		toggleReview, openFolder, pendingChanges, saveAll, discardChanges, setSaveMode,
 	} = useTranslationStore();
 	const { settings, updateSettings } = useSettings();
@@ -206,6 +206,7 @@ export default function App() {
 				allLocales={store.locales}
 				visibleLocales={effectiveLocales}
 				onVisibleLocalesChange={setVisibleLocales}
+				onAddLocale={addLocale}
 				saveMode={saveMode}
 				pendingCount={pendingCount}
 				onSave={saveAll}
@@ -349,9 +350,35 @@ function GlobalSearchResults({
 	onUpdateKey: (update: { namespace: string; key: string; locale: string; value: string }) => void;
 	onToggleReview: (toggle: ReviewToggle) => void;
 }) {
-	// Filter out namespaces with no keys (or no keys after filtering)
+	// Filter out namespaces with no keys surviving search + filter
 	const namespaces = Object.keys(results)
-		.filter((ns) => Object.keys(results[ns]).length > 0)
+		.filter((ns) => {
+			const entries = results[ns];
+			let keys = Object.keys(entries);
+			if (keys.length === 0) return false;
+
+			if (search) {
+				const q = search.toLowerCase();
+				keys = keys.filter((key) => {
+					if (key.toLowerCase().includes(q)) return true;
+					return Object.values(entries[key]).some((v) => v.toLowerCase().includes(q));
+				});
+			}
+
+			if (filter === "missing") {
+				keys = keys.filter((key) => locales.some((l) => entries[key][l] === undefined));
+			} else if (filter === "empty") {
+				keys = keys.filter((key) => locales.some((l) => entries[key][l] === undefined || entries[key][l] === ""));
+			} else if (filter === "unreviewed") {
+				keys = keys.filter((key) => locales.some((l) => {
+					const hasValue = entries[key][l] !== undefined;
+					const isReviewed = reviews?.[ns]?.[key]?.[l] === true;
+					return hasValue && !isReviewed;
+				}));
+			}
+
+			return keys.length > 0;
+		})
 		.sort();
 
 	if (namespaces.length === 0) {

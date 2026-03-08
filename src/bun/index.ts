@@ -55,7 +55,7 @@ ApplicationMenu.setApplicationMenu([
 ]);
 
 // --- Configuration ---
-const DEV_SERVER_PORT = 5173;
+const DEV_SERVER_PORT = 5174;
 const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 
 // --- Settings ---
@@ -188,6 +188,14 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 
 			deleteNamespace: async (params) => {
 				const ok = await store.deleteNamespace(params.namespace);
+				if (ok) {
+					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+				}
+				return { ok };
+			},
+
+			addLocale: async (params) => {
+				const ok = await store.addLocale(params.locale);
 				if (ok) {
 					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
 				}

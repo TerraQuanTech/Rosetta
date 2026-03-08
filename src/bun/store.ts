@@ -51,6 +51,9 @@ export class TranslationFileStore {
 	/** Remembered formatting per file path */
 	private fileFormats = new Map<string, FileFormat>();
 
+	/** Remembered key order per file path (flat dot-notation keys in original order) */
+	private keyOrders = new Map<string, string[]>();
+
 	constructor(localesDir: string) {
 		this.localesDir = localesDir;
 	}
@@ -91,6 +94,9 @@ export class TranslationFileStore {
 
 					const parsed = JSON.parse(content);
 					const flat = flatten(parsed);
+
+					// Remember the original key order
+					this.keyOrders.set(filePath, Object.keys(flat));
 
 					if (!translations[namespace]) {
 						translations[namespace] = {};
@@ -138,6 +144,9 @@ export class TranslationFileStore {
 			const parsed = JSON.parse(content);
 			const flat = flatten(parsed);
 
+			// Update remembered key order
+			this.keyOrders.set(filePath, Object.keys(flat));
+
 			// Clear existing entries for this namespace+locale
 			if (this.store.translations[namespace]) {
 				for (const key of Object.keys(this.store.translations[namespace])) {
@@ -178,7 +187,13 @@ export class TranslationFileStore {
 		if (!this.store.translations[namespace][key]) {
 			this.store.translations[namespace][key] = {};
 		}
-		this.store.translations[namespace][key][locale] = value;
+
+		if (value === "") {
+			// Empty value = delete the key for this locale so i18next falls back
+			delete this.store.translations[namespace][key][locale];
+		} else {
+			this.store.translations[namespace][key][locale] = value;
+		}
 
 		return this.writeNamespaceLocale(namespace, locale);
 	}
@@ -297,7 +312,10 @@ export class TranslationFileStore {
 			}
 		}
 
-		const nested = unflatten(flat);
+		const nested = unflatten(flat, this.keyOrders.get(filePath));
+
+		// Update remembered key order (preserves original + appends new keys)
+		this.keyOrders.set(filePath, Object.keys(flat));
 
 		// Use the remembered formatting, or default to 4 spaces
 		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
@@ -321,6 +339,33 @@ export class TranslationFileStore {
 			this.writeLocks.delete(filePath);
 			return false;
 		}
+	}
+
+	/** Add a new locale — creates the directory and empty JSON files for each namespace */
+	async addLocale(locale: string): Promise<boolean> {
+		if (this.store.locales.includes(locale)) return false;
+
+		const localeDir = join(this.localesDir, locale);
+		try {
+			await mkdir(localeDir, { recursive: true });
+		} catch {
+			return false;
+		}
+
+		// Create empty JSON files for each existing namespace
+		for (const namespace of Object.keys(this.store.translations)) {
+			const filePath = join(localeDir, `${namespace}.json`);
+			try {
+				await mkdir(dirname(filePath), { recursive: true });
+				await writeFile(filePath, "{}\n", "utf-8");
+			} catch {
+				// best effort
+			}
+		}
+
+		this.store.locales.push(locale);
+		this.store.locales.sort();
+		return true;
 	}
 
 	/** Find all locale directories (en, ru, de, ...) */
