@@ -1,0 +1,20 @@
+{
+	"name": "rosetta-connect",
+	"version": "0.1.0",
+	"description": "Connect your Electron/i18next app to Rosetta for live translation preview",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch"
+	},
+	"files": ["dist/"],
+	"license": "MIT",
+	"peerDependencies": {
+		"i18next": ">=21.0.0"
+	},
+	"devDependencies": {
+		"i18next": "^23.0.0",
+		"typescript": "^5.7.2"
+	}
+}
