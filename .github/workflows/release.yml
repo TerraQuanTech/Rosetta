@@ -68,7 +68,10 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
-            artifact: rosetta-mac
+            artifact: rosetta-mac-intel
+          - os: macos-14
+            platform: mac
+            artifact: rosetta-mac-arm
           - os: ubuntu-latest
             platform: linux
             artifact: rosetta-linux
