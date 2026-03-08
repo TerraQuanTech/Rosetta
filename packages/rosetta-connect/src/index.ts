@@ -1,5 +1,7 @@
 import type { i18n } from "i18next";
 
+export type ConnectionStatus = "connecting" | "connected" | "disconnected";
+
 export interface ConnectOptions {
 	/** Rosetta connector port. Default: 4871 */
 	port?: number;
@@ -15,6 +17,8 @@ export interface ConnectOptions {
 	 * - "resource": uses addResource — slightly more granular
 	 */
 	updateStrategy?: "bundle" | "resource";
+	/** Called when connection status changes */
+	onStatusChange?: (status: ConnectionStatus) => void;
 }
 
 interface TranslationUpdate {
@@ -37,21 +41,12 @@ type RosettaMessage = TranslationUpdate | TranslationReload;
  * Connect your i18next instance to a running Rosetta editor for live
  * translation preview. Changes made in Rosetta are hot-reloaded instantly.
  *
- * Works in:
- * - Electron renderer process (built or dev)
- * - Browser (Vite/webpack dev server)
- * - Node.js / Electron main process (requires `ws` package or Node 22+ built-in WebSocket)
- *
  * @example
  * ```ts
  * import i18next from "i18next";
  * import { connectRosetta } from "rosetta-connect";
  *
- * // Only in development
- * if (process.env.NODE_ENV === "development") {
- *   const disconnect = connectRosetta(i18next, { port: 4871 });
- *   // Call disconnect() to clean up
- * }
+ * connectRosetta(i18next);
  * ```
  *
  * @returns A cleanup function that closes the connection
@@ -63,6 +58,7 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 		verbose = typeof process !== "undefined" ? process.env.NODE_ENV === "development" : true,
 		appName,
 		updateStrategy = "bundle",
+		onStatusChange,
 	} = options;
 
 	const url = `ws://localhost:${port}/ws`;
@@ -74,11 +70,13 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 		? (...args: unknown[]) => console.log("[rosetta-connect]", ...args)
 		: () => {};
 
+	function emitStatus(status: ConnectionStatus) {
+		onStatusChange?.(status);
+	}
+
 	function getAppName(): string {
 		if (appName) return appName;
-		// Browser / Electron renderer
 		if (typeof document !== "undefined" && document.title) return document.title;
-		// Node.js / Electron main
 		if (typeof process !== "undefined" && process.argv[1]) {
 			const path = process.argv[1];
 			return path.split(/[/\\]/).pop() || "App";
@@ -88,11 +86,13 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 
 	function connect() {
 		if (stopped) return;
+		emitStatus("connecting");
 
 		try {
 			ws = new WebSocket(url);
 
 			ws.onopen = () => {
+				emitStatus("connected");
 				log("Connected to Rosetta at", url);
 				ws?.send(JSON.stringify({ type: "hello", appName: getAppName() }));
 			};
@@ -110,6 +110,7 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 
 			ws.onclose = () => {
 				log("Disconnected from Rosetta");
+				emitStatus("disconnected");
 				scheduleReconnect();
 			};
 
@@ -131,7 +132,6 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 
 			case "translation:reload": {
 				i18next.reloadResources([msg.locale], [msg.namespace]).then(() => {
-					// Emit event so React components re-render
 					i18next.emit("languageChanged", i18next.language);
 					log(`Reloaded ${msg.namespace} [${msg.locale}]`);
 				});
@@ -150,10 +150,10 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 		if (reconnectTimer) clearTimeout(reconnectTimer);
 		ws?.close();
 		ws = null;
+		emitStatus("disconnected");
 		log("Disconnected");
 	}
 
-	// Start connection
 	connect();
 
 	return disconnect;
@@ -165,17 +165,13 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
  */
 function applyUpdate(i18next: i18n, msg: TranslationUpdate, strategy: "bundle" | "resource") {
 	if (strategy === "resource") {
-		// addResource is more granular but doesn't trigger all plugins
 		i18next.addResource(msg.locale, msg.namespace, msg.key, msg.value);
 	} else {
-		// addResourceBundle with deep merge + overwrite
-		// i18next API: addResourceBundle(lng, ns, resources, deep, overwrite)
 		const bundle: Record<string, unknown> = {};
 		setNestedValue(bundle, msg.key, msg.value);
 		i18next.addResourceBundle(msg.locale, msg.namespace, bundle, true, true);
 	}
 
-	// Trigger re-render in react-i18next and other UI bindings
 	i18next.emit("languageChanged", i18next.language);
 }
 
