@@ -106,6 +106,7 @@ async function loadLocalesDir(dir: string) {
 	});
 
 	mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+	mainWindow?.setTitle(`Rosetta — ${dir}`);
 }
 
 if (currentLocalesDir) {
@@ -257,7 +258,7 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 const url = await getMainViewUrl();
 
 const mainWindow = new BrowserWindow({
-	title: "Rosetta — i18n Editor",
+	title: currentLocalesDir ? `Rosetta — ${currentLocalesDir}` : "Rosetta",
 	url,
 	frame: {
 		width: 1200,
