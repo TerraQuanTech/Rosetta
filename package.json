@@ -1,0 +1,36 @@
+{
+	"name": "rosetta-i18n",
+	"version": "0.1.0",
+	"description": "A visual i18n translation editor for JSON locale files, with live preview support for Electron apps",
+	"scripts": {
+		"start": "vite build && electrobun dev",
+		"dev": "electrobun dev --watch",
+		"dev:hmr": "concurrently \"bun run hmr\" \"bun run start\"",
+		"hmr": "vite --port 5173",
+		"build": "vite build && electrobun build --env=stable",
+		"build:canary": "vite build && electrobun build --env=canary",
+		"test": "bun test",
+		"test:watch": "bun test --watch",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"typecheck": "bunx tsc --noEmit"
+	},
+	"dependencies": {
+		"electrobun": "latest",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"chokidar": "^4.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/bun": "latest",
+		"@types/react": "^18.3.12",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.4",
+		"concurrently": "^9.1.0",
+		"typescript": "^5.7.2",
+		"vite": "^6.0.3"
+	},
+	"license": "MIT"
+}
