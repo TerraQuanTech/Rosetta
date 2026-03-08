@@ -347,7 +347,10 @@ function GlobalSearchResults({
 	onUpdateKey: (update: { namespace: string; key: string; locale: string; value: string }) => void;
 	onToggleReview: (toggle: ReviewToggle) => void;
 }) {
-	const namespaces = Object.keys(results).sort();
+	// Filter out namespaces with no keys (or no keys after filtering)
+	const namespaces = Object.keys(results)
+		.filter((ns) => Object.keys(results[ns]).length > 0)
+		.sort();
 
 	if (namespaces.length === 0) {
 		return (
@@ -366,12 +369,13 @@ function GlobalSearchResults({
 					<EditorTable
 						locales={locales}
 						entries={results[ns]}
-						reviews={reviews[ns]}
+						reviews={reviews?.[ns]}
 						namespace={ns}
 						search={search}
 						filter={filter}
 						onUpdateKey={onUpdateKey}
 						onToggleReview={onToggleReview}
+						hideEmptyFiltered
 					/>
 				</div>
 			))}

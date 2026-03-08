@@ -14,6 +14,8 @@ interface EditorTableProps {
 	filter: "all" | "missing" | "empty" | "unreviewed";
 	onUpdateKey: (update: KeyUpdate) => void;
 	onToggleReview?: (toggle: ReviewToggle) => void;
+	/** When true, return null instead of empty state when no keys match */
+	hideEmptyFiltered?: boolean;
 }
 
 export function EditorTable({
@@ -25,6 +27,7 @@ export function EditorTable({
 	filter,
 	onUpdateKey,
 	onToggleReview,
+	hideEmptyFiltered,
 }: EditorTableProps) {
 	const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
@@ -74,6 +77,7 @@ export function EditorTable({
 	}, [entries, locales, search, filter, reviews]);
 
 	if (filteredKeys.length === 0) {
+		if (hideEmptyFiltered) return null;
 		return (
 			<div className="empty-state">
 				<h2>{search ? "No matches" : "No keys"}</h2>
