@@ -1,5 +1,5 @@
-import { dirname, join, relative } from "node:path";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { dirname, join, relative } from "node:path";
 import { flatten, unflatten } from "../shared/json";
 import type {
 	KeyCreate,
@@ -220,7 +220,7 @@ export class TranslationFileStore {
 			await mkdir(dirname(filePath), { recursive: true });
 
 			this.writeLocks.add(filePath);
-			await writeFile(filePath, JSON.stringify(nested, null, 4) + "\n", "utf-8");
+			await writeFile(filePath, `${JSON.stringify(nested, null, 4)}\n`, "utf-8");
 
 			// Clear write lock after a short delay
 			setTimeout(() => this.writeLocks.delete(filePath), 500);

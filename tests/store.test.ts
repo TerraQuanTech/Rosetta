@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { tmpdir } from "os";
-import { join } from "path";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { TranslationFileStore } from "../src/bun/store";
 
 let tempDir: string;
@@ -15,7 +15,7 @@ async function createLocaleFile(
 	const dir = join(tempDir, locale, ...namespace.split("/").slice(0, -1));
 	const fileName = namespace.split("/").pop()!;
 	await mkdir(dir, { recursive: true });
-	await writeFile(join(dir, `${fileName}.json`), JSON.stringify(content, null, 4) + "\n");
+	await writeFile(join(dir, `${fileName}.json`), `${JSON.stringify(content, null, 4)}\n`);
 }
 
 async function readLocaleFile(locale: string, namespace: string): Promise<Record<string, unknown>> {

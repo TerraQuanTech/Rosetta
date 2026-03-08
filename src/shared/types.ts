@@ -54,6 +54,15 @@ export interface KeyRename {
 	newKey: string;
 }
 
+/** Persistent app settings */
+export interface RosettaSettings {
+	defaultLocalesDir: string | null;
+	visibleLocales: string[] | null;
+	connectorPort: number;
+	connectorEnabled: boolean;
+	theme: "auto" | "dark" | "light";
+}
+
 /** RPC schema for Electrobun communication */
 export type RosettaRPC = {
 	bun: {
@@ -68,6 +77,8 @@ export type RosettaRPC = {
 				params: Record<string, never>;
 				response: { connected: boolean; port: number };
 			};
+			getSettings: { params: Record<string, never>; response: RosettaSettings };
+			updateSettings: { params: Partial<RosettaSettings>; response: { ok: boolean } };
 		};
 		messages: Record<string, never>;
 	};
@@ -76,6 +87,7 @@ export type RosettaRPC = {
 		messages: {
 			storeUpdated: TranslationStore;
 			fileChanged: { namespace: string; locale: string };
+			settingsUpdated: RosettaSettings;
 		};
 	};
 };
