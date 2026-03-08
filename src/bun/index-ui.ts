@@ -318,10 +318,9 @@ const mainWindow = new BrowserWindow({
 });
 
 ApplicationMenu.on("application-menu-clicked", async (event: any) => {
-	console.log("Menu action:", event.action);
-	if (event.action === "openFolder") {
+	const action = event.data?.action;
+	if (action === "openFolder") {
 		try {
-			console.log("Opening folder dialog...");
 			const paths = await Utils.openFileDialog({
 				startingFolder: currentLocalesDir || "~/",
 				canChooseFiles: false,

@@ -73,30 +73,32 @@ export class TranslationFileStore {
 
 	/** Scan the locales directory and load everything into memory */
 	async load(): Promise<TranslationStore> {
-		const locales = await this.discoverLocales();
-		const namespaceSet = new Set<string>();
+		const entries = await readdir(this.localesDir, { withFileTypes: true });
+		const nestedDirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith(".")).map((e) => e.name);
+		const rootJsonFiles = entries.filter((e) => e.isFile() && e.name.endsWith(".json")).map((e) => e.name);
 
+		let locales: string[] = [];
+		let isFlat = false;
+		const namespaceSet = new Set<string>();
 		const translations: TranslationMap = {};
 
-		for (const locale of locales) {
-			const localeDir = join(this.localesDir, locale);
-			const jsonFiles = await this.findJsonFiles(localeDir);
+		// Detect layout: nested (locales/en/common.json) or flat (locales/en.json)
+		if (rootJsonFiles.length > 0 && nestedDirs.length === 0) {
+			// Flat layout: extract locale codes from filenames
+			isFlat = true;
+			locales = rootJsonFiles.map((f) => f.replace(/\.json$/, "")).sort();
 
-			for (const filePath of jsonFiles) {
-				const relPath = relative(localeDir, filePath);
-				const namespace = relPath.replace(/\.json$/, "").replace(/\\/g, "/");
+			for (const fileName of rootJsonFiles) {
+				const locale = fileName.replace(/\.json$/, "");
+				const filePath = join(this.localesDir, fileName);
+				const namespace = "root"; // Use 'root' as the namespace for flat layout
 				namespaceSet.add(namespace);
 
 				try {
 					const content = await readFile(filePath, "utf-8");
-
-					// Remember the original formatting
 					this.fileFormats.set(filePath, detectFormat(content));
-
 					const parsed = JSON.parse(content);
 					const flat = flatten(parsed);
-
-					// Remember the original key order
 					this.keyOrders.set(filePath, Object.keys(flat));
 
 					if (!translations[namespace]) {
@@ -113,6 +115,41 @@ export class TranslationFileStore {
 					console.error(`Failed to parse ${filePath}:`, err);
 				}
 			}
+		} else {
+			// Nested layout: locale folders with namespace files inside
+			locales = nestedDirs;
+
+			for (const locale of locales) {
+				const localeDir = join(this.localesDir, locale);
+				const jsonFiles = await this.findJsonFiles(localeDir);
+
+				for (const filePath of jsonFiles) {
+					const relPath = relative(localeDir, filePath);
+					const namespace = relPath.replace(/\.json$/, "").replace(/\\/g, "/");
+					namespaceSet.add(namespace);
+
+					try {
+						const content = await readFile(filePath, "utf-8");
+						this.fileFormats.set(filePath, detectFormat(content));
+						const parsed = JSON.parse(content);
+						const flat = flatten(parsed);
+						this.keyOrders.set(filePath, Object.keys(flat));
+
+						if (!translations[namespace]) {
+							translations[namespace] = {};
+						}
+
+						for (const [key, value] of Object.entries(flat)) {
+							if (!translations[namespace][key]) {
+								translations[namespace][key] = {};
+							}
+							translations[namespace][key][locale] = value;
+						}
+					} catch (err) {
+						console.error(`Failed to parse ${filePath}:`, err);
+					}
+				}
+			}
 		}
 
 		const namespaces = this.buildNamespaceTree(Array.from(namespaceSet).sort());
@@ -126,13 +163,23 @@ export class TranslationFileStore {
 		const rel = relative(this.localesDir, filePath);
 		const parts = rel.replace(/\\/g, "/").split("/");
 
-		if (parts.length < 2) return null;
+		let locale: string;
+		let namespace: string;
 
-		const locale = parts[0];
-		const namespace = parts
-			.slice(1)
-			.join("/")
-			.replace(/\.json$/, "");
+		// Detect flat vs nested layout
+		if (parts.length === 1) {
+			// Flat layout: locales/en.json
+			locale = parts[0].replace(/\.json$/, "");
+			namespace = "root";
+		} else {
+			// Nested layout: locales/en/common.json
+			if (parts.length < 2) return null;
+			locale = parts[0];
+			namespace = parts
+				.slice(1)
+				.join("/")
+				.replace(/\.json$/, "");
+		}
 
 		if (!this.store.locales.includes(locale)) return null;
 
@@ -205,7 +252,10 @@ export class TranslationFileStore {
 	 * which preserves all formatting/whitespace for unaffected parts of the file.
 	 */
 	private async patchJsonFile(namespace: string, locale: string, dotKey: string, value: string): Promise<boolean> {
-		const filePath = join(this.localesDir, locale, `${namespace}.json`);
+		// Handle flat layout (namespace="root") vs nested layout
+		const filePath = namespace === "root"
+			? join(this.localesDir, `${locale}.json`)
+			: join(this.localesDir, locale, `${namespace}.json`);
 		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
 		const jsonPath = dotKey.split(".");
 
@@ -325,7 +375,9 @@ export class TranslationFileStore {
 
 		let ok = true;
 		for (const locale of this.store.locales) {
-			const filePath = join(this.localesDir, locale, `${namespace}.json`);
+			const filePath = namespace === "root"
+				? join(this.localesDir, `${locale}.json`)
+				: join(this.localesDir, locale, `${namespace}.json`);
 			try {
 				await rm(filePath);
 			} catch {
@@ -342,7 +394,9 @@ export class TranslationFileStore {
 
 	/** Write the in-memory state for one namespace+locale back to its JSON file */
 	private async writeNamespaceLocale(namespace: string, locale: string): Promise<boolean> {
-		const filePath = join(this.localesDir, locale, `${namespace}.json`);
+		const filePath = namespace === "root"
+			? join(this.localesDir, `${locale}.json`)
+			: join(this.localesDir, locale, `${namespace}.json`);
 
 		// Collect all keys for this namespace+locale
 		const flat: Record<string, string> = {};
@@ -388,34 +442,44 @@ export class TranslationFileStore {
 	async addLocale(locale: string, copyFrom?: string): Promise<boolean> {
 		if (this.store.locales.includes(locale)) return false;
 
-		const localeDir = join(this.localesDir, locale);
 		try {
-			await mkdir(localeDir, { recursive: true });
-		} catch {
-			return false;
-		}
-
-		// Create JSON files for each existing namespace
-		for (const namespace of Object.keys(this.store.translations)) {
-			const filePath = join(localeDir, `${namespace}.json`);
-			try {
-				await mkdir(dirname(filePath), { recursive: true });
+			// For flat layout (root namespace), just create the locale.json file
+			if (Object.keys(this.store.translations).includes("root")) {
+				const filePath = join(this.localesDir, `${locale}.json`);
 				if (copyFrom && this.store.locales.includes(copyFrom)) {
-					// Copy from another locale
-					const sourcePath = join(this.localesDir, copyFrom, `${namespace}.json`);
+					const sourcePath = join(this.localesDir, `${copyFrom}.json`);
 					try {
 						const content = await readFile(sourcePath, "utf-8");
 						await writeFile(filePath, content, "utf-8");
 					} catch {
-						// If source doesn't exist, create empty
 						await writeFile(filePath, "{}\n", "utf-8");
 					}
 				} else {
 					await writeFile(filePath, "{}\n", "utf-8");
 				}
-			} catch {
-				// best effort
+			} else {
+				// For nested layout, create locale directory and namespace files
+				const localeDir = join(this.localesDir, locale);
+				await mkdir(localeDir, { recursive: true });
+
+				for (const namespace of Object.keys(this.store.translations)) {
+					const filePath = join(localeDir, `${namespace}.json`);
+					await mkdir(dirname(filePath), { recursive: true });
+					if (copyFrom && this.store.locales.includes(copyFrom)) {
+						const sourcePath = join(this.localesDir, copyFrom, `${namespace}.json`);
+						try {
+							const content = await readFile(sourcePath, "utf-8");
+							await writeFile(filePath, content, "utf-8");
+						} catch {
+							await writeFile(filePath, "{}\n", "utf-8");
+						}
+					} else {
+						await writeFile(filePath, "{}\n", "utf-8");
+					}
+				}
 			}
+		} catch {
+			return false;
 		}
 
 		this.store.locales.push(locale);
