@@ -1,11 +1,19 @@
+import { LocalePicker } from "./LocalePicker";
+
+type FilterType = "all" | "missing" | "empty" | "unreviewed";
+
 interface ToolbarProps {
 	search: string;
 	onSearchChange: (value: string) => void;
-	filter: "all" | "missing" | "empty";
-	onFilterChange: (filter: "all" | "missing" | "empty") => void;
+	filter: FilterType;
+	onFilterChange: (filter: FilterType) => void;
 	totalKeys: number;
 	missingCount: number;
+	unreviewedCount?: number;
 	onAddKey?: () => void;
+	allLocales: string[];
+	visibleLocales: string[];
+	onVisibleLocalesChange: (locales: string[]) => void;
 }
 
 export function Toolbar({
@@ -15,14 +23,18 @@ export function Toolbar({
 	onFilterChange,
 	totalKeys,
 	missingCount,
+	unreviewedCount,
 	onAddKey,
+	allLocales,
+	visibleLocales,
+	onVisibleLocalesChange,
 }: ToolbarProps) {
 	return (
 		<div className="toolbar">
 			<input
 				className="search-input"
 				type="text"
-				placeholder="Search keys or values..."
+				placeholder="Search all keys and values..."
 				value={search}
 				onChange={(e) => onSearchChange(e.target.value)}
 			/>
@@ -42,9 +54,26 @@ export function Toolbar({
 				>
 					Missing ({missingCount})
 				</button>
+				{unreviewedCount !== undefined && (
+					<button
+						type="button"
+						className={`filter-chip ${filter === "unreviewed" ? "active" : ""}`}
+						onClick={() => onFilterChange("unreviewed")}
+					>
+						Unreviewed ({unreviewedCount})
+					</button>
+				)}
 			</div>
 
 			<div className="toolbar-spacer" />
+
+			{allLocales.length > 1 && (
+				<LocalePicker
+					allLocales={allLocales}
+					visibleLocales={visibleLocales}
+					onChange={onVisibleLocalesChange}
+				/>
+			)}
 
 			{onAddKey && (
 				<button type="button" className="toolbar-btn primary" onClick={onAddKey}>

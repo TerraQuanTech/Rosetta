@@ -42,7 +42,6 @@ export function AddKeyDialog({ namespace, locales, onAdd, onClose }: AddKeyDialo
 						onKeyDown={(e) => {
 							if (e.key === "Enter") handleSubmit();
 						}}
-						autoFocus
 					/>
 				</div>
 				{locales.map((locale) => (

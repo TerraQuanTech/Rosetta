@@ -4,6 +4,7 @@ import type {
 	KeyDelete,
 	KeyRename,
 	KeyUpdate,
+	ReviewToggle,
 	TranslationStore,
 } from "../../shared/types";
 
@@ -59,17 +60,68 @@ export function useTranslationStore() {
 	}, []);
 
 	const updateKey = useCallback(async (update: KeyUpdate) => {
-		// Optimistic update
+		// Optimistic update — also clear review status when value changes
 		setStore((prev) => {
 			if (!prev) return prev;
-			const next = { ...prev, translations: { ...prev.translations } };
+			const next = { ...prev, translations: { ...prev.translations }, reviews: { ...prev.reviews } };
 			const ns = { ...next.translations[update.namespace] };
 			ns[update.key] = { ...ns[update.key], [update.locale]: update.value };
 			next.translations[update.namespace] = ns;
+			// Clear review for changed cell
+			if (next.reviews[update.namespace]?.[update.key]?.[update.locale]) {
+				const revNs = { ...next.reviews[update.namespace] };
+				const revKey = { ...revNs[update.key] };
+				delete revKey[update.locale];
+				if (Object.keys(revKey).length === 0) {
+					delete revNs[update.key];
+				} else {
+					revNs[update.key] = revKey;
+				}
+				if (Object.keys(revNs).length === 0) {
+					delete next.reviews[update.namespace];
+				} else {
+					next.reviews[update.namespace] = revNs;
+				}
+			}
 			return next;
 		});
 
 		await callRpc("updateKey", update);
+	}, []);
+
+	const toggleReview = useCallback(async (toggle: ReviewToggle) => {
+		// Optimistic update
+		setStore((prev) => {
+			if (!prev) return prev;
+			const next = { ...prev, reviews: { ...prev.reviews } };
+			if (toggle.reviewed) {
+				if (!next.reviews[toggle.namespace]) next.reviews[toggle.namespace] = {};
+				next.reviews[toggle.namespace] = { ...next.reviews[toggle.namespace] };
+				next.reviews[toggle.namespace][toggle.key] = {
+					...next.reviews[toggle.namespace][toggle.key],
+					[toggle.locale]: true,
+				};
+			} else {
+				if (next.reviews[toggle.namespace]?.[toggle.key]) {
+					const revNs = { ...next.reviews[toggle.namespace] };
+					const revKey = { ...revNs[toggle.key] };
+					delete revKey[toggle.locale];
+					if (Object.keys(revKey).length === 0) {
+						delete revNs[toggle.key];
+					} else {
+						revNs[toggle.key] = revKey;
+					}
+					if (Object.keys(revNs).length === 0) {
+						delete next.reviews[toggle.namespace];
+					} else {
+						next.reviews[toggle.namespace] = revNs;
+					}
+				}
+			}
+			return next;
+		});
+
+		await callRpc("toggleReview", toggle);
 	}, []);
 
 	const createKey = useCallback(
@@ -113,6 +165,7 @@ export function useTranslationStore() {
 		createKey,
 		deleteKey,
 		renameKey,
+		toggleReview,
 		openFolder,
 	};
 }

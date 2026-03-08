@@ -5,9 +5,17 @@ interface SidebarProps {
 	namespaces: NamespaceNode[];
 	activeNamespace: string | null;
 	onSelect: (path: string) => void;
+	onOpenSettings: () => void;
+	isSettingsActive: boolean;
 }
 
-export function Sidebar({ namespaces, activeNamespace, onSelect }: SidebarProps) {
+export function Sidebar({
+	namespaces,
+	activeNamespace,
+	onSelect,
+	onOpenSettings,
+	isSettingsActive,
+}: SidebarProps) {
 	return (
 		<div className="sidebar">
 			<div className="sidebar-header">
@@ -23,6 +31,21 @@ export function Sidebar({ namespaces, activeNamespace, onSelect }: SidebarProps)
 						depth={0}
 					/>
 				))}
+			</div>
+			<div className="sidebar-footer">
+				<button
+					type="button"
+					className={`sidebar-footer-btn ${isSettingsActive ? "active" : ""}`}
+					onClick={onOpenSettings}
+					title="Settings"
+				>
+					<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+						<path
+							d="M6.5 1.75a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v.3c0 .285.183.538.45.633a4.5 4.5 0 0 1 .826.39c.242.148.54.154.76-.02l.213-.17a.75.75 0 0 1 1.06.06l1.06 1.06a.75.75 0 0 1 .06 1.06l-.17.213c-.174.22-.168.518-.02.76.156.265.29.54.39.826.095.267.348.45.633.45h.3a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75h-.3c-.285 0-.538.183-.633.45a4.5 4.5 0 0 1-.39.826c-.148.242-.154.54.02.76l.17.213a.75.75 0 0 1-.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06.06l-.213-.17c-.22-.174-.518-.168-.76-.02a4.5 4.5 0 0 1-.826.39c-.267.095-.45.348-.45.633v.3a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-.3c0-.285-.183-.538-.45-.633a4.5 4.5 0 0 1-.826-.39c-.242-.148-.54-.154-.76.02l-.213.17a.75.75 0 0 1-1.06-.06l-1.06-1.06a.75.75 0 0 1-.06-1.06l.17-.213c.174-.22.168-.518.02-.76a4.5 4.5 0 0 1-.39-.826c-.095-.267-.348-.45-.633-.45h-.3a.75.75 0 0 1-.75-.75v-1.5a.75.75 0 0 1 .75-.75h.3c.285 0 .538-.183.633-.45a4.5 4.5 0 0 1 .39-.826c.148-.242.154-.54-.02-.76l-.17-.213a.75.75 0 0 1 .06-1.06l1.06-1.06a.75.75 0 0 1 1.06-.06l.213.17c.22.174.518.168.76.02.265-.156.54-.29.826-.39.267-.095.45-.348.45-.633v-.3ZM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+							fill="currentColor"
+						/>
+					</svg>
+				</button>
 			</div>
 		</div>
 	);
@@ -45,7 +68,6 @@ function TreeNode({ node, activeNamespace, onSelect, depth }: TreeNodeProps) {
 		if (hasChildren) {
 			setExpanded((e) => !e);
 		}
-		// Always select — folders might also be file-backed namespaces
 		onSelect(node.path);
 	}, [hasChildren, node.path, onSelect]);
 

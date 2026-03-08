@@ -1,35 +1,34 @@
-/**
- * Connector WebSocket server.
- *
- * When an Electron app includes `rosetta-connect`, it connects here.
- * On every translation update Rosetta pushes the change to all connected
- * Electron apps so they can hot-reload i18next in real time.
- */
-
 import type { KeyUpdate } from "../shared/types";
 
-const CONNECTOR_PORT = 4871;
-
 interface ConnectorClient {
-	ws: unknown; // WebSocket-like (Bun's native WebSocket)
+	ws: unknown;
 	appName?: string;
 }
 
 export class ConnectorServer {
 	private clients: Set<ConnectorClient> = new Set();
 	private server: ReturnType<typeof Bun.serve> | null = null;
+	private _port: number;
+
+	constructor(port = 4871) {
+		this._port = port;
+	}
 
 	get port(): number {
-		return CONNECTOR_PORT;
+		return this._port;
 	}
 
 	get connected(): boolean {
 		return this.clients.size > 0;
 	}
 
+	updatePort(port: number): void {
+		this._port = port;
+	}
+
 	start(): void {
 		this.server = Bun.serve({
-			port: CONNECTOR_PORT,
+			port: this._port,
 			fetch(req, server) {
 				const url = new URL(req.url);
 				if (url.pathname === "/ws") {
@@ -48,7 +47,6 @@ export class ConnectorServer {
 					console.log(`[connector] App connected (${this.clients.size} total)`);
 				},
 				message: (_ws, message) => {
-					// Could receive heartbeats or app metadata
 					try {
 						const data = JSON.parse(String(message));
 						if (data.type === "hello") {
@@ -70,10 +68,9 @@ export class ConnectorServer {
 			},
 		});
 
-		console.log(`[connector] Listening on ws://localhost:${CONNECTOR_PORT}/ws`);
+		console.log(`[connector] Listening on ws://localhost:${this._port}/ws`);
 	}
 
-	/** Push a key update to all connected apps */
 	broadcastUpdate(update: KeyUpdate): void {
 		const message = JSON.stringify({
 			type: "translation:update",
@@ -92,7 +89,6 @@ export class ConnectorServer {
 		}
 	}
 
-	/** Push a full reload signal (e.g. after key delete/rename) */
 	broadcastReload(namespace: string, locale: string): void {
 		const message = JSON.stringify({
 			type: "translation:reload",

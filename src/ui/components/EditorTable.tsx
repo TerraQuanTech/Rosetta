@@ -1,24 +1,29 @@
 import { useMemo } from "react";
-import type { KeyUpdate } from "../../shared/types";
+import type { KeyUpdate, ReviewToggle } from "../../shared/types";
 import { EditableCell } from "./EditableCell";
 
 interface EditorTableProps {
 	locales: string[];
 	/** flat key -> locale -> value */
 	entries: Record<string, Record<string, string>>;
+	/** key -> locale -> reviewed */
+	reviews?: Record<string, Record<string, boolean>>;
 	namespace: string;
 	search: string;
-	filter: "all" | "missing" | "empty";
+	filter: "all" | "missing" | "empty" | "unreviewed";
 	onUpdateKey: (update: KeyUpdate) => void;
+	onToggleReview?: (toggle: ReviewToggle) => void;
 }
 
 export function EditorTable({
 	locales,
 	entries,
+	reviews,
 	namespace,
 	search,
 	filter,
 	onUpdateKey,
+	onToggleReview,
 }: EditorTableProps) {
 	const filteredKeys = useMemo(() => {
 		let keys = Object.keys(entries).sort();
@@ -40,10 +45,18 @@ export function EditorTable({
 			keys = keys.filter((key) =>
 				locales.some((locale) => entries[key][locale] === undefined || entries[key][locale] === ""),
 			);
+		} else if (filter === "unreviewed") {
+			keys = keys.filter((key) =>
+				locales.some((locale) => {
+					const hasValue = entries[key][locale] !== undefined;
+					const isReviewed = reviews?.[key]?.[locale] === true;
+					return hasValue && !isReviewed;
+				}),
+			);
 		}
 
 		return keys;
-	}, [entries, locales, search, filter]);
+	}, [entries, locales, search, filter, reviews]);
 
 	if (filteredKeys.length === 0) {
 		return (
@@ -79,7 +92,13 @@ export function EditorTable({
 								key={`${key}-${locale}`}
 								value={entries[key]?.[locale]}
 								locale={locale}
+								reviewed={reviews?.[key]?.[locale] === true}
 								onSave={(value) => onUpdateKey({ namespace, key, locale, value })}
+								onToggleReview={
+									onToggleReview
+										? (reviewed) => onToggleReview({ namespace, key, locale, reviewed })
+										: undefined
+								}
 							/>
 						))}
 					</tr>

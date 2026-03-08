@@ -3,10 +3,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface EditableCellProps {
 	value: string | undefined;
 	locale: string;
+	reviewed?: boolean;
 	onSave: (value: string) => void;
+	onToggleReview?: (reviewed: boolean) => void;
 }
 
-export function EditableCell({ value, locale: _locale, onSave }: EditableCellProps) {
+export function EditableCell({ value, locale: _locale, reviewed, onSave, onToggleReview }: EditableCellProps) {
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(value ?? "");
 	const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -61,7 +63,7 @@ export function EditableCell({ value, locale: _locale, onSave }: EditableCellPro
 		[cancel, save],
 	);
 
-	const cellClass = `value-cell${isMissing ? " missing" : ""}${isEmpty ? " empty" : ""}`;
+	const cellClass = `value-cell${isMissing ? " missing" : ""}${isEmpty ? " empty" : ""}${reviewed ? " reviewed" : ""}`;
 
 	if (editing) {
 		return (
@@ -100,6 +102,20 @@ export function EditableCell({ value, locale: _locale, onSave }: EditableCellPro
 				<div className="value-display placeholder empty-placeholder">empty</div>
 			) : (
 				<div className="value-display">{value}</div>
+			)}
+			{onToggleReview && !isMissing && (
+				<button
+					type="button"
+					className={`review-btn${reviewed ? " reviewed" : ""}`}
+					title={reviewed ? "Mark as unreviewed" : "Mark as reviewed"}
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggleReview(!reviewed);
+					}}
+					aria-label={reviewed ? "Mark as unreviewed" : "Mark as reviewed"}
+				>
+					{reviewed ? "\u2713" : "\u25CB"}
+				</button>
 			)}
 		</td>
 	);

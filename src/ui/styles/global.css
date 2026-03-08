@@ -355,7 +355,6 @@ body {
 	padding: 5px 8px;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	font-size: 12px;
 	color: var(--text-secondary);
 	user-select: none;
 	width: 100%;
@@ -363,6 +362,7 @@ body {
 	border: none;
 	text-align: left;
 	font: inherit;
+	font-size: 12px;
 }
 
 .locale-picker-item:hover {
@@ -459,6 +459,52 @@ body {
 
 .value-cell.empty {
 	background: var(--empty-bg);
+}
+
+.value-cell.reviewed {
+	border-left: 2px solid var(--success);
+}
+
+.value-cell {
+	position: relative;
+}
+
+.review-btn {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 20px;
+	height: 20px;
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.15s;
+	padding: 0;
+}
+
+.value-cell:hover .review-btn {
+	opacity: 1;
+}
+
+.review-btn.reviewed {
+	opacity: 1;
+	color: var(--success);
+	border-color: var(--success);
+	background: rgba(58, 179, 96, 0.1);
+}
+
+.review-btn:hover {
+	opacity: 1;
+	border-color: var(--success);
+	color: var(--success);
 }
 
 .value-display {

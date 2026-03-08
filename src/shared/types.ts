@@ -21,6 +21,9 @@ export interface TranslationStore {
 	locales: string[];
 	namespaces: NamespaceNode[];
 	translations: TranslationMap;
+	reviews: ReviewMap;
+	/** The filesystem path to the locales directory */
+	localesDir?: string;
 }
 
 /** namespace -> flatKey -> locale -> value */
@@ -54,6 +57,17 @@ export interface KeyRename {
 	newKey: string;
 }
 
+/** Review status map: namespace -> key -> locale -> reviewed */
+export type ReviewMap = Record<string, Record<string, Record<string, boolean>>>;
+
+/** Toggle review status for a single translation */
+export interface ReviewToggle {
+	namespace: string;
+	key: string;
+	locale: string;
+	reviewed: boolean;
+}
+
 /** Persistent app settings */
 export interface RosettaSettings {
 	defaultLocalesDir: string | null;
@@ -79,6 +93,7 @@ export type RosettaRPC = {
 			};
 			getSettings: { params: Record<string, never>; response: RosettaSettings };
 			updateSettings: { params: Partial<RosettaSettings>; response: { ok: boolean } };
+			toggleReview: { params: ReviewToggle; response: { ok: boolean } };
 		};
 		messages: Record<string, never>;
 	};

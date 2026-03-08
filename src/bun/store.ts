@@ -7,16 +7,49 @@ import type {
 	KeyRename,
 	KeyUpdate,
 	NamespaceNode,
+	ReviewMap,
 	TranslationMap,
 	TranslationStore,
 } from "../shared/types";
 
+/** Detected formatting for a JSON file */
+interface FileFormat {
+	indent: string;
+	trailingNewline: boolean;
+}
+
+/** Detect indent style from raw JSON content */
+function detectFormat(content: string): FileFormat {
+	const trailingNewline = content.endsWith("\n");
+
+	// Find first indented line to detect indent style
+	const lines = content.split("\n");
+	for (const line of lines) {
+		const match = line.match(/^(\s+)\S/);
+		if (match) {
+			const whitespace = match[1];
+			// If it starts with tab, use tab indent
+			if (whitespace[0] === "\t") {
+				return { indent: "\t", trailingNewline };
+			}
+			// Otherwise use the detected space indent
+			return { indent: whitespace, trailingNewline };
+		}
+	}
+
+	// Default: 4 spaces
+	return { indent: "    ", trailingNewline: true };
+}
+
 export class TranslationFileStore {
 	private localesDir: string;
-	private store: TranslationStore = { locales: [], namespaces: [], translations: {} };
+	private store: TranslationStore = { locales: [], namespaces: [], translations: {}, reviews: {} };
 
 	/** Paths we just wrote to — skip the next chokidar event for these */
 	private writeLocks = new Set<string>();
+
+	/** Remembered formatting per file path */
+	private fileFormats = new Map<string, FileFormat>();
 
 	constructor(localesDir: string) {
 		this.localesDir = localesDir;
@@ -52,6 +85,10 @@ export class TranslationFileStore {
 
 				try {
 					const content = await readFile(filePath, "utf-8");
+
+					// Remember the original formatting
+					this.fileFormats.set(filePath, detectFormat(content));
+
 					const parsed = JSON.parse(content);
 					const flat = flatten(parsed);
 
@@ -73,7 +110,7 @@ export class TranslationFileStore {
 
 		const namespaces = this.buildNamespaceTree(Array.from(namespaceSet).sort());
 
-		this.store = { locales, namespaces, translations };
+		this.store = { locales, namespaces, translations, reviews: {} };
 		return this.store;
 	}
 
@@ -94,6 +131,10 @@ export class TranslationFileStore {
 
 		try {
 			const content = await readFile(filePath, "utf-8");
+
+			// Update remembered formatting
+			this.fileFormats.set(filePath, detectFormat(content));
+
 			const parsed = JSON.parse(content);
 			const flat = flatten(parsed);
 
@@ -215,12 +256,19 @@ export class TranslationFileStore {
 
 		const nested = unflatten(flat);
 
+		// Use the remembered formatting, or default to 4 spaces
+		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
+		let output = JSON.stringify(nested, null, format.indent);
+		if (format.trailingNewline) {
+			output += "\n";
+		}
+
 		try {
 			// Ensure directory exists
 			await mkdir(dirname(filePath), { recursive: true });
 
 			this.writeLocks.add(filePath);
-			await writeFile(filePath, `${JSON.stringify(nested, null, 4)}\n`, "utf-8");
+			await writeFile(filePath, output, "utf-8");
 
 			// Clear write lock after a short delay
 			setTimeout(() => this.writeLocks.delete(filePath), 500);
