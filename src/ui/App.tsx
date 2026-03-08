@@ -364,7 +364,7 @@ function GlobalSearchResults({
 	}
 
 	return (
-		<div>
+		<div className="global-search-results">
 			{namespaces.map((ns) => (
 				<div key={ns}>
 					<div className="search-result-namespace">{ns}</div>
