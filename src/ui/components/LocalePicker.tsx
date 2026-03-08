@@ -4,13 +4,14 @@ interface LocalePickerProps {
 	allLocales: string[];
 	visibleLocales: string[];
 	onChange: (locales: string[]) => void;
-	onAddLocale?: (locale: string) => void;
+	onAddLocale?: (locale: string, copyFrom?: string) => void;
 }
 
 export function LocalePicker({ allLocales, visibleLocales, onChange, onAddLocale }: LocalePickerProps) {
 	const [open, setOpen] = useState(false);
 	const [showAddInput, setShowAddInput] = useState(false);
 	const [newLocale, setNewLocale] = useState("");
+	const [copyFrom, setCopyFrom] = useState<string | undefined>(undefined);
 	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -81,7 +82,7 @@ export function LocalePicker({ allLocales, visibleLocales, onChange, onAddLocale
 						<>
 							<div className="locale-picker-divider" />
 							{showAddInput ? (
-								<div style={{ padding: "4px 8px" }}>
+								<div style={{ padding: "8px" }}>
 									<input
 										type="text"
 										className="search-input"
@@ -92,19 +93,43 @@ export function LocalePicker({ allLocales, visibleLocales, onChange, onAddLocale
 											if (e.key === "Enter") {
 												const code = newLocale.trim();
 												if (code && !allLocales.includes(code)) {
-													onAddLocale(code);
+													onAddLocale(code, copyFrom);
 													setNewLocale("");
+													setCopyFrom(undefined);
 													setShowAddInput(false);
 												}
 											}
 											if (e.key === "Escape") {
 												setShowAddInput(false);
 												setNewLocale("");
+												setCopyFrom(undefined);
 											}
 										}}
-										style={{ width: "100%", height: 24, fontSize: 12 }}
+										style={{ width: "100%", height: 24, fontSize: 12, marginBottom: 8 }}
 										autoFocus
 									/>
+									{allLocales.length > 0 && (
+										<div style={{ fontSize: 12, marginBottom: 6, color: "#999" }}>
+											Copy from (optional):
+										</div>
+									)}
+									{allLocales.map((locale) => (
+										<button
+											key={locale}
+											type="button"
+											className="locale-picker-item"
+											onClick={() => setCopyFrom(copyFrom === locale ? undefined : locale)}
+											style={{ fontSize: 12, paddingLeft: 12 }}
+										>
+											<input
+												type="checkbox"
+												checked={copyFrom === locale}
+												readOnly
+												tabIndex={-1}
+											/>
+											{locale.toUpperCase()}
+										</button>
+									))}
 								</div>
 							) : (
 								<button

@@ -198,8 +198,8 @@ export function useTranslationStore() {
 	);
 
 	const addLocale = useCallback(
-		async (locale: string) => {
-			await callRpc("addLocale", { locale });
+		async (locale: string, copyFrom?: string) => {
+			await callRpc("addLocale", { locale, copyFrom });
 		},
 		[],
 	);

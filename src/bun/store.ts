@@ -385,7 +385,7 @@ export class TranslationFileStore {
 	}
 
 	/** Add a new locale — creates the directory and empty JSON files for each namespace */
-	async addLocale(locale: string): Promise<boolean> {
+	async addLocale(locale: string, copyFrom?: string): Promise<boolean> {
 		if (this.store.locales.includes(locale)) return false;
 
 		const localeDir = join(this.localesDir, locale);
@@ -395,12 +395,24 @@ export class TranslationFileStore {
 			return false;
 		}
 
-		// Create empty JSON files for each existing namespace
+		// Create JSON files for each existing namespace
 		for (const namespace of Object.keys(this.store.translations)) {
 			const filePath = join(localeDir, `${namespace}.json`);
 			try {
 				await mkdir(dirname(filePath), { recursive: true });
-				await writeFile(filePath, "{}\n", "utf-8");
+				if (copyFrom && this.store.locales.includes(copyFrom)) {
+					// Copy from another locale
+					const sourcePath = join(this.localesDir, copyFrom, `${namespace}.json`);
+					try {
+						const content = await readFile(sourcePath, "utf-8");
+						await writeFile(filePath, content, "utf-8");
+					} catch {
+						// If source doesn't exist, create empty
+						await writeFile(filePath, "{}\n", "utf-8");
+					}
+				} else {
+					await writeFile(filePath, "{}\n", "utf-8");
+				}
 			} catch {
 				// best effort
 			}

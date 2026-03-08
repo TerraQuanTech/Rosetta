@@ -200,7 +200,7 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 			},
 
 			addLocale: async (params) => {
-				const ok = await store.addLocale(params.locale);
+				const ok = await store.addLocale(params.locale, params.copyFrom);
 				if (ok) {
 					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
 				}
