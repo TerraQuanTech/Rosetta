@@ -1,0 +1,81 @@
+/** A namespace represents a single JSON file (e.g. "common", "pages/home", "components/plot") */
+export interface NamespaceNode {
+	/** Display name (e.g. "plot") */
+	name: string;
+	/** Full path relative to locale root, without extension (e.g. "components/plot") */
+	path: string;
+	/** Child namespaces (subdirectories) */
+	children?: NamespaceNode[];
+}
+
+/**
+ * The complete translation store.
+ *
+ * `translations` is indexed as:
+ *   namespace path -> flat dot-key -> locale -> value
+ *
+ * Example:
+ *   { "components/plot": { "measure.title": { "en": "Measure", "ru": "Измерения" } } }
+ */
+export interface TranslationStore {
+	locales: string[];
+	namespaces: NamespaceNode[];
+	translations: TranslationMap;
+}
+
+/** namespace -> flatKey -> locale -> value */
+export type TranslationMap = Record<string, Record<string, Record<string, string>>>;
+
+/** A single key update */
+export interface KeyUpdate {
+	namespace: string;
+	key: string;
+	locale: string;
+	value: string;
+}
+
+/** Request to create a new key */
+export interface KeyCreate {
+	namespace: string;
+	key: string;
+	values: Record<string, string>;
+}
+
+/** Request to delete a key */
+export interface KeyDelete {
+	namespace: string;
+	key: string;
+}
+
+/** Request to rename a key */
+export interface KeyRename {
+	namespace: string;
+	oldKey: string;
+	newKey: string;
+}
+
+/** RPC schema for Electrobun communication */
+export type RosettaRPC = {
+	bun: {
+		requests: {
+			getStore: { params: Record<string, never>; response: TranslationStore };
+			updateKey: { params: KeyUpdate; response: { ok: boolean } };
+			createKey: { params: KeyCreate; response: { ok: boolean } };
+			deleteKey: { params: KeyDelete; response: { ok: boolean } };
+			renameKey: { params: KeyRename; response: { ok: boolean } };
+			openLocalesDir: { params: Record<string, never>; response: { path: string | null } };
+			getConnectorStatus: {
+				params: Record<string, never>;
+				response: { connected: boolean; port: number };
+			};
+		};
+		messages: Record<string, never>;
+	};
+	webview: {
+		requests: Record<string, never>;
+		messages: {
+			storeUpdated: TranslationStore;
+			fileChanged: { namespace: string; locale: string };
+		};
+	};
+};
