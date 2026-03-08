@@ -51,11 +51,14 @@ type RosettaMessage = TranslationUpdate | TranslationReload;
  *
  * @returns A cleanup function that closes the connection
  */
-export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () => void {
+export function connectRosetta(
+	i18next: i18n,
+	options: ConnectOptions = {},
+): () => void {
 	const {
 		port = 4871,
 		reconnectInterval = 3000,
-		verbose = typeof process !== "undefined" ? process.env.NODE_ENV === "development" : true,
+		verbose = false,
 		appName,
 		updateStrategy = "bundle",
 		onStatusChange,
@@ -76,11 +79,8 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 
 	function getAppName(): string {
 		if (appName) return appName;
-		if (typeof document !== "undefined" && document.title) return document.title;
-		if (typeof process !== "undefined" && process.argv[1]) {
-			const path = process.argv[1];
-			return path.split(/[/\\]/).pop() || "App";
-		}
+		if (typeof document !== "undefined" && document.title)
+			return document.title;
 		return "App";
 	}
 
@@ -94,13 +94,17 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 			ws.onopen = () => {
 				emitStatus("connected");
 				log("Connected to Rosetta at", url);
-				ws?.send(JSON.stringify({ type: "hello", appName: getAppName() }));
+				ws?.send(
+					JSON.stringify({ type: "hello", appName: getAppName() }),
+				);
 			};
 
 			ws.onmessage = (event) => {
 				try {
 					const msg: RosettaMessage = JSON.parse(
-						typeof event.data === "string" ? event.data : String(event.data),
+						typeof event.data === "string"
+							? event.data
+							: String(event.data),
 					);
 					handleMessage(msg);
 				} catch {
@@ -131,10 +135,12 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 			}
 
 			case "translation:reload": {
-				i18next.reloadResources([msg.locale], [msg.namespace]).then(() => {
-					i18next.emit("languageChanged", i18next.language);
-					log(`Reloaded ${msg.namespace} [${msg.locale}]`);
-				});
+				i18next
+					.reloadResources([msg.locale], [msg.namespace])
+					.then(() => {
+						i18next.emit("languageChanged", i18next.language);
+						log(`Reloaded ${msg.namespace} [${msg.locale}]`);
+					});
 				break;
 			}
 		}
@@ -163,20 +169,34 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
  * Apply a single translation update to i18next.
  * After applying, emits a languageChanged event to trigger React re-renders.
  */
-function applyUpdate(i18next: i18n, msg: TranslationUpdate, strategy: "bundle" | "resource") {
+function applyUpdate(
+	i18next: i18n,
+	msg: TranslationUpdate,
+	strategy: "bundle" | "resource",
+) {
 	if (strategy === "resource") {
 		i18next.addResource(msg.locale, msg.namespace, msg.key, msg.value);
 	} else {
 		const bundle: Record<string, unknown> = {};
 		setNestedValue(bundle, msg.key, msg.value);
-		i18next.addResourceBundle(msg.locale, msg.namespace, bundle, true, true);
+		i18next.addResourceBundle(
+			msg.locale,
+			msg.namespace,
+			bundle,
+			true,
+			true,
+		);
 	}
 
 	i18next.emit("languageChanged", i18next.language);
 }
 
 /** Set a nested value using a dot-notation key */
-export function setNestedValue(obj: Record<string, unknown>, dotKey: string, value: string): void {
+export function setNestedValue(
+	obj: Record<string, unknown>,
+	dotKey: string,
+	value: string,
+): void {
 	const parts = dotKey.split(".");
 	let current = obj;
 
