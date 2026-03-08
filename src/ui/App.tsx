@@ -32,6 +32,26 @@ export default function App() {
 	const pendingCount = pendingChanges.size;
 	const hasUnsaved = pendingCount > 0;
 
+	// Wrap updateSettings to emit theme changes to the main process
+	const handleUpdateSettings = useCallback((partial: Partial<typeof settings>) => {
+		updateSettings(partial);
+		if (partial.theme) {
+			const rpc = (window as any).rpc;
+			rpc?.("sendMessage", "themeChanged", { theme: partial.theme });
+		}
+	}, [updateSettings]);
+
+	// Apply theme to body
+	useEffect(() => {
+		const theme = settings?.theme ?? "system";
+		const isDark =
+			theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+		document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+		document.body.classList.toggle("dark", isDark);
+		document.body.classList.toggle("light", !isDark);
+	}, [settings?.theme]);
+
 	// Keep saveMode ref in sync
 	useEffect(() => {
 		setSaveMode(saveMode);
@@ -225,7 +245,7 @@ export default function App() {
 				{view === "settings" && settings ? (
 					<SettingsPanel
 						settings={settings}
-						onUpdate={updateSettings}
+						onUpdate={handleUpdateSettings}
 						onBrowseFolder={openFolder}
 						currentDir={store?.localesDir ?? null}
 					onInstallCli={async () => {

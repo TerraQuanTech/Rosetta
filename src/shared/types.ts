@@ -137,6 +137,7 @@ export type RosettaRPC = {
 			fileChanged: { namespace: string; locale: string };
 			settingsUpdated: RosettaSettings;
 			connectorStatusChanged: { connected: boolean; clientCount: number; apps: string[] };
+			themeChanged: { theme: "system" | "light" | "dark" };
 		};
 	};
 };
