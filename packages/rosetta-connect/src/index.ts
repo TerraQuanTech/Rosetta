@@ -64,13 +64,22 @@ export function connectRosetta(
 		onStatusChange,
 	} = options;
 
+	// Ensure react-i18next re-renders when resources are added.
+	// By default (v14+) bindI18nStore is '' so store events are ignored.
+	const ri = (i18next as any).options?.react;
+	if (ri && (!ri.bindI18nStore || !ri.bindI18nStore.includes("added"))) {
+		ri.bindI18nStore = ri.bindI18nStore
+			? `${ri.bindI18nStore} added`
+			: "added";
+	}
+
 	const url = `ws://localhost:${port}/ws`;
 	let ws: WebSocket | null = null;
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	let stopped = false;
 
 	const log = verbose
-		? (...args: unknown[]) => console.log("[rosetta-connect]", ...args)
+		? (...args: unknown[]) => console.debug("[rosetta-connect]", ...args)
 		: () => {};
 
 	function emitStatus(status: ConnectionStatus) {
@@ -138,6 +147,14 @@ export function connectRosetta(
 				i18next
 					.reloadResources([msg.locale], [msg.namespace])
 					.then(() => {
+						// Notify react-i18next to re-render.
+						// Emitting 'added' on the store + 'languageChanged' on i18next
+						// covers both legacy and modern react-i18next versions.
+						(i18next as any).store?.emit(
+							"added",
+							msg.locale,
+							msg.namespace,
+						);
 						i18next.emit("languageChanged", i18next.language);
 						log(`Reloaded ${msg.namespace} [${msg.locale}]`);
 					});
@@ -174,7 +191,20 @@ function applyUpdate(
 	msg: TranslationUpdate,
 	strategy: "bundle" | "resource",
 ) {
-	if (strategy === "resource") {
+	if (msg.value === "") {
+		// Empty value = remove key so i18next falls back to fallback language
+		const existing = i18next.getResourceBundle(msg.locale, msg.namespace);
+		if (existing) {
+			removeNestedValue(existing, msg.key);
+			i18next.addResourceBundle(
+				msg.locale,
+				msg.namespace,
+				existing,
+				false,
+				false,
+			);
+		}
+	} else if (strategy === "resource") {
 		i18next.addResource(msg.locale, msg.namespace, msg.key, msg.value);
 	} else {
 		const bundle: Record<string, unknown> = {};
@@ -188,6 +218,10 @@ function applyUpdate(
 		);
 	}
 
+	// Notify react-i18next to re-render.
+	// Emitting 'added' on the store + 'languageChanged' on i18next
+	// covers both legacy and modern react-i18next versions.
+	(i18next as any).store?.emit("added", msg.locale, msg.namespace);
 	i18next.emit("languageChanged", i18next.language);
 }
 
@@ -209,6 +243,22 @@ export function setNestedValue(
 	}
 
 	current[parts[parts.length - 1]] = value;
+}
+
+/** Remove a nested value using a dot-notation key */
+function removeNestedValue(obj: Record<string, unknown>, dotKey: string): void {
+	const parts = dotKey.split(".");
+	let current = obj;
+
+	for (let i = 0; i < parts.length - 1; i++) {
+		const part = parts[i];
+		if (typeof current[part] !== "object" || current[part] === null) {
+			return; // Path doesn't exist, nothing to remove
+		}
+		current = current[part] as Record<string, unknown>;
+	}
+
+	delete current[parts[parts.length - 1]];
 }
 
 export default connectRosetta;
