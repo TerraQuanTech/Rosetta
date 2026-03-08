@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { KeyCreate, ReviewToggle } from "../shared/types";
+import type { KeyCreate, ReviewToggle, RosettaSettings } from "../shared/types";
 import { AddKeyDialog } from "./components/AddKeyDialog";
 import { EditorTable } from "./components/EditorTable";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -8,7 +8,7 @@ import { StatusBar } from "./components/StatusBar";
 import { Toolbar } from "./components/Toolbar";
 import { useConnectorStatus } from "./hooks/useConnectorStatus";
 import { useSettings } from "./hooks/useSettings";
-import { useTranslationStore, setRpcRequest } from "./hooks/useStore";
+import { useTranslationStore } from "./hooks/useStore";
 
 type ViewMode = "editor" | "settings";
 
@@ -51,7 +51,7 @@ export default function App() {
 
 	// Wrap updateSettings to emit theme changes to the main process
 	const handleUpdateSettings = useCallback(
-		(partial: Partial<typeof settings>) => {
+		(partial: Partial<RosettaSettings>) => {
 			updateSettings(partial);
 		},
 		[updateSettings],
@@ -241,7 +241,13 @@ export default function App() {
 	}
 
 	return (
-		<div className="app" onClick={() => contextMenu && setContextMenu(null)}>
+		<div
+			className="app"
+			onClick={() => contextMenu && setContextMenu(null)}
+			onKeyDown={(e) => {
+				if (e.key === "Escape") setContextMenu(null);
+			}}
+		>
 			<Sidebar
 				namespaces={store.namespaces}
 				activeNamespace={view === "settings" ? null : effectiveNamespace}
@@ -381,6 +387,7 @@ export default function App() {
 						zIndex: 10000,
 					}}
 					onClick={(e) => e.stopPropagation()}
+					onKeyDown={(e) => e.stopPropagation()}
 				>
 					<button
 						type="button"

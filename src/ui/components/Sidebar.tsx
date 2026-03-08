@@ -76,7 +76,6 @@ export function Sidebar({
 									setShowNewNs(false);
 								}
 							}}
-							autoFocus
 						/>
 					</div>
 				) : (

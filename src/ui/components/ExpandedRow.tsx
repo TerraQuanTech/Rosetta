@@ -33,10 +33,23 @@ export function ExpandedRow({
 						locale={locale}
 						value={values[locale]}
 						reviewed={reviews[locale] === true}
-						onSave={(value) => onUpdateKey({ namespace, key: translationKey, locale, value })}
+						onSave={(value) =>
+							onUpdateKey({
+								namespace,
+								key: translationKey,
+								locale,
+								value,
+							})
+						}
 						onToggleReview={
 							onToggleReview
-								? (reviewed) => onToggleReview({ namespace, key: translationKey, locale, reviewed })
+								? (reviewed) =>
+										onToggleReview({
+											namespace,
+											key: translationKey,
+											locale,
+											reviewed,
+										})
 								: undefined
 						}
 					/>
@@ -138,7 +151,8 @@ function ExpandedEntry({
 						rows={1}
 					/>
 				) : (
-					<div
+					<button
+						type="button"
 						className={`expanded-entry-text${isMissing || isEmpty ? " placeholder" : ""}`}
 						onClick={() => setEditing(true)}
 						onKeyDown={(e) => {
@@ -147,13 +161,12 @@ function ExpandedEntry({
 								setEditing(true);
 							}
 						}}
-						role="button"
 						tabIndex={0}
 					>
 						<span dir={isRtl ? "rtl" : "ltr"}>
 							{isMissing ? "missing" : isEmpty ? "empty" : value}
 						</span>
-					</div>
+					</button>
 				)}
 			</div>
 		</div>

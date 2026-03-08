@@ -55,8 +55,7 @@ describe("rosetta-connect integration", () => {
 	});
 
 	test("client connects and receives hello", async () => {
-		const appNames: string[] = [];
-		const originalNotify = (server as any).notifyStatus.bind(server);
+		(server as any).notifyStatus.bind(server);
 
 		// Connect a raw WebSocket simulating the client behavior
 		const ws = new WebSocket(`ws://localhost:${TEST_PORT}/ws`);
@@ -147,8 +146,18 @@ describe("rosetta-connect integration", () => {
 		await Bun.sleep(50);
 
 		// Simulate Rosetta editing multiple keys
-		server.broadcastUpdate({ namespace: "ns1", key: "a.b", locale: "en", value: "val1" });
-		server.broadcastUpdate({ namespace: "ns1", key: "a.c", locale: "en", value: "val2" });
+		server.broadcastUpdate({
+			namespace: "ns1",
+			key: "a.b",
+			locale: "en",
+			value: "val1",
+		});
+		server.broadcastUpdate({
+			namespace: "ns1",
+			key: "a.c",
+			locale: "en",
+			value: "val2",
+		});
 		server.broadcastReload("ns2", "fr");
 
 		await Bun.sleep(100);

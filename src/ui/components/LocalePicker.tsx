@@ -111,7 +111,6 @@ export function LocalePicker({
 											}
 										}}
 										style={{ width: "100%", height: 24, fontSize: 12, marginBottom: 8 }}
-										autoFocus
 									/>
 									{allLocales.length > 0 && (
 										<div style={{ fontSize: 12, marginBottom: 6, color: "#999" }}>

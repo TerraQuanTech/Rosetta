@@ -56,7 +56,7 @@ async function showMissing(store: TranslationFileStore) {
 
 			// Collect all keys present in this locale
 			for (const key in nsData) {
-				if (nsData[key] && nsData[key][locale]) {
+				if (nsData[key]?.[locale]) {
 					localeKeys.add(key);
 				}
 			}
@@ -123,7 +123,7 @@ async function showStats(store: TranslationFileStore) {
 			const nsData = storeData.translations[ns] || {};
 			for (const key in nsData) {
 				total++;
-				const value = nsData[key] && nsData[key][locale];
+				const value = nsData[key]?.[locale];
 				if (value && value !== "") {
 					translated++;
 				}

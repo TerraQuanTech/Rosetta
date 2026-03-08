@@ -16,12 +16,7 @@ let connectorStatusHandler: ((data: any) => void) | null = null;
 const rpc = Electroview.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
 	handlers: {
-		requests: {
-			installCli: async () => {
-				const requestProxy = (rpc as any).request as any;
-				return requestProxy.installCli({});
-			},
-		},
+		requests: {},
 		messages: {
 			storeUpdated: (payload) => {
 				storeMessageHandler?.(payload);

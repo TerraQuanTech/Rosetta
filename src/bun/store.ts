@@ -8,7 +8,6 @@ import type {
 	KeyRename,
 	KeyUpdate,
 	NamespaceNode,
-	ReviewMap,
 	TranslationMap,
 	TranslationStore,
 } from "../shared/types";
@@ -49,7 +48,12 @@ function detectFormat(content: string): FileFormat {
 
 export class TranslationFileStore {
 	private localesDir: string;
-	private store: TranslationStore = { locales: [], namespaces: [], translations: {}, reviews: {} };
+	private store: TranslationStore = {
+		locales: [],
+		namespaces: [],
+		translations: {},
+		reviews: {},
+	};
 
 	/** Paths we just wrote to — skip the next chokidar event for these */
 	private writeLocks = new Set<string>();
@@ -87,14 +91,12 @@ export class TranslationFileStore {
 			.map((e) => e.name);
 
 		let locales: string[] = [];
-		let isFlat = false;
 		const namespaceSet = new Set<string>();
 		const translations: TranslationMap = {};
 
 		// Detect layout: nested (locales/en/common.json) or flat (locales/en.json)
 		if (rootJsonFiles.length > 0 && nestedDirs.length === 0) {
 			// Flat layout: extract locale codes from filenames
-			isFlat = true;
 			locales = rootJsonFiles.map((f) => f.replace(/\.json$/, "")).sort();
 
 			for (const fileName of rootJsonFiles) {
@@ -138,7 +140,7 @@ export class TranslationFileStore {
 					namespaceSet.add(namespace);
 
 					try {
-						let content = stripBOM(await readFile(filePath, "utf-8"));
+						const content = stripBOM(await readFile(filePath, "utf-8"));
 						this.fileFormats.set(filePath, detectFormat(content));
 						const parsed = JSON.parse(content);
 						const flat = flatten(parsed);
@@ -193,7 +195,7 @@ export class TranslationFileStore {
 		if (!this.store.locales.includes(locale)) return null;
 
 		try {
-			let content = stripBOM(await readFile(filePath, "utf-8"));
+			const content = stripBOM(await readFile(filePath, "utf-8"));
 
 			// Update remembered formatting
 			this.fileFormats.set(filePath, detectFormat(content));
@@ -271,7 +273,10 @@ export class TranslationFileStore {
 			namespace === "root"
 				? join(this.localesDir, `${locale}.json`)
 				: join(this.localesDir, locale, `${namespace}.json`);
-		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
+		const format = this.fileFormats.get(filePath) ?? {
+			indent: "    ",
+			trailingNewline: true,
+		};
 		const jsonPath = dotKey.split(".");
 
 		try {
@@ -393,7 +398,7 @@ export class TranslationFileStore {
 
 		delete this.store.translations[namespace];
 
-		let ok = true;
+		const ok = true;
 		for (const locale of this.store.locales) {
 			const filePath =
 				namespace === "root"
@@ -437,7 +442,10 @@ export class TranslationFileStore {
 		this.keyOrders.set(filePath, Object.keys(flat));
 
 		// Use the remembered formatting, or default to 4 spaces
-		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
+		const format = this.fileFormats.get(filePath) ?? {
+			indent: "    ",
+			trailingNewline: true,
+		};
 		let output = JSON.stringify(nested, null, format.indent);
 		if (format.trailingNewline) {
 			output += "\n";
@@ -552,7 +560,11 @@ export class TranslationFileStore {
 					const parentPath = parts.slice(0, i + 1).join("/");
 					let parent = children.find((n) => n.path === parentPath);
 					if (!parent) {
-						parent = { name: parts[i], path: parentPath, children: [] };
+						parent = {
+							name: parts[i],
+							path: parentPath,
+							children: [],
+						};
 						children.push(parent);
 					}
 					if (!parent.children) parent.children = [];

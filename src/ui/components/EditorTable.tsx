@@ -33,7 +33,6 @@ export function EditorTable({
 	onToggleReview,
 	hideEmptyFiltered,
 	onFocusKey,
-	onFocusNamespace,
 }: EditorTableProps) {
 	const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
@@ -122,7 +121,8 @@ export function EditorTable({
 								}}
 							>
 								<td>
-									<div
+									<button
+										type="button"
 										className="key-cell"
 										onClick={() => toggleExpand(key)}
 										onKeyDown={(e) => {
@@ -131,12 +131,17 @@ export function EditorTable({
 												toggleExpand(key);
 											}
 										}}
-										role="button"
-										tabIndex={0}
+										style={{
+											background: "none",
+											border: "none",
+											padding: 0,
+											cursor: "pointer",
+											font: "inherit",
+										}}
 									>
 										<span className={`expand-chevron${isExpanded ? " open" : ""}`}>&#9656;</span>
 										{breakByDot(key)}
-									</div>
+									</button>
 								</td>
 								{locales.map((locale) => (
 									<EditableCell
