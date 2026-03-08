@@ -191,6 +191,11 @@ export default function App() {
 					if (effectiveNamespace === ns) setActiveNamespace(null);
 					deleteNamespace({ namespace: ns });
 				}}
+				onAddKeyToNamespace={(ns) => {
+					setActiveNamespace(ns);
+					setView("editor");
+					setShowAddKey(true);
+				}}
 				isSettingsActive={view === "settings"}
 			/>
 
@@ -266,6 +271,7 @@ export default function App() {
 				<AddKeyDialog
 					namespace={effectiveNamespace}
 					locales={store.locales}
+					existingKeys={Object.keys(store.translations[effectiveNamespace] ?? {})}
 					onAdd={handleAddKey}
 					onClose={() => setShowAddKey(false)}
 				/>

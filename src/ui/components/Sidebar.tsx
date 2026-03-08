@@ -8,6 +8,7 @@ interface SidebarProps {
 	onOpenSettings: () => void;
 	onCreateNamespace: (namespace: string) => void;
 	onDeleteNamespace: (namespace: string) => void;
+	onAddKeyToNamespace: (namespace: string) => void;
 	isSettingsActive: boolean;
 }
 
@@ -18,6 +19,7 @@ export function Sidebar({
 	onOpenSettings,
 	onCreateNamespace,
 	onDeleteNamespace,
+	onAddKeyToNamespace,
 	isSettingsActive,
 }: SidebarProps) {
 	const [showNewNs, setShowNewNs] = useState(false);
@@ -32,6 +34,11 @@ export function Sidebar({
 		setShowNewNs(false);
 	}, [newNsName, onCreateNamespace]);
 
+	const openCreateWithPrefix = useCallback((prefix: string) => {
+		setNewNsName(prefix);
+		setShowNewNs(true);
+	}, []);
+
 	return (
 		<div className="sidebar">
 			<div className="sidebar-header">
@@ -45,6 +52,8 @@ export function Sidebar({
 						activeNamespace={activeNamespace}
 						onSelect={onSelect}
 						onDelete={(path) => setConfirmDelete(path)}
+						onAddKey={onAddKeyToNamespace}
+						onCreateNamespace={openCreateWithPrefix}
 						depth={0}
 					/>
 				))}
@@ -108,9 +117,12 @@ export function Sidebar({
 					}}
 				>
 					<div className="dialog">
-						<h3>Delete namespace</h3>
+						<h3>Delete {isDirectory(confirmDelete, namespaces) ? "directory" : "namespace"}</h3>
 						<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
-							Delete <strong>{confirmDelete}</strong>? This will remove the JSON files from all locales.
+							Delete <strong>{confirmDelete}{isDirectory(confirmDelete, namespaces) ? "/" : ""}</strong>?
+							{isDirectory(confirmDelete, namespaces)
+								? " This will remove all namespaces under this directory from all locales."
+								: " This will remove the JSON files from all locales."}
 						</p>
 						<div className="dialog-actions">
 							<button type="button" className="toolbar-btn" onClick={() => setConfirmDelete(null)}>
@@ -121,7 +133,13 @@ export function Sidebar({
 								className="toolbar-btn"
 								style={{ color: "var(--missing)" }}
 								onClick={() => {
-									onDeleteNamespace(confirmDelete);
+									if (isDirectory(confirmDelete, namespaces)) {
+										for (const leaf of collectLeaves(confirmDelete, namespaces)) {
+											onDeleteNamespace(leaf);
+										}
+									} else {
+										onDeleteNamespace(confirmDelete);
+									}
 									setConfirmDelete(null);
 								}}
 							>
@@ -140,13 +158,14 @@ interface TreeNodeProps {
 	activeNamespace: string | null;
 	onSelect: (path: string) => void;
 	onDelete: (namespace: string) => void;
+	onAddKey: (namespace: string) => void;
+	onCreateNamespace: (prefill: string) => void;
 	depth: number;
 }
 
-function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNodeProps) {
+function TreeNode({ node, activeNamespace, onSelect, onDelete, onAddKey, onCreateNamespace, depth }: TreeNodeProps) {
 	const [expanded, setExpanded] = useState(true);
 	const hasChildren = node.children && node.children.length > 0;
-	const isFolder = hasChildren && !node.path.includes(".");
 	const isActive = activeNamespace === node.path;
 	const isLeaf = !hasChildren;
 
@@ -162,7 +181,7 @@ function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNode
 			<div className="tree-item-row">
 				<button
 					type="button"
-					className={`tree-item ${isActive ? "active" : ""} ${isFolder ? "folder" : ""}`}
+					className={`tree-item ${isActive ? "active" : ""} ${hasChildren ? "folder" : ""}`}
 					onClick={handleClick}
 					style={{ paddingLeft: `${8 + depth * 12}px` }}
 				>
@@ -179,20 +198,32 @@ function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNode
 					{!hasChildren && <span style={{ width: 14 }} />}
 					<span>{node.name}</span>
 				</button>
-				{isLeaf && (
-					<button
-						type="button"
-						className="tree-item-delete"
-						onClick={(e) => {
-							e.stopPropagation();
-							onDelete(node.path);
-						}}
-						title={`Delete ${node.path}`}
-						aria-label={`Delete namespace ${node.path}`}
-					>
-						&times;
-					</button>
-				)}
+				<button
+					type="button"
+					className="tree-item-action add"
+					onClick={(e) => {
+						e.stopPropagation();
+						if (isLeaf) {
+							onAddKey(node.path);
+						} else {
+							onCreateNamespace(`${node.path}/`);
+						}
+					}}
+					title={isLeaf ? `Add key to ${node.path}` : `Add namespace under ${node.path}/`}
+				>
+					+
+				</button>
+				<button
+					type="button"
+					className="tree-item-action delete"
+					onClick={(e) => {
+						e.stopPropagation();
+						onDelete(node.path);
+					}}
+					title={isLeaf ? `Delete ${node.path}` : `Delete ${node.path}/ and all children`}
+				>
+					&times;
+				</button>
 			</div>
 			{hasChildren && expanded && (
 				<div className="tree-children">
@@ -203,6 +234,8 @@ function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNode
 							activeNamespace={activeNamespace}
 							onSelect={onSelect}
 							onDelete={onDelete}
+							onAddKey={onAddKey}
+							onCreateNamespace={onCreateNamespace}
 							depth={depth + 1}
 						/>
 					))}
@@ -210,4 +243,28 @@ function TreeNode({ node, activeNamespace, onSelect, onDelete, depth }: TreeNode
 			)}
 		</div>
 	);
+}
+
+/** Check if a path is a directory (has children) in the namespace tree */
+function isDirectory(path: string, nodes: NamespaceNode[]): boolean {
+	for (const node of nodes) {
+		if (node.path === path) return !!(node.children && node.children.length > 0);
+		if (node.children && isDirectory(path, node.children)) return true;
+	}
+	return false;
+}
+
+/** Collect all leaf namespace paths under a directory */
+function collectLeaves(dirPath: string, nodes: NamespaceNode[]): string[] {
+	for (const node of nodes) {
+		if (node.path === dirPath) {
+			if (!node.children) return [node.path];
+			return node.children.flatMap((c) => collectLeaves(c.path, [c]));
+		}
+		if (node.children) {
+			const found = collectLeaves(dirPath, node.children);
+			if (found.length) return found;
+		}
+	}
+	return [];
 }

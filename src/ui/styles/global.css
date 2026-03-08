@@ -239,9 +239,8 @@ body {
 	min-width: 0;
 }
 
-.tree-item-delete {
+.tree-item-action {
 	position: absolute;
-	right: 4px;
 	top: 50%;
 	transform: translateY(-50%);
 	width: 20px;
@@ -264,13 +263,26 @@ body {
 	padding: 0;
 }
 
-.tree-item-row:hover .tree-item-delete {
+.tree-item-action.delete {
+	right: 4px;
+}
+
+.tree-item-action.add {
+	right: 24px;
+}
+
+.tree-item-row:hover .tree-item-action {
 	opacity: 1;
 }
 
-.tree-item-delete:hover {
+.tree-item-action.delete:hover {
 	color: var(--missing);
 	background: var(--missing-bg);
+}
+
+.tree-item-action.add:hover {
+	color: var(--accent);
+	background: var(--accent-subtle);
 }
 
 .add-namespace-btn {
@@ -971,6 +983,40 @@ body {
 	justify-content: flex-end;
 	gap: 8px;
 	margin-top: 20px;
+}
+
+/* Prefix suggestions dropdown */
+.prefix-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 10;
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	margin-top: 2px;
+	max-height: 180px;
+	overflow-y: auto;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.prefix-suggestion-item {
+	display: block;
+	width: 100%;
+	padding: 5px 10px;
+	text-align: left;
+	background: none;
+	border: none;
+	color: var(--text-secondary);
+	font-size: 12px;
+	font-family: var(--font-mono);
+	cursor: pointer;
+}
+
+.prefix-suggestion-item:hover {
+	background: var(--accent-subtle);
+	color: var(--text-primary);
 }
 
 /* Settings Panel */

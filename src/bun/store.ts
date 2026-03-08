@@ -1,5 +1,6 @@
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
+import { applyEdits, modify } from "jsonc-parser";
 import { flatten, unflatten } from "../shared/json";
 import type {
 	KeyCreate,
@@ -177,10 +178,11 @@ export class TranslationFileStore {
 		}
 	}
 
-	/** Update a single translation value and write to disk */
+	/** Update a single translation value and write to disk (preserving file formatting) */
 	async updateKey(update: KeyUpdate): Promise<boolean> {
 		const { namespace, key, locale, value } = update;
 
+		// Update in-memory store
 		if (!this.store.translations[namespace]) {
 			this.store.translations[namespace] = {};
 		}
@@ -189,13 +191,54 @@ export class TranslationFileStore {
 		}
 
 		if (value === "") {
-			// Empty value = delete the key for this locale so i18next falls back
 			delete this.store.translations[namespace][key][locale];
 		} else {
 			this.store.translations[namespace][key][locale] = value;
 		}
 
-		return this.writeNamespaceLocale(namespace, locale);
+		// Surgically update the JSON file instead of rebuilding it
+		return this.patchJsonFile(namespace, locale, key, value);
+	}
+
+	/**
+	 * Read the existing JSON file, apply a single key change using jsonc-parser,
+	 * which preserves all formatting/whitespace for unaffected parts of the file.
+	 */
+	private async patchJsonFile(namespace: string, locale: string, dotKey: string, value: string): Promise<boolean> {
+		const filePath = join(this.localesDir, locale, `${namespace}.json`);
+		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
+		const jsonPath = dotKey.split(".");
+
+		try {
+			let content: string;
+			try {
+				content = await readFile(filePath, "utf-8");
+			} catch {
+				// File doesn't exist — create with just this key
+				content = "{}";
+			}
+
+			const edits = modify(
+				content,
+				jsonPath,
+				value === "" ? undefined : value, // undefined = remove
+				{ formattingOptions: { tabSize: format.indent === "\t" ? 1 : format.indent.length, insertSpaces: format.indent !== "\t" } },
+			);
+			let output = applyEdits(content, edits);
+
+			// Preserve trailing newline preference
+			if (format.trailingNewline && !output.endsWith("\n")) output += "\n";
+			if (!format.trailingNewline && output.endsWith("\n")) output = output.replace(/\n$/, "");
+
+			await mkdir(dirname(filePath), { recursive: true });
+			this.writeLocks.add(filePath);
+			await writeFile(filePath, output, "utf-8");
+			setTimeout(() => this.writeLocks.delete(filePath), 500);
+			return true;
+		} catch (err) {
+			console.error(`Failed to patch ${filePath}:`, err);
+			return false;
+		}
 	}
 
 	/** Create a new key across all specified locales */
