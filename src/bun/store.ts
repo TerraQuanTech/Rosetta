@@ -19,6 +19,11 @@ interface FileFormat {
 	trailingNewline: boolean;
 }
 
+/** Remove BOM (Byte Order Mark) from content if present */
+function stripBOM(content: string): string {
+	return content.charCodeAt(0) === 0xFEFF ? content.slice(1) : content;
+}
+
 /** Detect indent style from raw JSON content */
 function detectFormat(content: string): FileFormat {
 	const trailingNewline = content.endsWith("\n");
@@ -95,7 +100,7 @@ export class TranslationFileStore {
 				namespaceSet.add(namespace);
 
 				try {
-					const content = await readFile(filePath, "utf-8");
+					const content = stripBOM(await readFile(filePath, "utf-8"));
 					this.fileFormats.set(filePath, detectFormat(content));
 					const parsed = JSON.parse(content);
 					const flat = flatten(parsed);
@@ -129,7 +134,7 @@ export class TranslationFileStore {
 					namespaceSet.add(namespace);
 
 					try {
-						const content = await readFile(filePath, "utf-8");
+						let content = stripBOM(await readFile(filePath, "utf-8"));
 						this.fileFormats.set(filePath, detectFormat(content));
 						const parsed = JSON.parse(content);
 						const flat = flatten(parsed);
@@ -184,7 +189,7 @@ export class TranslationFileStore {
 		if (!this.store.locales.includes(locale)) return null;
 
 		try {
-			const content = await readFile(filePath, "utf-8");
+			let content = stripBOM(await readFile(filePath, "utf-8"));
 
 			// Update remembered formatting
 			this.fileFormats.set(filePath, detectFormat(content));
@@ -262,7 +267,7 @@ export class TranslationFileStore {
 		try {
 			let content: string;
 			try {
-				content = await readFile(filePath, "utf-8");
+				content = stripBOM(await readFile(filePath, "utf-8"));
 			} catch {
 				// File doesn't exist — create with just this key
 				content = "{}";
