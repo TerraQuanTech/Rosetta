@@ -17,12 +17,15 @@ export default {
 		watchIgnore: ["dist/**"],
 		mac: {
 			bundleCEF: false,
+			icons: "assets/icon.iconset",
 		},
 		linux: {
 			bundleCEF: false,
+			icon: "assets/icon.png",
 		},
 		win: {
 			bundleCEF: false,
+			icon: "assets/icon.ico",
 		},
 	},
 	runtime: {
