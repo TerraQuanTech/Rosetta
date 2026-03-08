@@ -228,6 +228,18 @@ export default function App() {
 						onUpdate={updateSettings}
 						onBrowseFolder={openFolder}
 						currentDir={store?.localesDir ?? null}
+					onInstallCli={async () => {
+						try {
+							const rpc = (window as any).rpc;
+							if (!rpc) {
+								return { success: false, message: "RPC not available" };
+							}
+							const result = await rpc("installCli", {});
+							return result as { success: boolean; message: string };
+						} catch (err) {
+							return { success: false, message: `Error: ${err instanceof Error ? err.message : String(err)}` };
+						}
+					}}
 					/>
 				) : isGlobalView ? (
 					<GlobalSearchResults

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { RosettaSettings } from "../../shared/types";
 
 interface SettingsPanelProps {
@@ -6,6 +6,7 @@ interface SettingsPanelProps {
 	onUpdate: (partial: Partial<RosettaSettings>) => void;
 	onBrowseFolder: () => void;
 	currentDir: string | null;
+	onInstallCli?: () => Promise<{ success: boolean; message: string }>;
 }
 
 export function SettingsPanel({
@@ -13,11 +14,27 @@ export function SettingsPanel({
 	onUpdate,
 	onBrowseFolder,
 	currentDir,
+	onInstallCli,
 }: SettingsPanelProps) {
+	const [cliInstalling, setCliInstalling] = useState(false);
+	const [cliMessage, setCliMessage] = useState<string | null>(null);
+
 	const setTheme = useCallback(
 		(theme: RosettaSettings["theme"]) => onUpdate({ theme }),
 		[onUpdate],
 	);
+
+	const handleInstallCli = useCallback(async () => {
+		if (!onInstallCli) return;
+		setCliInstalling(true);
+		try {
+			const result = await onInstallCli();
+			setCliMessage(result.message);
+			setTimeout(() => setCliMessage(null), 4000);
+		} finally {
+			setCliInstalling(false);
+		}
+	}, [onInstallCli]);
 
 	return (
 		<div className="settings-panel">
@@ -117,6 +134,40 @@ export function SettingsPanel({
 						>
 							Manual
 						</button>
+					</div>
+				</div>
+			</div>
+
+			<div className="settings-section">
+				<h3>Command Line</h3>
+
+				<div className="settings-field">
+					<div>
+						<div className="settings-field-label">Install CLI</div>
+						<div className="settings-field-desc">
+							Create a <code>rosetta</code> command-line tool for stats, missing, and complete
+						</div>
+					</div>
+					<div style={{ display: "flex", gap: 8, flexDirection: "column", alignItems: "flex-start" }}>
+						<button
+							type="button"
+							className="toolbar-btn"
+							onClick={handleInstallCli}
+							disabled={cliInstalling}
+						>
+							{cliInstalling ? "Installing..." : "Install CLI"}
+						</button>
+						{cliMessage && (
+							<div
+								style={{
+									fontSize: 12,
+									color: cliMessage.includes("success") ? "#28a745" : "#dc3545",
+									marginTop: 4,
+								}}
+							>
+								{cliMessage}
+							</div>
+						)}
 					</div>
 				</div>
 			</div>

@@ -37,6 +37,22 @@ export interface KeyUpdate {
 	value: string;
 }
 
+/** Missing keys for a specific locale and namespace */
+export interface MissingKeysReport {
+	namespace: string;
+	locale: string;
+	missingKeys: string[];
+}
+
+/** Translation coverage statistics */
+export interface CoverageStats {
+	[locale: string]: {
+		translated: number;
+		total: number;
+		percentage: number;
+	};
+}
+
 /** Request to create a new key */
 export interface KeyCreate {
 	namespace: string;
@@ -108,6 +124,9 @@ export type RosettaRPC = {
 			getSettings: { params: Record<string, never>; response: RosettaSettings };
 			updateSettings: { params: Partial<RosettaSettings>; response: { ok: boolean } };
 			toggleReview: { params: ReviewToggle; response: { ok: boolean } };
+			getMissingKeys: { params: Record<string, never>; response: MissingKeysReport[] };
+			getCoverageStats: { params: Record<string, never>; response: CoverageStats };
+			installCli: { params: Record<string, never>; response: { success: boolean; message: string } };
 		};
 		messages: Record<string, never>;
 	};
