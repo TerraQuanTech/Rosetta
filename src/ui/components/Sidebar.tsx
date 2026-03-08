@@ -119,7 +119,12 @@ export function Sidebar({
 					<div className="dialog">
 						<h3>Delete {isDirectory(confirmDelete, namespaces) ? "directory" : "namespace"}</h3>
 						<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
-							Delete <strong>{confirmDelete}{isDirectory(confirmDelete, namespaces) ? "/" : ""}</strong>?
+							Delete{" "}
+							<strong>
+								{confirmDelete}
+								{isDirectory(confirmDelete, namespaces) ? "/" : ""}
+							</strong>
+							?
 							{isDirectory(confirmDelete, namespaces)
 								? " This will remove all namespaces under this directory from all locales."
 								: " This will remove the JSON files from all locales."}
@@ -163,7 +168,15 @@ interface TreeNodeProps {
 	depth: number;
 }
 
-function TreeNode({ node, activeNamespace, onSelect, onDelete, onAddKey, onCreateNamespace, depth }: TreeNodeProps) {
+function TreeNode({
+	node,
+	activeNamespace,
+	onSelect,
+	onDelete,
+	onAddKey,
+	onCreateNamespace,
+	depth,
+}: TreeNodeProps) {
 	const [expanded, setExpanded] = useState(true);
 	const hasChildren = node.children && node.children.length > 0;
 	const isActive = activeNamespace === node.path;

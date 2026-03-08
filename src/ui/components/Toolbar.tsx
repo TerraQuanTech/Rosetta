@@ -58,7 +58,9 @@ export function Toolbar({
 				<input
 					className="search-input"
 					type="text"
-					placeholder={searchScope === "all" ? "Search all namespaces..." : "Search current namespace..."}
+					placeholder={
+						searchScope === "all" ? "Search all namespaces..." : "Search current namespace..."
+					}
 					value={search}
 					onChange={(e) => onSearchChange(e.target.value)}
 				/>
@@ -122,11 +124,11 @@ export function Toolbar({
 			)}
 
 			<LocalePicker
-					allLocales={allLocales}
-					visibleLocales={visibleLocales}
-					onChange={onVisibleLocalesChange}
-					onAddLocale={onAddLocale}
-				/>
+				allLocales={allLocales}
+				visibleLocales={visibleLocales}
+				onChange={onVisibleLocalesChange}
+				onAddLocale={onAddLocale}
+			/>
 
 			{onAddKey && (
 				<button type="button" className="toolbar-btn primary" onClick={onAddKey}>

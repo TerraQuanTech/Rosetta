@@ -26,7 +26,10 @@ export function flatten(obj: Record<string, unknown>, prefix = ""): Record<strin
  *
  *   { "a.b": 1, "a.c.d": 2 }  =>  { a: { b: 1, c: { d: 2 } } }
  */
-export function unflatten(flat: Record<string, string>, keyOrder?: string[]): Record<string, unknown> {
+export function unflatten(
+	flat: Record<string, string>,
+	keyOrder?: string[],
+): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
 	// Use provided key order, or fall back to insertion order

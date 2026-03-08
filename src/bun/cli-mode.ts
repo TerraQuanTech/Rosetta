@@ -241,7 +241,9 @@ async function listKeys(
 		for (const key of keys) {
 			const value = nsData[key]?.[locale];
 			const status = value ? "✓" : "✗";
-			const preview = value ? `"${value.substring(0, 50)}${value.length > 50 ? "..." : ""}"` : "(missing)";
+			const preview = value
+				? `"${value.substring(0, 50)}${value.length > 50 ? "..." : ""}"`
+				: "(missing)";
 			console.log(`  ${status} ${key}: ${preview}`);
 		}
 	} else if (namespace) {
@@ -274,7 +276,11 @@ async function listKeys(
 	console.log();
 }
 
-async function addLocaleCommand(store: TranslationFileStore, localeCode: string, copyFrom?: string) {
+async function addLocaleCommand(
+	store: TranslationFileStore,
+	localeCode: string,
+	copyFrom?: string,
+) {
 	try {
 		const success = await store.addLocale(localeCode, copyFrom);
 		if (success) {

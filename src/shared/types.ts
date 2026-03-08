@@ -126,7 +126,10 @@ export type RosettaRPC = {
 			toggleReview: { params: ReviewToggle; response: { ok: boolean } };
 			getMissingKeys: { params: Record<string, never>; response: MissingKeysReport[] };
 			getCoverageStats: { params: Record<string, never>; response: CoverageStats };
-			installCli: { params: Record<string, never>; response: { success: boolean; message: string } };
+			installCli: {
+				params: Record<string, never>;
+				response: { success: boolean; message: string };
+			};
 		};
 		messages: Record<string, never>;
 	};

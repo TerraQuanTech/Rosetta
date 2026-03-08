@@ -148,7 +148,9 @@ export function SettingsPanel({
 							Create a <code>rosetta</code> command-line tool for stats, missing, and complete
 						</div>
 					</div>
-					<div style={{ display: "flex", gap: 8, flexDirection: "column", alignItems: "flex-start" }}>
+					<div
+						style={{ display: "flex", gap: 8, flexDirection: "column", alignItems: "flex-start" }}
+					>
 						<button
 							type="button"
 							className="toolbar-btn"

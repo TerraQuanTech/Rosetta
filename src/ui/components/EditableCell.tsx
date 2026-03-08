@@ -9,7 +9,13 @@ interface EditableCellProps {
 	onToggleReview?: (reviewed: boolean) => void;
 }
 
-export function EditableCell({ value, locale, reviewed, onSave, onToggleReview }: EditableCellProps) {
+export function EditableCell({
+	value,
+	locale,
+	reviewed,
+	onSave,
+	onToggleReview,
+}: EditableCellProps) {
 	const isRtl = isRtlLocale(locale);
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState(value ?? "");
@@ -104,7 +110,9 @@ export function EditableCell({ value, locale, reviewed, onSave, onToggleReview }
 			) : isEmpty ? (
 				<div className="value-display placeholder empty-placeholder">empty</div>
 			) : (
-				<div className="value-display" dir={isRtl ? "rtl" : "ltr"}>{value}</div>
+				<div className="value-display" dir={isRtl ? "rtl" : "ltr"}>
+					{value}
+				</div>
 			)}
 			{onToggleReview && !isMissing && (
 				<button

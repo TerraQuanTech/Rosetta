@@ -21,7 +21,7 @@ interface FileFormat {
 
 /** Remove BOM (Byte Order Mark) from content if present */
 function stripBOM(content: string): string {
-	return content.charCodeAt(0) === 0xFEFF ? content.slice(1) : content;
+	return content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
 }
 
 /** Detect indent style from raw JSON content */
@@ -79,8 +79,12 @@ export class TranslationFileStore {
 	/** Scan the locales directory and load everything into memory */
 	async load(): Promise<TranslationStore> {
 		const entries = await readdir(this.localesDir, { withFileTypes: true });
-		const nestedDirs = entries.filter((e) => e.isDirectory() && !e.name.startsWith(".")).map((e) => e.name);
-		const rootJsonFiles = entries.filter((e) => e.isFile() && e.name.endsWith(".json")).map((e) => e.name);
+		const nestedDirs = entries
+			.filter((e) => e.isDirectory() && !e.name.startsWith("."))
+			.map((e) => e.name);
+		const rootJsonFiles = entries
+			.filter((e) => e.isFile() && e.name.endsWith(".json"))
+			.map((e) => e.name);
 
 		let locales: string[] = [];
 		let isFlat = false;
@@ -256,11 +260,17 @@ export class TranslationFileStore {
 	 * Read the existing JSON file, apply a single key change using jsonc-parser,
 	 * which preserves all formatting/whitespace for unaffected parts of the file.
 	 */
-	private async patchJsonFile(namespace: string, locale: string, dotKey: string, value: string): Promise<boolean> {
+	private async patchJsonFile(
+		namespace: string,
+		locale: string,
+		dotKey: string,
+		value: string,
+	): Promise<boolean> {
 		// Handle flat layout (namespace="root") vs nested layout
-		const filePath = namespace === "root"
-			? join(this.localesDir, `${locale}.json`)
-			: join(this.localesDir, locale, `${namespace}.json`);
+		const filePath =
+			namespace === "root"
+				? join(this.localesDir, `${locale}.json`)
+				: join(this.localesDir, locale, `${namespace}.json`);
 		const format = this.fileFormats.get(filePath) ?? { indent: "    ", trailingNewline: true };
 		const jsonPath = dotKey.split(".");
 
@@ -277,7 +287,12 @@ export class TranslationFileStore {
 				content,
 				jsonPath,
 				value === "" ? undefined : value, // undefined = remove
-				{ formattingOptions: { tabSize: format.indent === "\t" ? 1 : format.indent.length, insertSpaces: format.indent !== "\t" } },
+				{
+					formattingOptions: {
+						tabSize: format.indent === "\t" ? 1 : format.indent.length,
+						insertSpaces: format.indent !== "\t",
+					},
+				},
 			);
 			let output = applyEdits(content, edits);
 
@@ -380,9 +395,10 @@ export class TranslationFileStore {
 
 		let ok = true;
 		for (const locale of this.store.locales) {
-			const filePath = namespace === "root"
-				? join(this.localesDir, `${locale}.json`)
-				: join(this.localesDir, locale, `${namespace}.json`);
+			const filePath =
+				namespace === "root"
+					? join(this.localesDir, `${locale}.json`)
+					: join(this.localesDir, locale, `${namespace}.json`);
 			try {
 				await rm(filePath);
 			} catch {
@@ -399,9 +415,10 @@ export class TranslationFileStore {
 
 	/** Write the in-memory state for one namespace+locale back to its JSON file */
 	private async writeNamespaceLocale(namespace: string, locale: string): Promise<boolean> {
-		const filePath = namespace === "root"
-			? join(this.localesDir, `${locale}.json`)
-			: join(this.localesDir, locale, `${namespace}.json`);
+		const filePath =
+			namespace === "root"
+				? join(this.localesDir, `${locale}.json`)
+				: join(this.localesDir, locale, `${namespace}.json`);
 
 		// Collect all keys for this namespace+locale
 		const flat: Record<string, string> = {};

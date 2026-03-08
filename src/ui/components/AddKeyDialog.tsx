@@ -9,7 +9,13 @@ interface AddKeyDialogProps {
 	onClose: () => void;
 }
 
-export function AddKeyDialog({ namespace, locales, existingKeys, onAdd, onClose }: AddKeyDialogProps) {
+export function AddKeyDialog({
+	namespace,
+	locales,
+	existingKeys,
+	onAdd,
+	onClose,
+}: AddKeyDialogProps) {
 	const [prefix, setPrefix] = useState("");
 	const [suffix, setSuffix] = useState("");
 	const [values, setValues] = useState<Record<string, string>>(() =>

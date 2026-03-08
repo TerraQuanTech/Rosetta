@@ -36,8 +36,7 @@ export function ExpandedRow({
 						onSave={(value) => onUpdateKey({ namespace, key: translationKey, locale, value })}
 						onToggleReview={
 							onToggleReview
-								? (reviewed) =>
-										onToggleReview({ namespace, key: translationKey, locale, reviewed })
+								? (reviewed) => onToggleReview({ namespace, key: translationKey, locale, reviewed })
 								: undefined
 						}
 					/>
@@ -151,7 +150,9 @@ function ExpandedEntry({
 						role="button"
 						tabIndex={0}
 					>
-						<span dir={isRtl ? "rtl" : "ltr"}>{isMissing ? "missing" : isEmpty ? "empty" : value}</span>
+						<span dir={isRtl ? "rtl" : "ltr"}>
+							{isMissing ? "missing" : isEmpty ? "empty" : value}
+						</span>
 					</div>
 				)}
 			</div>

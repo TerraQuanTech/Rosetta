@@ -51,10 +51,7 @@ type RosettaMessage = TranslationUpdate | TranslationReload;
  *
  * @returns A cleanup function that closes the connection
  */
-export function connectRosetta(
-	i18next: i18n,
-	options: ConnectOptions = {},
-): () => void {
+export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () => void {
 	const {
 		port = 4871,
 		reconnectInterval = 3000,
@@ -68,9 +65,7 @@ export function connectRosetta(
 	// By default (v14+) bindI18nStore is '' so store events are ignored.
 	const ri = (i18next as any).options?.react;
 	if (ri && (!ri.bindI18nStore || !ri.bindI18nStore.includes("added"))) {
-		ri.bindI18nStore = ri.bindI18nStore
-			? `${ri.bindI18nStore} added`
-			: "added";
+		ri.bindI18nStore = ri.bindI18nStore ? `${ri.bindI18nStore} added` : "added";
 	}
 
 	const url = `ws://localhost:${port}/ws`;
@@ -88,8 +83,7 @@ export function connectRosetta(
 
 	function getAppName(): string {
 		if (appName) return appName;
-		if (typeof document !== "undefined" && document.title)
-			return document.title;
+		if (typeof document !== "undefined" && document.title) return document.title;
 		return "App";
 	}
 
@@ -103,17 +97,13 @@ export function connectRosetta(
 			ws.onopen = () => {
 				emitStatus("connected");
 				log("Connected to Rosetta at", url);
-				ws?.send(
-					JSON.stringify({ type: "hello", appName: getAppName() }),
-				);
+				ws?.send(JSON.stringify({ type: "hello", appName: getAppName() }));
 			};
 
 			ws.onmessage = (event) => {
 				try {
 					const msg: RosettaMessage = JSON.parse(
-						typeof event.data === "string"
-							? event.data
-							: String(event.data),
+						typeof event.data === "string" ? event.data : String(event.data),
 					);
 					handleMessage(msg);
 				} catch {
@@ -144,20 +134,14 @@ export function connectRosetta(
 			}
 
 			case "translation:reload": {
-				i18next
-					.reloadResources([msg.locale], [msg.namespace])
-					.then(() => {
-						// Notify react-i18next to re-render.
-						// Emitting 'added' on the store + 'languageChanged' on i18next
-						// covers both legacy and modern react-i18next versions.
-						(i18next as any).store?.emit(
-							"added",
-							msg.locale,
-							msg.namespace,
-						);
-						i18next.emit("languageChanged", i18next.language);
-						log(`Reloaded ${msg.namespace} [${msg.locale}]`);
-					});
+				i18next.reloadResources([msg.locale], [msg.namespace]).then(() => {
+					// Notify react-i18next to re-render.
+					// Emitting 'added' on the store + 'languageChanged' on i18next
+					// covers both legacy and modern react-i18next versions.
+					(i18next as any).store?.emit("added", msg.locale, msg.namespace);
+					i18next.emit("languageChanged", i18next.language);
+					log(`Reloaded ${msg.namespace} [${msg.locale}]`);
+				});
 				break;
 			}
 		}
@@ -186,36 +170,20 @@ export function connectRosetta(
  * Apply a single translation update to i18next.
  * After applying, emits a languageChanged event to trigger React re-renders.
  */
-function applyUpdate(
-	i18next: i18n,
-	msg: TranslationUpdate,
-	strategy: "bundle" | "resource",
-) {
+function applyUpdate(i18next: i18n, msg: TranslationUpdate, strategy: "bundle" | "resource") {
 	if (msg.value === "") {
 		// Empty value = remove key so i18next falls back to fallback language
 		const existing = i18next.getResourceBundle(msg.locale, msg.namespace);
 		if (existing) {
 			removeNestedValue(existing, msg.key);
-			i18next.addResourceBundle(
-				msg.locale,
-				msg.namespace,
-				existing,
-				false,
-				false,
-			);
+			i18next.addResourceBundle(msg.locale, msg.namespace, existing, false, false);
 		}
 	} else if (strategy === "resource") {
 		i18next.addResource(msg.locale, msg.namespace, msg.key, msg.value);
 	} else {
 		const bundle: Record<string, unknown> = {};
 		setNestedValue(bundle, msg.key, msg.value);
-		i18next.addResourceBundle(
-			msg.locale,
-			msg.namespace,
-			bundle,
-			true,
-			true,
-		);
+		i18next.addResourceBundle(msg.locale, msg.namespace, bundle, true, true);
 	}
 
 	// Notify react-i18next to re-render.
@@ -226,11 +194,7 @@ function applyUpdate(
 }
 
 /** Set a nested value using a dot-notation key */
-export function setNestedValue(
-	obj: Record<string, unknown>,
-	dotKey: string,
-	value: string,
-): void {
+export function setNestedValue(obj: Record<string, unknown>, dotKey: string, value: string): void {
 	const parts = dotKey.split(".");
 	let current = obj;
 

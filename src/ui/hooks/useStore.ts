@@ -68,7 +68,11 @@ export function useTranslationStore() {
 		// Optimistic update — also clear review status when value changes
 		setStore((prev) => {
 			if (!prev) return prev;
-			const next = { ...prev, translations: { ...prev.translations }, reviews: { ...prev.reviews } };
+			const next = {
+				...prev,
+				translations: { ...prev.translations },
+				reviews: { ...prev.reviews },
+			};
 			const ns = { ...next.translations[update.namespace] };
 			ns[update.key] = { ...ns[update.key], [update.locale]: update.value };
 			next.translations[update.namespace] = ns;
@@ -183,26 +187,17 @@ export function useTranslationStore() {
 		[refresh],
 	);
 
-	const createNamespace = useCallback(
-		async (ns: NamespaceCreate) => {
-			await callRpc("createNamespace", ns);
-		},
-		[],
-	);
+	const createNamespace = useCallback(async (ns: NamespaceCreate) => {
+		await callRpc("createNamespace", ns);
+	}, []);
 
-	const deleteNamespace = useCallback(
-		async (ns: NamespaceDelete) => {
-			await callRpc("deleteNamespace", ns);
-		},
-		[],
-	);
+	const deleteNamespace = useCallback(async (ns: NamespaceDelete) => {
+		await callRpc("deleteNamespace", ns);
+	}, []);
 
-	const addLocale = useCallback(
-		async (locale: string, copyFrom?: string) => {
-			await callRpc("addLocale", { locale, copyFrom });
-		},
-		[],
-	);
+	const addLocale = useCallback(async (locale: string, copyFrom?: string) => {
+		await callRpc("addLocale", { locale, copyFrom });
+	}, []);
 
 	const openFolder = useCallback(async () => {
 		await callRpc<{ path: string | null }>("openLocalesDir");

@@ -7,7 +7,12 @@ interface LocalePickerProps {
 	onAddLocale?: (locale: string, copyFrom?: string) => void;
 }
 
-export function LocalePicker({ allLocales, visibleLocales, onChange, onAddLocale }: LocalePickerProps) {
+export function LocalePicker({
+	allLocales,
+	visibleLocales,
+	onChange,
+	onAddLocale,
+}: LocalePickerProps) {
 	const [open, setOpen] = useState(false);
 	const [showAddInput, setShowAddInput] = useState(false);
 	const [newLocale, setNewLocale] = useState("");
@@ -121,12 +126,7 @@ export function LocalePicker({ allLocales, visibleLocales, onChange, onAddLocale
 											onClick={() => setCopyFrom(copyFrom === locale ? undefined : locale)}
 											style={{ fontSize: 12, paddingLeft: 12 }}
 										>
-											<input
-												type="checkbox"
-												checked={copyFrom === locale}
-												readOnly
-												tabIndex={-1}
-											/>
+											<input type="checkbox" checked={copyFrom === locale} readOnly tabIndex={-1} />
 											{locale.toUpperCase()}
 										</button>
 									))}

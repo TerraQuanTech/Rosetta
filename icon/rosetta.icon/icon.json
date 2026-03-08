@@ -1,28 +1,28 @@
 {
-  "fill" : {
-    "automatic-gradient" : "display-p3:0.16078,0.15294,0.16078,1.00000"
-  },
-  "groups" : [
-    {
-      "layers" : [
-        {
-          "fill" : "none",
-          "glass" : false,
-          "image-name" : "rosetta_bg_221916.svg",
-          "name" : "rosetta_bg_221916"
-        }
-      ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
-      }
-    }
-  ],
-  "supported-platforms" : {
-    "squares" : "shared"
-  }
+	"fill": {
+		"automatic-gradient": "display-p3:0.16078,0.15294,0.16078,1.00000"
+	},
+	"groups": [
+		{
+			"layers": [
+				{
+					"fill": "none",
+					"glass": false,
+					"image-name": "rosetta_bg_221916.svg",
+					"name": "rosetta_bg_221916"
+				}
+			],
+			"shadow": {
+				"kind": "neutral",
+				"opacity": 0.5
+			},
+			"translucency": {
+				"enabled": true,
+				"value": 0.5
+			}
+		}
+	],
+	"supported-platforms": {
+		"squares": "shared"
+	}
 }

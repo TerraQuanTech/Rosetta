@@ -14,8 +14,19 @@ type ViewMode = "editor" | "settings";
 
 export default function App() {
 	const {
-		store, loading, updateKey, createKey, createNamespace, deleteNamespace, addLocale,
-		toggleReview, openFolder, pendingChanges, saveAll, discardChanges, setSaveMode,
+		store,
+		loading,
+		updateKey,
+		createKey,
+		createNamespace,
+		deleteNamespace,
+		addLocale,
+		toggleReview,
+		openFolder,
+		pendingChanges,
+		saveAll,
+		discardChanges,
+		setSaveMode,
 	} = useTranslationStore();
 	const { settings, updateSettings } = useSettings();
 	const connectorStatus = useConnectorStatus();
@@ -27,22 +38,31 @@ export default function App() {
 	const [showAddKey, setShowAddKey] = useState(false);
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 	const [searchScope, setSearchScope] = useState<"current" | "all">("current");
-	const [contextMenu, setContextMenu] = useState<{ x: number; y: number; type: "namespace" | "key"; value: string } | null>(null);
+	const [contextMenu, setContextMenu] = useState<{
+		x: number;
+		y: number;
+		type: "namespace" | "key";
+		value: string;
+	} | null>(null);
 
 	const saveMode = settings?.saveMode ?? "auto";
 	const pendingCount = pendingChanges.size;
 	const hasUnsaved = pendingCount > 0;
 
 	// Wrap updateSettings to emit theme changes to the main process
-	const handleUpdateSettings = useCallback((partial: Partial<typeof settings>) => {
-		updateSettings(partial);
-	}, [updateSettings]);
+	const handleUpdateSettings = useCallback(
+		(partial: Partial<typeof settings>) => {
+			updateSettings(partial);
+		},
+		[updateSettings],
+	);
 
 	// Apply theme to body
 	useEffect(() => {
 		const theme = settings?.theme ?? "system";
 		const isDark =
-			theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+			theme === "dark" ||
+			(theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
 		document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
 		document.body.classList.toggle("dark", isDark);
@@ -172,10 +192,13 @@ export default function App() {
 		[effectiveNamespace, createKey],
 	);
 
-	const handleContextMenu = useCallback((e: React.MouseEvent, type: "namespace" | "key", value: string) => {
-		e.preventDefault();
-		setContextMenu({ x: e.clientX, y: e.clientY, type, value });
-	}, []);
+	const handleContextMenu = useCallback(
+		(e: React.MouseEvent, type: "namespace" | "key", value: string) => {
+			e.preventDefault();
+			setContextMenu({ x: e.clientX, y: e.clientY, type, value });
+		},
+		[],
+	);
 
 	const handleFocusNamespace = useCallback((ns: string) => {
 		setSearch("");
@@ -266,18 +289,21 @@ export default function App() {
 						onUpdate={handleUpdateSettings}
 						onBrowseFolder={openFolder}
 						currentDir={store?.localesDir ?? null}
-					onInstallCli={async () => {
-						try {
-							const rpcBridge = (window as any).rpcBridge;
-							if (!rpcBridge) {
-								return { success: false, message: "RPC not available" };
+						onInstallCli={async () => {
+							try {
+								const rpcBridge = (window as any).rpcBridge;
+								if (!rpcBridge) {
+									return { success: false, message: "RPC not available" };
+								}
+								const result = await rpcBridge("installCli", {});
+								return result as { success: boolean; message: string };
+							} catch (err) {
+								return {
+									success: false,
+									message: `Error: ${err instanceof Error ? err.message : String(err)}`,
+								};
 							}
-							const result = await rpcBridge("installCli", {});
-							return result as { success: boolean; message: string };
-						} catch (err) {
-							return { success: false, message: `Error: ${err instanceof Error ? err.message : String(err)}` };
-						}
-					}}
+						}}
 					/>
 				) : isGlobalView ? (
 					<GlobalSearchResults
@@ -399,8 +425,8 @@ function UnsavedDialog({
 			<div className="dialog">
 				<h3>Unsaved changes</h3>
 				<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
-					You have {pendingCount} unsaved {pendingCount === 1 ? "change" : "changes"}.
-					What would you like to do?
+					You have {pendingCount} unsaved {pendingCount === 1 ? "change" : "changes"}. What would
+					you like to do?
 				</p>
 				<div className="dialog-actions">
 					<button type="button" className="toolbar-btn" onClick={onDiscard}>
@@ -458,13 +484,17 @@ function GlobalSearchResults({
 			if (filter === "missing") {
 				keys = keys.filter((key) => locales.some((l) => entries[key][l] === undefined));
 			} else if (filter === "empty") {
-				keys = keys.filter((key) => locales.some((l) => entries[key][l] === undefined || entries[key][l] === ""));
+				keys = keys.filter((key) =>
+					locales.some((l) => entries[key][l] === undefined || entries[key][l] === ""),
+				);
 			} else if (filter === "unreviewed") {
-				keys = keys.filter((key) => locales.some((l) => {
-					const hasValue = entries[key][l] !== undefined;
-					const isReviewed = reviews?.[ns]?.[key]?.[l] === true;
-					return hasValue && !isReviewed;
-				}));
+				keys = keys.filter((key) =>
+					locales.some((l) => {
+						const hasValue = entries[key][l] !== undefined;
+						const isReviewed = reviews?.[ns]?.[key]?.[l] === true;
+						return hasValue && !isReviewed;
+					}),
+				);
 			}
 
 			return keys.length > 0;
@@ -475,7 +505,11 @@ function GlobalSearchResults({
 		return (
 			<div className="empty-state">
 				<h2>No keys</h2>
-				<p>{search ? `No translation keys match "${search}" across any namespace.` : "No translation keys found."}</p>
+				<p>
+					{search
+						? `No translation keys match "${search}" across any namespace.`
+						: "No translation keys found."}
+				</p>
 			</div>
 		);
 	}

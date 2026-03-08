@@ -80,7 +80,8 @@ const settings = new SettingsManager();
 await settings.load();
 
 // Don't use process.argv[2] if in CLI mode
-let currentLocalesDir = !isCliMode && process.argv[2] ? process.argv[2] : settings.get().defaultLocalesDir || "";
+let currentLocalesDir =
+	!isCliMode && process.argv[2] ? process.argv[2] : settings.get().defaultLocalesDir || "";
 let store = new TranslationFileStore(currentLocalesDir);
 const reviews = new ReviewManager();
 let watcher: ReturnType<typeof startWatcher> | null = null;
@@ -112,14 +113,26 @@ async function loadLocalesDir(dir: string) {
 
 	watcher = startWatcher(dir, store, {
 		onFileChanged(_namespace) {
-			mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+			mainWindow?.webview.rpc?.send.storeUpdated({
+				...store.getStore(),
+				reviews: reviews.get(),
+				localesDir: currentLocalesDir,
+			});
 		},
 		onReloadNeeded() {
-			mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+			mainWindow?.webview.rpc?.send.storeUpdated({
+				...store.getStore(),
+				reviews: reviews.get(),
+				localesDir: currentLocalesDir,
+			});
 		},
 	});
 
-	mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+	mainWindow?.webview.rpc?.send.storeUpdated({
+		...store.getStore(),
+		reviews: reviews.get(),
+		localesDir: currentLocalesDir,
+	});
 	mainWindow?.setTitle(`Rosetta — ${dir}`);
 }
 
@@ -155,7 +168,11 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
 	handlers: {
 		requests: {
-			getStore: () => ({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir }),
+			getStore: () => ({
+				...store.getStore(),
+				reviews: reviews.get(),
+				localesDir: currentLocalesDir,
+			}),
 
 			updateKey: async (params) => {
 				const ok = await store.updateKey(params);
@@ -200,7 +217,11 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 			createNamespace: async (params) => {
 				const ok = await store.createNamespace(params.namespace);
 				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+					mainWindow?.webview.rpc?.send.storeUpdated({
+						...store.getStore(),
+						reviews: reviews.get(),
+						localesDir: currentLocalesDir,
+					});
 				}
 				return { ok };
 			},
@@ -208,7 +229,11 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 			deleteNamespace: async (params) => {
 				const ok = await store.deleteNamespace(params.namespace);
 				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+					mainWindow?.webview.rpc?.send.storeUpdated({
+						...store.getStore(),
+						reviews: reviews.get(),
+						localesDir: currentLocalesDir,
+					});
 				}
 				return { ok };
 			},
@@ -216,7 +241,11 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 			addLocale: async (params) => {
 				const ok = await store.addLocale(params.locale, params.copyFrom);
 				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({ ...store.getStore(), reviews: reviews.get(), localesDir: currentLocalesDir });
+					mainWindow?.webview.rpc?.send.storeUpdated({
+						...store.getStore(),
+						reviews: reviews.get(),
+						localesDir: currentLocalesDir,
+					});
 				}
 				return { ok };
 			},
@@ -279,21 +308,28 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 
 					if (platform() === "win32") {
 						// Windows
-						execSync(`powershell -Command "Start-Process cmd.exe -ArgumentList '/c', 'call \\"${scriptDir}\\install-cli.bat\\"' -Verb RunAs -Wait"`, {
-							stdio: "pipe",
-						});
+						execSync(
+							`powershell -Command "Start-Process cmd.exe -ArgumentList '/c', 'call \\"${scriptDir}\\install-cli.bat\\"' -Verb RunAs -Wait"`,
+							{
+								stdio: "pipe",
+							},
+						);
 					} else {
 						// macOS/Linux
 						execSync(`bash "${scriptDir}/install-cli.sh"`, { stdio: "pipe" });
 					}
 
-					return { success: true, message: "CLI installed successfully. You can now use 'rosetta' in your terminal." };
+					return {
+						success: true,
+						message: "CLI installed successfully. You can now use 'rosetta' in your terminal.",
+					};
 				} catch (err) {
 					const msg = err instanceof Error ? err.message : String(err);
 					// Extract the actual error message
-					const errorMsg = typeof err === "object" && err !== null && "stderr" in err
-						? (err as any).stderr?.toString() || msg
-						: msg;
+					const errorMsg =
+						typeof err === "object" && err !== null && "stderr" in err
+							? (err as any).stderr?.toString() || msg
+							: msg;
 					return { success: false, message: `Failed to install CLI: ${errorMsg}` };
 				}
 			},

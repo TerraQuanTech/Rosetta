@@ -3,14 +3,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import type { RosettaRPC } from "../shared/types";
 import App from "./App";
-import {
-	setConnectorMessageHandler,
-	setConnectorRpcRequest,
-} from "./hooks/useConnectorStatus";
-import {
-	setSettingsMessageHandler,
-	setSettingsRpcRequest,
-} from "./hooks/useSettings";
+import { setConnectorMessageHandler, setConnectorRpcRequest } from "./hooks/useConnectorStatus";
+import { setSettingsMessageHandler, setSettingsRpcRequest } from "./hooks/useSettings";
 import { setMessageHandler, setRpcRequest } from "./hooks/useStore";
 import "./styles/global.css";
 
