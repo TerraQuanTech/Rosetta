@@ -139,7 +139,7 @@ body {
 }
 
 .sidebar-header {
-	padding: 16px;
+	padding: 14.5px;
 	border-bottom: 1px solid var(--border);
 	flex-shrink: 0;
 }

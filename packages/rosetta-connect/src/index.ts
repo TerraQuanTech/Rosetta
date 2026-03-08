@@ -1,12 +1,20 @@
 import type { i18n } from "i18next";
 
-interface ConnectOptions {
+export interface ConnectOptions {
 	/** Rosetta connector port. Default: 4871 */
 	port?: number;
 	/** Reconnect interval in ms. Default: 3000 */
 	reconnectInterval?: number;
-	/** Log connection events. Default: true */
+	/** Log connection events. Default: true in development, false otherwise */
 	verbose?: boolean;
+	/** App name sent to Rosetta on connect. Default: auto-detected */
+	appName?: string;
+	/**
+	 * How to apply single-key updates.
+	 * - "bundle" (default): uses addResourceBundle — works with all i18next setups
+	 * - "resource": uses addResource — slightly more granular
+	 */
+	updateStrategy?: "bundle" | "resource";
 }
 
 interface TranslationUpdate {
@@ -26,20 +34,36 @@ interface TranslationReload {
 type RosettaMessage = TranslationUpdate | TranslationReload;
 
 /**
- * Connect your i18next instance to a running Rosetta editor.
+ * Connect your i18next instance to a running Rosetta editor for live
+ * translation preview. Changes made in Rosetta are hot-reloaded instantly.
  *
- * When Rosetta edits a translation, it's hot-reloaded in your app
- * without restart. Only use in development.
+ * Works in:
+ * - Electron renderer process (built or dev)
+ * - Browser (Vite/webpack dev server)
+ * - Node.js / Electron main process (requires `ws` package or Node 22+ built-in WebSocket)
  *
+ * @example
  * ```ts
+ * import i18next from "i18next";
  * import { connectRosetta } from "rosetta-connect";
+ *
+ * // Only in development
  * if (process.env.NODE_ENV === "development") {
- *   connectRosetta(i18next, { port: 4871 });
+ *   const disconnect = connectRosetta(i18next, { port: 4871 });
+ *   // Call disconnect() to clean up
  * }
  * ```
+ *
+ * @returns A cleanup function that closes the connection
  */
 export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () => void {
-	const { port = 4871, reconnectInterval = 3000, verbose = true } = options;
+	const {
+		port = 4871,
+		reconnectInterval = 3000,
+		verbose = typeof process !== "undefined" ? process.env.NODE_ENV === "development" : true,
+		appName,
+		updateStrategy = "bundle",
+	} = options;
 
 	const url = `ws://localhost:${port}/ws`;
 	let ws: WebSocket | null = null;
@@ -50,6 +74,18 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 		? (...args: unknown[]) => console.log("[rosetta-connect]", ...args)
 		: () => {};
 
+	function getAppName(): string {
+		if (appName) return appName;
+		// Browser / Electron renderer
+		if (typeof document !== "undefined" && document.title) return document.title;
+		// Node.js / Electron main
+		if (typeof process !== "undefined" && process.argv[1]) {
+			const path = process.argv[1];
+			return path.split(/[/\\]/).pop() || "App";
+		}
+		return "App";
+	}
+
 	function connect() {
 		if (stopped) return;
 
@@ -57,18 +93,15 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 			ws = new WebSocket(url);
 
 			ws.onopen = () => {
-				log("Connected to Rosetta");
-				ws?.send(
-					JSON.stringify({
-						type: "hello",
-						appName: document.title || "Electron App",
-					}),
-				);
+				log("Connected to Rosetta at", url);
+				ws?.send(JSON.stringify({ type: "hello", appName: getAppName() }));
 			};
 
 			ws.onmessage = (event) => {
 				try {
-					const msg: RosettaMessage = JSON.parse(event.data);
+					const msg: RosettaMessage = JSON.parse(
+						typeof event.data === "string" ? event.data : String(event.data),
+					);
 					handleMessage(msg);
 				} catch {
 					// Ignore malformed messages
@@ -91,21 +124,17 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 	function handleMessage(msg: RosettaMessage) {
 		switch (msg.type) {
 			case "translation:update": {
-				// Hot-reload a single key
-				const bundle = i18next.getResourceBundle(msg.locale, msg.namespace) || {};
-				setNestedValue(bundle, msg.key, msg.value);
-				i18next.addResourceBundle(msg.namespace, msg.locale, bundle, true, true);
-				// Also add with the namespace as the ns parameter (i18next API varies)
-				i18next.addResourceBundle(msg.locale, msg.namespace, bundle, true, true);
+				applyUpdate(i18next, msg, updateStrategy);
 				log(`Updated ${msg.namespace}:${msg.key} [${msg.locale}]`);
 				break;
 			}
 
 			case "translation:reload": {
-				// Full namespace reload — the app should re-fetch from its source
-				// For file-based i18next, trigger a reload
-				i18next.reloadResources(msg.locale, msg.namespace);
-				log(`Reloaded ${msg.namespace} [${msg.locale}]`);
+				i18next.reloadResources([msg.locale], [msg.namespace]).then(() => {
+					// Emit event so React components re-render
+					i18next.emit("languageChanged", i18next.language);
+					log(`Reloaded ${msg.namespace} [${msg.locale}]`);
+				});
 				break;
 			}
 		}
@@ -124,15 +153,34 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 		log("Disconnected");
 	}
 
-	// Start
+	// Start connection
 	connect();
 
-	// Return cleanup function
 	return disconnect;
 }
 
+/**
+ * Apply a single translation update to i18next.
+ * After applying, emits a languageChanged event to trigger React re-renders.
+ */
+function applyUpdate(i18next: i18n, msg: TranslationUpdate, strategy: "bundle" | "resource") {
+	if (strategy === "resource") {
+		// addResource is more granular but doesn't trigger all plugins
+		i18next.addResource(msg.locale, msg.namespace, msg.key, msg.value);
+	} else {
+		// addResourceBundle with deep merge + overwrite
+		// i18next API: addResourceBundle(lng, ns, resources, deep, overwrite)
+		const bundle: Record<string, unknown> = {};
+		setNestedValue(bundle, msg.key, msg.value);
+		i18next.addResourceBundle(msg.locale, msg.namespace, bundle, true, true);
+	}
+
+	// Trigger re-render in react-i18next and other UI bindings
+	i18next.emit("languageChanged", i18next.language);
+}
+
 /** Set a nested value using a dot-notation key */
-function setNestedValue(obj: Record<string, unknown>, dotKey: string, value: string): void {
+export function setNestedValue(obj: Record<string, unknown>, dotKey: string, value: string): void {
 	const parts = dotKey.split(".");
 	let current = obj;
 

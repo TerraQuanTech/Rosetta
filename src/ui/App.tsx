@@ -6,6 +6,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { Toolbar } from "./components/Toolbar";
+import { useConnectorStatus } from "./hooks/useConnectorStatus";
 import { useSettings } from "./hooks/useSettings";
 import { useTranslationStore } from "./hooks/useStore";
 
@@ -17,6 +18,7 @@ export default function App() {
 		toggleReview, openFolder, pendingChanges, saveAll, discardChanges, setSaveMode,
 	} = useTranslationStore();
 	const { settings, updateSettings } = useSettings();
+	const connectorStatus = useConnectorStatus();
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [filter, setFilter] = useState<"all" | "missing" | "empty" | "unreviewed">("all");
@@ -253,7 +255,7 @@ export default function App() {
 			<StatusBar
 				totalKeys={stats.total}
 				missingCount={stats.missing}
-				connectorConnected={false}
+				connectorConnected={connectorStatus.connected}
 				activeNamespace={isGlobalView ? "All namespaces" : effectiveNamespace}
 				saveMode={saveMode}
 				pendingCount={pendingCount}

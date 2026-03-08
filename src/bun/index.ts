@@ -72,6 +72,15 @@ if (settings.get().connectorEnabled) {
 	connector.start();
 }
 
+// Forward connector status changes to UI
+connector.onStatusChange((connected, clientCount) => {
+	mainWindow?.webview.rpc?.send.connectorStatusChanged({
+		connected,
+		clientCount,
+		apps: connector.connectedApps,
+	});
+});
+
 async function loadLocalesDir(dir: string) {
 	currentLocalesDir = dir;
 	store = new TranslationFileStore(dir);

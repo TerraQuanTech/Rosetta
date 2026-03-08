@@ -116,6 +116,7 @@ export type RosettaRPC = {
 			storeUpdated: TranslationStore;
 			fileChanged: { namespace: string; locale: string };
 			settingsUpdated: RosettaSettings;
+			connectorStatusChanged: { connected: boolean; clientCount: number; apps: string[] };
 		};
 	};
 };

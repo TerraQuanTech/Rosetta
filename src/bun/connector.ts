@@ -5,10 +5,13 @@ interface ConnectorClient {
 	appName?: string;
 }
 
+type StatusListener = (connected: boolean, clients: number) => void;
+
 export class ConnectorServer {
 	private clients: Set<ConnectorClient> = new Set();
 	private server: ReturnType<typeof Bun.serve> | null = null;
 	private _port: number;
+	private statusListeners: Set<StatusListener> = new Set();
 
 	constructor(port = 4871) {
 		this._port = port;
@@ -22,8 +25,31 @@ export class ConnectorServer {
 		return this.clients.size > 0;
 	}
 
+	get clientCount(): number {
+		return this.clients.size;
+	}
+
+	/** Get info about connected clients */
+	get connectedApps(): string[] {
+		return [...this.clients].map((c) => c.appName || "Unknown").filter(Boolean);
+	}
+
 	updatePort(port: number): void {
 		this._port = port;
+	}
+
+	/** Subscribe to connection status changes */
+	onStatusChange(listener: StatusListener): () => void {
+		this.statusListeners.add(listener);
+		return () => this.statusListeners.delete(listener);
+	}
+
+	private notifyStatus(): void {
+		const connected = this.connected;
+		const count = this.clientCount;
+		for (const listener of this.statusListeners) {
+			listener(connected, count);
+		}
 	}
 
 	start(): void {
@@ -38,6 +64,10 @@ export class ConnectorServer {
 					}
 					return undefined;
 				}
+				// Health check endpoint
+				if (url.pathname === "/health") {
+					return Response.json({ status: "ok", version: "0.1.0" });
+				}
 				return new Response("Rosetta Connector", { status: 200 });
 			},
 			websocket: {
@@ -45,12 +75,21 @@ export class ConnectorServer {
 					const client: ConnectorClient = { ws };
 					this.clients.add(client);
 					console.log(`[connector] App connected (${this.clients.size} total)`);
+					this.notifyStatus();
 				},
-				message: (_ws, message) => {
+				message: (ws, message) => {
 					try {
 						const data = JSON.parse(String(message));
 						if (data.type === "hello") {
+							// Find the client and set the appName
+							for (const client of this.clients) {
+								if (client.ws === ws) {
+									client.appName = data.appName;
+									break;
+								}
+							}
 							console.log(`[connector] App identified: ${data.appName}`);
+							this.notifyStatus();
 						}
 					} catch {
 						// Ignore
@@ -64,6 +103,7 @@ export class ConnectorServer {
 						}
 					}
 					console.log(`[connector] App disconnected (${this.clients.size} total)`);
+					this.notifyStatus();
 				},
 			},
 		});
@@ -108,5 +148,6 @@ export class ConnectorServer {
 	stop(): void {
 		this.server?.stop();
 		this.clients.clear();
+		this.notifyStatus();
 	}
 }

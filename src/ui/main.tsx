@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import type { RosettaRPC } from "../shared/types";
 import App from "./App";
+import { setConnectorMessageHandler, setConnectorRpcRequest } from "./hooks/useConnectorStatus";
 import { setSettingsMessageHandler, setSettingsRpcRequest } from "./hooks/useSettings";
 import { setMessageHandler, setRpcRequest } from "./hooks/useStore";
 import "./styles/global.css";
@@ -10,6 +11,7 @@ import "./styles/global.css";
 // --- Wire Electrobun RPC ---
 let storeMessageHandler: ((data: any) => void) | null = null;
 let settingsMessageHandler: ((data: any) => void) | null = null;
+let connectorStatusHandler: ((data: any) => void) | null = null;
 
 const rpc = Electroview.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
@@ -22,6 +24,9 @@ const rpc = Electroview.defineRPC<RosettaRPC>({
 			fileChanged: (_payload) => {},
 			settingsUpdated: (payload) => {
 				settingsMessageHandler?.(payload);
+			},
+			connectorStatusChanged: (payload) => {
+				connectorStatusHandler?.(payload);
 			},
 		},
 	},
@@ -37,6 +42,7 @@ const rpcBridge = async (method: string, params: unknown) => {
 
 setRpcRequest(rpcBridge);
 setSettingsRpcRequest(rpcBridge);
+setConnectorRpcRequest(rpcBridge);
 
 // Bridge incoming messages
 setMessageHandler((handler) => {
@@ -44,6 +50,9 @@ setMessageHandler((handler) => {
 });
 setSettingsMessageHandler((handler) => {
 	settingsMessageHandler = handler;
+});
+setConnectorMessageHandler((handler) => {
+	connectorStatusHandler = handler;
 });
 
 // --- Render ---
