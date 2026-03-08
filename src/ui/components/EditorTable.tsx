@@ -16,6 +16,10 @@ interface EditorTableProps {
 	onToggleReview?: (toggle: ReviewToggle) => void;
 	/** When true, return null instead of empty state when no keys match */
 	hideEmptyFiltered?: boolean;
+	/** Called when right-clicking a row to focus on that key */
+	onFocusKey?: (e: React.MouseEvent, key: string) => void;
+	/** Called when right-clicking namespace header to focus on that namespace */
+	onFocusNamespace?: () => void;
 }
 
 export function EditorTable({
@@ -28,6 +32,8 @@ export function EditorTable({
 	onUpdateKey,
 	onToggleReview,
 	hideEmptyFiltered,
+	onFocusKey,
+	onFocusNamespace,
 }: EditorTableProps) {
 	const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
@@ -107,7 +113,14 @@ export function EditorTable({
 					const isExpanded = expandedKeys.has(key);
 					return (
 						<Fragment key={key}>
-							<tr className={isExpanded ? "row-expanded" : ""}>
+							<tr
+								className={isExpanded ? "row-expanded" : ""}
+								onContextMenu={(e) => {
+									if (onFocusKey) {
+										onFocusKey(e, key);
+									}
+								}}
+							>
 								<td>
 									<div
 										className="key-cell"

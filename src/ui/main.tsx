@@ -22,7 +22,12 @@ let connectorStatusHandler: ((data: any) => void) | null = null;
 const rpc = Electroview.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
 	handlers: {
-		requests: {},
+		requests: {
+			installCli: async () => {
+				const requestProxy = (rpc as any).request as any;
+				return requestProxy.installCli({});
+			},
+		},
 		messages: {
 			storeUpdated: (payload) => {
 				storeMessageHandler?.(payload);
@@ -34,6 +39,7 @@ const rpc = Electroview.defineRPC<RosettaRPC>({
 			connectorStatusChanged: (payload) => {
 				connectorStatusHandler?.(payload);
 			},
+			themeChanged: (_payload) => {},
 		},
 	},
 });
@@ -45,6 +51,9 @@ const rpcBridge = async (method: string, params: unknown) => {
 	const requestProxy = view.rpc!.request as any;
 	return requestProxy[method](params);
 };
+
+// Expose RPC bridge globally for UI components
+(window as any).rpcBridge = rpcBridge;
 
 setRpcRequest(rpcBridge);
 setSettingsRpcRequest(rpcBridge);

@@ -8,7 +8,7 @@ import { StatusBar } from "./components/StatusBar";
 import { Toolbar } from "./components/Toolbar";
 import { useConnectorStatus } from "./hooks/useConnectorStatus";
 import { useSettings } from "./hooks/useSettings";
-import { useTranslationStore } from "./hooks/useStore";
+import { useTranslationStore, setRpcRequest } from "./hooks/useStore";
 
 type ViewMode = "editor" | "settings";
 
@@ -27,6 +27,7 @@ export default function App() {
 	const [showAddKey, setShowAddKey] = useState(false);
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 	const [searchScope, setSearchScope] = useState<"current" | "all">("current");
+	const [contextMenu, setContextMenu] = useState<{ x: number; y: number; type: "namespace" | "key"; value: string } | null>(null);
 
 	const saveMode = settings?.saveMode ?? "auto";
 	const pendingCount = pendingChanges.size;
@@ -35,10 +36,6 @@ export default function App() {
 	// Wrap updateSettings to emit theme changes to the main process
 	const handleUpdateSettings = useCallback((partial: Partial<typeof settings>) => {
 		updateSettings(partial);
-		if (partial.theme) {
-			const rpc = (window as any).rpc;
-			rpc?.("sendMessage", "themeChanged", { theme: partial.theme });
-		}
 	}, [updateSettings]);
 
 	// Apply theme to body
@@ -175,6 +172,27 @@ export default function App() {
 		[effectiveNamespace, createKey],
 	);
 
+	const handleContextMenu = useCallback((e: React.MouseEvent, type: "namespace" | "key", value: string) => {
+		e.preventDefault();
+		setContextMenu({ x: e.clientX, y: e.clientY, type, value });
+	}, []);
+
+	const handleFocusNamespace = useCallback((ns: string) => {
+		setSearch("");
+		setFilter("all");
+		setActiveNamespace(ns);
+		setView("editor");
+		setSearchScope("current");
+		setContextMenu(null);
+	}, []);
+
+	const handleFocusKey = useCallback((key: string) => {
+		setSearch(key);
+		setFilter("all");
+		setSearchScope("current");
+		setContextMenu(null);
+	}, []);
+
 	if (loading) {
 		return (
 			<div className="app">
@@ -200,7 +218,7 @@ export default function App() {
 	}
 
 	return (
-		<div className="app">
+		<div className="app" onClick={() => contextMenu && setContextMenu(null)}>
 			<Sidebar
 				namespaces={store.namespaces}
 				activeNamespace={view === "settings" ? null : effectiveNamespace}
@@ -250,11 +268,11 @@ export default function App() {
 						currentDir={store?.localesDir ?? null}
 					onInstallCli={async () => {
 						try {
-							const rpc = (window as any).rpc;
-							if (!rpc) {
+							const rpcBridge = (window as any).rpcBridge;
+							if (!rpcBridge) {
 								return { success: false, message: "RPC not available" };
 							}
-							const result = await rpc("installCli", {});
+							const result = await rpcBridge("installCli", {});
 							return result as { success: boolean; message: string };
 						} catch (err) {
 							return { success: false, message: `Error: ${err instanceof Error ? err.message : String(err)}` };
@@ -270,6 +288,8 @@ export default function App() {
 						filter={filter}
 						onUpdateKey={updateKey}
 						onToggleReview={toggleReview}
+						onFocusNamespace={(e, ns) => handleContextMenu(e, "namespace", ns)}
+						onFocusKey={(e, key) => handleContextMenu(e, "key", key)}
 					/>
 				) : effectiveNamespace ? (
 					<EditorTable
@@ -281,6 +301,7 @@ export default function App() {
 						filter={filter}
 						onUpdateKey={updateKey}
 						onToggleReview={toggleReview}
+						onFocusKey={(e, key) => handleContextMenu(e, "key", key)}
 					/>
 				) : (
 					<div className="empty-state">
@@ -322,6 +343,33 @@ export default function App() {
 					}}
 					onCancel={() => setShowUnsavedDialog(false)}
 				/>
+			)}
+
+			{contextMenu && (
+				<div
+					className="context-menu"
+					style={{
+						position: "fixed",
+						left: `${contextMenu.x}px`,
+						top: `${contextMenu.y}px`,
+						zIndex: 10000,
+					}}
+					onClick={(e) => e.stopPropagation()}
+				>
+					<button
+						type="button"
+						className="context-menu-item"
+						onClick={() => {
+							if (contextMenu.type === "namespace") {
+								handleFocusNamespace(contextMenu.value);
+							} else {
+								handleFocusKey(contextMenu.value);
+							}
+						}}
+					>
+						Focus on {contextMenu.type === "namespace" ? "namespace" : "key"}
+					</button>
+				</div>
 			)}
 		</div>
 	);
@@ -379,6 +427,8 @@ function GlobalSearchResults({
 	filter,
 	onUpdateKey,
 	onToggleReview,
+	onFocusNamespace,
+	onFocusKey,
 }: {
 	results: Record<string, Record<string, Record<string, string>>>;
 	reviews: Record<string, Record<string, Record<string, boolean>>>;
@@ -387,6 +437,8 @@ function GlobalSearchResults({
 	filter: "all" | "missing" | "empty" | "unreviewed";
 	onUpdateKey: (update: { namespace: string; key: string; locale: string; value: string }) => void;
 	onToggleReview: (toggle: ReviewToggle) => void;
+	onFocusNamespace: (e: React.MouseEvent, ns: string) => void;
+	onFocusKey: (e: React.MouseEvent, key: string) => void;
 }) {
 	// Filter out namespaces with no keys surviving search + filter
 	const namespaces = Object.keys(results)
@@ -432,7 +484,14 @@ function GlobalSearchResults({
 		<div className="global-search-results">
 			{namespaces.map((ns) => (
 				<div key={ns}>
-					<div className="search-result-namespace">{ns}</div>
+					<div
+						className="search-result-namespace"
+						onContextMenu={(e) => {
+							onFocusNamespace(e, ns);
+						}}
+					>
+						{ns}
+					</div>
 					<EditorTable
 						locales={locales}
 						entries={results[ns]}
@@ -442,6 +501,7 @@ function GlobalSearchResults({
 						filter={filter}
 						onUpdateKey={onUpdateKey}
 						onToggleReview={onToggleReview}
+						onFocusKey={onFocusKey}
 						hideEmptyFiltered
 					/>
 				</div>
