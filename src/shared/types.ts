@@ -131,6 +131,10 @@ export type RosettaRPC = {
 				params: Record<string, never>;
 				response: { success: boolean; message: string };
 			};
+			getPlatform: { params: Record<string, never>; response: { platform: string } };
+			windowMinimize: { params: Record<string, never>; response: { ok: boolean } };
+			windowMaximize: { params: Record<string, never>; response: { ok: boolean } };
+			windowClose: { params: Record<string, never>; response: { ok: boolean } };
 		};
 		messages: Record<string, never>;
 	};

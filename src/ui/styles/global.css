@@ -436,6 +436,37 @@ body {
 	flex: 1;
 }
 
+/* Windows custom window controls */
+.window-controls {
+	display: flex;
+	align-items: center;
+	margin-left: 8px;
+	gap: 0;
+}
+
+.window-control-btn {
+	background: none;
+	border: none;
+	color: var(--fg);
+	width: 36px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 12px;
+	border-radius: 0;
+}
+
+.window-control-btn:hover {
+	background: var(--bg-hover);
+}
+
+.window-control-close:hover {
+	background: #e81123;
+	color: #fff;
+}
+
 .save-group {
 	display: flex;
 	gap: 4px;

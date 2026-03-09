@@ -305,6 +305,30 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 				return { ok: true };
 			},
 
+			getPlatform: async () => {
+				const { platform } = await import("node:os");
+				return { platform: platform() };
+			},
+
+			windowMinimize: () => {
+				mainWindow?.minimize();
+				return { ok: true };
+			},
+
+			windowMaximize: () => {
+				if (mainWindow?.isMaximized()) {
+					mainWindow.unmaximize();
+				} else {
+					mainWindow?.maximize();
+				}
+				return { ok: true };
+			},
+
+			windowClose: () => {
+				mainWindow?.close();
+				return { ok: true };
+			},
+
 			installCli: async () => {
 				try {
 					const { execSync } = await import("node:child_process");
