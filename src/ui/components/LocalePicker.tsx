@@ -19,6 +19,7 @@ export function LocalePicker({
 	const [showAddInput, setShowAddInput] = useState(false);
 	const [newLocale, setNewLocale] = useState("");
 	const [copyFrom, setCopyFrom] = useState<string | undefined>(undefined);
+	const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
 	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -87,13 +88,9 @@ export function LocalePicker({
 									title={`Remove ${locale.toUpperCase()}`}
 									onClick={(e) => {
 										e.stopPropagation();
-										if (
-											window.confirm(
-												`Remove locale "${locale.toUpperCase()}"? This will delete all translation files for this locale.`,
-											)
-										) {
-											onRemoveLocale(locale);
-										}
+										e.preventDefault();
+										setConfirmRemove(locale);
+										setOpen(false);
 									}}
 								>
 									&times;
@@ -159,6 +156,42 @@ export function LocalePicker({
 							)}
 						</>
 					)}
+				</div>
+			)}
+
+			{confirmRemove !== null && (
+				<div
+					className="dialog-overlay"
+					onClick={(e) => {
+						if (e.target === e.currentTarget) setConfirmRemove(null);
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Escape") setConfirmRemove(null);
+					}}
+				>
+					<div className="dialog">
+						<h3>Remove locale</h3>
+						<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
+							Remove <strong>{confirmRemove.toUpperCase()}</strong>? This will delete all
+							translation files for this locale.
+						</p>
+						<div className="dialog-actions">
+							<button type="button" className="toolbar-btn" onClick={() => setConfirmRemove(null)}>
+								Cancel
+							</button>
+							<button
+								type="button"
+								className="toolbar-btn"
+								style={{ color: "var(--missing)" }}
+								onClick={() => {
+									onRemoveLocale?.(confirmRemove);
+									setConfirmRemove(null);
+								}}
+							>
+								Delete
+							</button>
+						</div>
+					</div>
 				</div>
 			)}
 		</div>
