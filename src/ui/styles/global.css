@@ -144,7 +144,7 @@ body {
 
 .sidebar-header {
     padding: 14.5px;
-    padding-top: var(--titlebar-inset);
+    padding-top: max(var(--titlebar-inset), 14.5px);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     -webkit-app-region: drag;
@@ -738,7 +738,7 @@ body {
     font-size: 13px;
     font-family: var(--font-sans);
     outline: none;
-    resize: vertical;
+    resize: none;
     min-height: 32px;
 }
 
@@ -867,7 +867,7 @@ body {
     font-size: 13px;
     font-family: var(--font-sans);
     outline: none;
-    resize: vertical;
+    resize: none;
     min-height: 36px;
 }
 
