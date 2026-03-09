@@ -71,11 +71,7 @@ export function LocalePicker({
 					)}
 					{allLocales.map((locale) => (
 						<div key={locale} className="locale-picker-item-row">
-							<button
-								type="button"
-								className="locale-picker-item"
-								onClick={() => toggle(locale)}
-							>
+							<button type="button" className="locale-picker-item" onClick={() => toggle(locale)}>
 								<input
 									type="checkbox"
 									checked={visibleLocales.includes(locale)}
@@ -91,7 +87,11 @@ export function LocalePicker({
 									title={`Remove ${locale.toUpperCase()}`}
 									onClick={(e) => {
 										e.stopPropagation();
-										if (window.confirm(`Remove locale "${locale.toUpperCase()}"? This will delete all translation files for this locale.`)) {
+										if (
+											window.confirm(
+												`Remove locale "${locale.toUpperCase()}"? This will delete all translation files for this locale.`,
+											)
+										) {
 											onRemoveLocale(locale);
 										}
 									}}
