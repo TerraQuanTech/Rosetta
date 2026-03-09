@@ -50,6 +50,7 @@ export default function App() {
 		y: number;
 		type: "namespace" | "key";
 		value: string;
+		namespace?: string;
 	} | null>(null);
 
 	const saveMode = settings?.saveMode ?? "auto";
@@ -200,9 +201,9 @@ export default function App() {
 	);
 
 	const handleContextMenu = useCallback(
-		(e: React.MouseEvent, type: "namespace" | "key", value: string) => {
+		(e: React.MouseEvent, type: "namespace" | "key", value: string, namespace?: string) => {
 			e.preventDefault();
-			setContextMenu({ x: e.clientX, y: e.clientY, type, value });
+			setContextMenu({ x: e.clientX, y: e.clientY, type, value, namespace });
 		},
 		[],
 	);
@@ -216,12 +217,19 @@ export default function App() {
 		setContextMenu(null);
 	}, []);
 
-	const handleFocusKey = useCallback((key: string) => {
-		setSearch(key);
-		setFilter("all");
-		setSearchScope("current");
-		setContextMenu(null);
-	}, []);
+	const handleFocusKey = useCallback(
+		(key: string, namespace?: string) => {
+			if (namespace) {
+				setActiveNamespace(namespace);
+			}
+			setSearch(key);
+			setFilter("all");
+			setSearchScope("current");
+			setView("editor");
+			setContextMenu(null);
+		},
+		[],
+	);
 
 	if (loading) {
 		return (
@@ -329,7 +337,7 @@ export default function App() {
 						onUpdateKey={updateKey}
 						onToggleReview={toggleReview}
 						onFocusNamespace={(e, ns) => handleContextMenu(e, "namespace", ns)}
-						onFocusKey={(e, key) => handleContextMenu(e, "key", key)}
+						onFocusKey={(e, key, ns) => handleContextMenu(e, "key", key, ns)}
 					/>
 				) : effectiveNamespace ? (
 					<EditorTable
@@ -341,7 +349,7 @@ export default function App() {
 						filter={filter}
 						onUpdateKey={updateKey}
 						onToggleReview={toggleReview}
-						onFocusKey={(e, key) => handleContextMenu(e, "key", key)}
+						onFocusKey={(e, key) => handleContextMenu(e, "key", key, effectiveNamespace!)}
 					/>
 				) : (
 					<div className="empty-state">
@@ -404,7 +412,7 @@ export default function App() {
 							if (contextMenu.type === "namespace") {
 								handleFocusNamespace(contextMenu.value);
 							} else {
-								handleFocusKey(contextMenu.value);
+								handleFocusKey(contextMenu.value, contextMenu.namespace);
 							}
 						}}
 					>
@@ -479,7 +487,7 @@ function GlobalSearchResults({
 	onUpdateKey: (update: { namespace: string; key: string; locale: string; value: string }) => void;
 	onToggleReview: (toggle: ReviewToggle) => void;
 	onFocusNamespace: (e: React.MouseEvent, ns: string) => void;
-	onFocusKey: (e: React.MouseEvent, key: string) => void;
+	onFocusKey: (e: React.MouseEvent, key: string, namespace?: string) => void;
 }) {
 	// Filter out namespaces with no keys surviving search + filter
 	const namespaces = Object.keys(results)
@@ -550,7 +558,7 @@ function GlobalSearchResults({
 						filter={filter}
 						onUpdateKey={onUpdateKey}
 						onToggleReview={onToggleReview}
-						onFocusKey={onFocusKey}
+						onFocusKey={(e, key) => onFocusKey(e, key, ns)}
 						hideEmptyFiltered
 					/>
 				</div>

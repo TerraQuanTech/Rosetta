@@ -341,6 +341,7 @@ body {
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     min-width: 0;
+    overflow: hidden;
 }
 
 .search-group {
@@ -348,12 +349,64 @@ body {
     align-items: center;
     gap: 6px;
     flex: 1;
-    max-width: 480px;
+    max-width: 800px;
 }
 
-.search-group .search-input {
-    flex: 1;
-    min-width: 0;
+.search-input-wrapper {
+    position: relative;
+    flex: 2;
+}
+
+.search-input-wrapper .search-input {
+    width: 100%;
+    min-width: 240px;
+    padding-right: 26px;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.search-clear-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.search-shortcut-hint {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    font-family: var(--font-sans);
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    pointer-events: none;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.search-input:focus ~ .search-shortcut-hint {
+    display: none;
 }
 
 .search-input {
@@ -456,6 +509,7 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
 }
 
 .filter-chip {
@@ -1262,4 +1316,37 @@ body {
 .context-menu-item:hover {
     background: var(--bg-hover);
     color: var(--text-primary);
+}
+
+/* Responsive toolbar */
+@media (max-width: 1064px) {
+    .toolbar-spacer {
+        display: none;
+    }
+
+    .search-input {
+        min-width: unset !important;
+    }
+
+    .search-input::placeholder {
+        color: transparent;
+    }
+
+    .search-shortcut-hint {
+        right: auto;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+@media (max-width: 910px) {
+    .filter-group {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .scope-toggle {
+        display: none;
+    }
 }

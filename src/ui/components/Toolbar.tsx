@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { LocalePicker } from "./LocalePicker";
 
 type FilterType = "all" | "missing" | "empty" | "unreviewed";
@@ -48,7 +49,19 @@ export function Toolbar({
 	searchScope,
 	onSearchScopeChange,
 }: ToolbarProps) {
+	const searchRef = useRef<HTMLInputElement>(null);
 	const hasUnsaved = saveMode === "manual" && pendingCount > 0;
+
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+				e.preventDefault();
+				searchRef.current?.focus();
+			}
+		};
+		document.addEventListener("keydown", handler);
+		return () => document.removeEventListener("keydown", handler);
+	}, []);
 
 	if (hidden) {
 		return <div className="toolbar electrobun-webkit-app-region-drag" />;
@@ -57,15 +70,37 @@ export function Toolbar({
 	return (
 		<div className="toolbar electrobun-webkit-app-region-drag">
 			<div className="search-group">
-				<input
-					className="search-input"
-					type="text"
-					placeholder={
-						searchScope === "all" ? "Search all namespaces..." : "Search current namespace..."
-					}
-					value={search}
-					onChange={(e) => onSearchChange(e.target.value)}
-				/>
+				<div className="search-input-wrapper">
+					<input
+						ref={searchRef}
+						className="search-input"
+						type="text"
+						placeholder={
+							searchScope === "all" ? "Search all namespaces..." : "Search current namespace..."
+						}
+						value={search}
+						onChange={(e) => onSearchChange(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === "Escape") {
+								(e.target as HTMLInputElement).blur();
+							}
+						}}
+					/>
+					{search ? (
+						<button
+							type="button"
+							className="search-clear-btn"
+							onClick={() => onSearchChange("")}
+							title="Clear search"
+						>
+							&times;
+						</button>
+					) : (
+						<kbd className="search-shortcut-hint">
+							{navigator.platform.startsWith("Mac") ? "\u2318" : "Ctrl"}+F
+						</kbd>
+					)}
+				</div>
 				<div className="scope-toggle">
 					<button
 						type="button"
