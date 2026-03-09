@@ -13,26 +13,6 @@ Rosetta connects to your running Electron app via WebSocket and hot-reloads tran
 - Dark and light theme (follows system preference)
 - Supports nested JSON structures with dot-notation flattening
 
-## Project structure
-
-```
-src/
-  bun/          # Main process (Electrobun/Bun runtime)
-    index.ts    # Window creation, RPC handlers
-    store.ts    # In-memory translation store with disk sync
-    watcher.ts  # File watcher (chokidar)
-    connector.ts # WebSocket server for live preview
-  ui/           # Webview (React + Vite)
-    App.tsx     # Root component
-    components/ # Sidebar, EditorTable, Toolbar, StatusBar, EditableCell
-    hooks/      # useStore (RPC bridge)
-    styles/     # CSS with custom properties
-  shared/       # Types and utilities shared between bun and ui
-packages/
-  rosetta-connect/ # npm package for Electron app integration
-tests/             # bun:test suite
-```
-
 ## Getting started
 
 ### Prerequisites
@@ -98,9 +78,9 @@ import i18next from "i18next";
 import { connectRosetta } from "rosetta-connect";
 
 if (process.env.NODE_ENV === "development") {
-	const disconnect = connectRosetta(i18next, { port: 4871 });
+    const disconnect = connectRosetta(i18next, { port: 4871 });
 
-	// Call disconnect() to stop
+    // Call disconnect() to stop
 }
 ```
 
