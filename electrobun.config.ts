@@ -4,7 +4,7 @@ export default {
 	app: {
 		name: "Rosetta",
 		identifier: "dev.rosetta.i18n",
-		version: "0.2.2",
+		version: "0.2.3",
 	},
 	build: {
 		bun: {
