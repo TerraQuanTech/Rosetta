@@ -67,7 +67,9 @@ Each top-level directory is a locale. JSON files and subdirectories become names
 <details>
 <summary>Why does this exist? There are other i18n editors out there.</summary>
 
-> Most of them are full-blown platforms — cloud-hosted, team-based, with pricing tiers and onboarding flows. Great if you need that, but overkill if you just want to edit some JSON files. Rosetta is a local desktop app that opens a folder and lets you work. It's meant to be trivially easy to set up and operate, even for non-technical people like translators who just need to fill in strings.
+> Most of them are full-blown platforms — cloud-hosted, team-based, with pricing tiers and onboarding flows. Great if you need that, but overkill if you just want to edit some JSON files.
+>
+> Rosetta is a local desktop app that opens a folder and lets you work. It's meant to be trivially easy to set up and operate, even for non-technical people like translators who just need to fill in strings.
 
 </details>
 
@@ -83,7 +85,9 @@ Each top-level directory is a locale. JSON files and subdirectories become names
 <details>
 <summary>Is this the right tool for my team?</summary>
 
-> If you're a large team with multiple translators working simultaneously and need collaboration features, access control, or translation memory — look at dedicated platforms like Crowdin or Lokalise. If you're a small dev team that either does translations in-house or sends out one-off tasks to freelance translators, Rosetta is built for you.
+> If you're a large team with multiple translators working simultaneously and need collaboration features, access control, or translation memory — look at dedicated platforms like [Crowdin](https://crowdin.com/) or [Lokalise](https://lokalise.com/).
+>
+> If you're a small dev team that either does translations in-house or sends out one-off tasks to freelance translators, Rosetta is built for you.
 
 </details>
 
