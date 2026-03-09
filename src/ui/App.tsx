@@ -285,7 +285,7 @@ export default function App() {
 				namespaces={store.namespaces}
 				activeNamespace={view === "settings" ? null : effectiveNamespace}
 				onSelect={handleSelectNamespace}
-				onOpenSettings={() => setView("settings")}
+				onOpenSettings={() => setView((v) => (v === "settings" ? "editor" : "settings"))}
 				onCreateNamespace={(ns) => createNamespace({ namespace: ns })}
 				onDeleteNamespace={(ns) => {
 					if (effectiveNamespace === ns) setActiveNamespace(null);
