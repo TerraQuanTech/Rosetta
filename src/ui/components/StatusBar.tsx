@@ -24,11 +24,7 @@ export function StatusBar({
 			<div className="statusbar-item">{totalKeys} keys</div>
 
 			{missingCount > 0 && (
-				<button
-					type="button"
-					className="statusbar-item statusbar-btn"
-					onClick={onShowMissing}
-				>
+				<button type="button" className="statusbar-item statusbar-btn" onClick={onShowMissing}>
 					<span className="status-dot red" />
 					{missingCount} missing
 				</button>

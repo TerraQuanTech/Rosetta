@@ -397,7 +397,6 @@ if (!isMac) {
 	mainWindow.on("resize", () => {
 		mainWindow?.webview.rpc?.send.forceRelayout({});
 	});
-
 }
 
 ApplicationMenu.on("application-menu-clicked", async (event: any) => {

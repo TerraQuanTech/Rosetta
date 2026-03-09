@@ -18,6 +18,7 @@ export default function App() {
 		loading,
 		updateKey,
 		createKey,
+		renameKey,
 		createNamespace,
 		deleteNamespace,
 		addLocale,
@@ -34,7 +35,7 @@ export default function App() {
 
 	// Signal the bun side that the UI has painted (triggers Windows resize hack)
 	useEffect(() => {
-		window.rpcBridge?.("windowReady", {});
+		(window as any).rpcBridge?.("windowReady", {});
 	}, []);
 
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function App() {
 	const [showAddKey, setShowAddKey] = useState(false);
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 	const [searchScope, setSearchScope] = useState<"current" | "all">("current");
+	const [renamingKey, setRenamingKey] = useState<string | null>(null);
 	const [contextMenu, setContextMenu] = useState<{
 		x: number;
 		y: number;
@@ -236,19 +238,16 @@ export default function App() {
 		setContextMenu(null);
 	}, []);
 
-	const handleFocusKey = useCallback(
-		(key: string, namespace?: string) => {
-			if (namespace) {
-				setActiveNamespace(namespace);
-			}
-			setSearch(key);
-			setFilter("all");
-			setSearchScope("current");
-			setView("editor");
-			setContextMenu(null);
-		},
-		[],
-	);
+	const handleFocusKey = useCallback((key: string, namespace?: string) => {
+		if (namespace) {
+			setActiveNamespace(namespace);
+		}
+		setSearch(key);
+		setFilter("all");
+		setSearchScope("current");
+		setView("editor");
+		setContextMenu(null);
+	}, []);
 
 	if (loading) {
 		return (
@@ -367,8 +366,11 @@ export default function App() {
 						search={search}
 						filter={filter}
 						onUpdateKey={updateKey}
+						onRenameKey={renameKey}
 						onToggleReview={toggleReview}
 						onFocusKey={(e, key) => handleContextMenu(e, "key", key, effectiveNamespace!)}
+						renamingKey={renamingKey}
+						onRenamingKeyChange={setRenamingKey}
 					/>
 				) : (
 					<div className="empty-state">
@@ -442,6 +444,18 @@ export default function App() {
 					>
 						Focus on {contextMenu.type === "namespace" ? "namespace" : "key"}
 					</button>
+					{contextMenu.type === "key" && (
+						<button
+							type="button"
+							className="context-menu-item"
+							onClick={() => {
+								setRenamingKey(contextMenu.value);
+								setContextMenu(null);
+							}}
+						>
+							Rename key
+						</button>
+					)}
 				</div>
 			)}
 		</div>
