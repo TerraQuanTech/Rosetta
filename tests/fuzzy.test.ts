@@ -22,17 +22,17 @@ describe("fuzzyMatch", () => {
 		expect(fuzzyMatch("HeLLo", "hElLO")).toBe(true);
 	});
 
-	test("characters in order but not contiguous", () => {
-		expect(fuzzyMatch("btn", "button")).toBe(true);
-		expect(fuzzyMatch("btsv", "buttons.save")).toBe(true);
-		expect(fuzzyMatch("cmmn", "common")).toBe(true);
-		expect(fuzzyMatch("hlo", "hello")).toBe(true);
+	test("prefix and near-matches with typo tolerance", () => {
+		expect(fuzzyMatch("buton", "button")).toBe(true);
+		expect(fuzzyMatch("commo", "common")).toBe(true);
+		expect(fuzzyMatch("setings", "settings")).toBe(true);
 	});
 
-	test("dot-separated key paths", () => {
-		expect(fuzzyMatch("btn.sv", "buttons.save")).toBe(true);
-		expect(fuzzyMatch("usr.prof", "user.profile")).toBe(true);
-		expect(fuzzyMatch("a.b.c", "alpha.beta.gamma")).toBe(false);
+	test("rejects scattered character subsequences", () => {
+		// This was the original problem — "Generator" matching "errors.page_error_message"
+		expect(fuzzyMatch("btn", "button")).toBe(false);
+		expect(fuzzyMatch("btsv", "buttons.save")).toBe(false);
+		expect(fuzzyMatch("cmmn", "common")).toBe(false);
 	});
 
 	test("no match when characters are out of order", () => {
@@ -55,16 +55,22 @@ describe("fuzzyMatch", () => {
 		expect(fuzzyMatch("z", "hello")).toBe(false);
 	});
 
-	test("repeated characters consume left-to-right", () => {
+	test("repeated characters", () => {
 		expect(fuzzyMatch("oo", "foobar")).toBe(true);
 		expect(fuzzyMatch("ooo", "foobar")).toBe(false);
 	});
 
 	test("realistic translation key searches", () => {
 		expect(fuzzyMatch("nav", "navigation")).toBe(true);
-		expect(fuzzyMatch("errmsg", "error.message")).toBe(true);
-		expect(fuzzyMatch("sttgs", "settings")).toBe(true);
-		expect(fuzzyMatch("lgn", "login")).toBe(true);
-		expect(fuzzyMatch("hm.ttl", "home.title")).toBe(true);
+		expect(fuzzyMatch("error", "error.message")).toBe(true);
+		expect(fuzzyMatch("sett", "settings")).toBe(true);
+		expect(fuzzyMatch("login", "login")).toBe(true);
+		expect(fuzzyMatch("home", "home.title")).toBe(true);
+		expect(fuzzyMatch("genertor", "generator")).toBe(true);
+	});
+
+	test("does not match unrelated strings", () => {
+		expect(fuzzyMatch("generator", "errors.page_error_message")).toBe(false);
+		expect(fuzzyMatch("button", "schedule")).toBe(false);
 	});
 });

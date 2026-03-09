@@ -17,6 +17,7 @@
 		"typecheck": "bunx tsc --noEmit"
 	},
 	"dependencies": {
+		"@leeoniya/ufuzzy": "^1.0.19",
 		"chokidar": "^4.0.0",
 		"commander": "^12.1.0",
 		"electrobun": "latest",
