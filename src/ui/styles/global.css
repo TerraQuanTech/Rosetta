@@ -174,9 +174,9 @@ body {
 .sidebar-footer-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 28px;
+    gap: 6px;
     height: 28px;
+    padding: 0 8px;
     background: none;
     border: none;
     border-radius: var(--radius-sm);
