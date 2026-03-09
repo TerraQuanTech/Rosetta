@@ -101,7 +101,6 @@ export function EditorTable({
 	const filteredKeys = useMemo(() => {
 		let keys = Object.keys(entries).sort();
 
-		// Search filter
 		if (search) {
 			const q = search.toLowerCase();
 			keys = keys.filter((key) => {
@@ -111,7 +110,6 @@ export function EditorTable({
 			});
 		}
 
-		// Status filter
 		if (filter === "missing") {
 			keys = keys.filter((key) => locales.some((locale) => entries[key][locale] === undefined));
 		} else if (filter === "empty") {

@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { KeyCreate, ReviewToggle, RosettaSettings } from "../shared/types";
+import type { KeyCreate, RosettaSettings } from "../shared/types";
 import { AddKeyDialog } from "./components/AddKeyDialog";
 import { EditorTable } from "./components/EditorTable";
+import { GlobalSearchResults } from "./components/GlobalSearchResults";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { Sidebar } from "./components/Sidebar";
 import { StatusBar } from "./components/StatusBar";
 import { Toolbar } from "./components/Toolbar";
+import { UnsavedDialog } from "./components/UnsavedDialog";
 import { useConnectorStatus } from "./hooks/useConnectorStatus";
 import { useSettings } from "./hooks/useSettings";
 import { useTranslationStore } from "./hooks/useStore";
+import { findFirstLeaf } from "./utils/namespace";
 
 type ViewMode = "editor" | "settings";
 
@@ -59,14 +62,12 @@ export default function App() {
 	const pendingCount = pendingChanges.size;
 	const hasUnsaved = pendingCount > 0;
 
-	// Update window title with unsaved indicator
 	useEffect(() => {
 		const base = store?.localesDir ? `Rosetta — ${store.localesDir}` : "Rosetta";
 		const title = saveMode === "manual" && hasUnsaved ? `${base} *` : base;
 		window.rpcBridge?.("setWindowTitle", { title });
 	}, [hasUnsaved, saveMode, store?.localesDir]);
 
-	// Wrap updateSettings to emit theme changes to the main process
 	const handleUpdateSettings = useCallback(
 		(partial: Partial<RosettaSettings>) => {
 			updateSettings(partial);
@@ -74,7 +75,6 @@ export default function App() {
 		[updateSettings],
 	);
 
-	// Apply theme to body
 	useEffect(() => {
 		const theme = settings?.theme ?? "system";
 		const isDark =
@@ -86,12 +86,10 @@ export default function App() {
 		document.body.classList.toggle("light", !isDark);
 	}, [settings?.theme]);
 
-	// Keep saveMode ref in sync
 	useEffect(() => {
 		setSaveMode(saveMode);
 	}, [saveMode, setSaveMode]);
 
-	// Warn on close/refresh with unsaved changes
 	useEffect(() => {
 		if (!hasUnsaved) return;
 		const handler = (e: BeforeUnloadEvent) => {
@@ -101,7 +99,6 @@ export default function App() {
 		return () => window.removeEventListener("beforeunload", handler);
 	}, [hasUnsaved]);
 
-	// Cmd+S / Ctrl+S to save in manual mode
 	useEffect(() => {
 		if (saveMode !== "manual") return;
 		const handler = (e: KeyboardEvent) => {
@@ -114,7 +111,6 @@ export default function App() {
 		return () => window.removeEventListener("keydown", handler);
 	}, [saveMode, hasUnsaved, saveAll]);
 
-	// Cmd/Ctrl+. to toggle settings
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
 			if ((e.metaKey || e.ctrlKey) && e.key === ".") {
@@ -126,7 +122,6 @@ export default function App() {
 		return () => window.removeEventListener("keydown", handler);
 	}, []);
 
-	// Apply theme
 	const theme = settings?.theme;
 	useEffect(() => {
 		if (!theme) return;
@@ -137,7 +132,6 @@ export default function App() {
 		}
 	}, [theme]);
 
-	// Initialize visible locales from settings
 	useEffect(() => {
 		if (settings?.visibleLocales && visibleLocales === null) {
 			setVisibleLocales(settings.visibleLocales);
@@ -147,7 +141,6 @@ export default function App() {
 	const effectiveNamespace = activeNamespace ?? findFirstLeaf(store?.namespaces ?? []);
 	const effectiveLocales = visibleLocales ?? store?.locales ?? [];
 
-	// Global view: show all namespaces when scope is "all"
 	const isGlobalView = searchScope === "all";
 
 	const entries = useMemo(() => {
@@ -459,160 +452,4 @@ export default function App() {
 			)}
 		</div>
 	);
-}
-
-function UnsavedDialog({
-	pendingCount,
-	onSave,
-	onDiscard,
-	onCancel,
-}: {
-	pendingCount: number;
-	onSave: () => void;
-	onDiscard: () => void;
-	onCancel: () => void;
-}) {
-	return (
-		<div
-			className="dialog-overlay"
-			onClick={(e) => {
-				if (e.target === e.currentTarget) onCancel();
-			}}
-			onKeyDown={(e) => {
-				if (e.key === "Escape") onCancel();
-			}}
-		>
-			<div className="dialog">
-				<h3>Unsaved changes</h3>
-				<p style={{ color: "var(--text-secondary)", marginBottom: 20, lineHeight: 1.5 }}>
-					You have {pendingCount} unsaved {pendingCount === 1 ? "change" : "changes"}. What would
-					you like to do?
-				</p>
-				<div className="dialog-actions">
-					<button type="button" className="toolbar-btn" onClick={onDiscard}>
-						Discard
-					</button>
-					<button type="button" className="toolbar-btn" onClick={onCancel}>
-						Cancel
-					</button>
-					<button type="button" className="toolbar-btn primary" onClick={onSave}>
-						Save All
-					</button>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-/** Global search results — shows entries grouped by namespace */
-function GlobalSearchResults({
-	results,
-	reviews,
-	locales,
-	search,
-	filter,
-	onUpdateKey,
-	onToggleReview,
-	onFocusNamespace,
-	onFocusKey,
-}: {
-	results: Record<string, Record<string, Record<string, string>>>;
-	reviews: Record<string, Record<string, Record<string, boolean>>>;
-	locales: string[];
-	search: string;
-	filter: "all" | "missing" | "empty" | "unreviewed";
-	onUpdateKey: (update: { namespace: string; key: string; locale: string; value: string }) => void;
-	onToggleReview: (toggle: ReviewToggle) => void;
-	onFocusNamespace: (e: React.MouseEvent, ns: string) => void;
-	onFocusKey: (e: React.MouseEvent, key: string, namespace?: string) => void;
-}) {
-	// Filter out namespaces with no keys surviving search + filter
-	const namespaces = Object.keys(results)
-		.filter((ns) => {
-			const entries = results[ns];
-			let keys = Object.keys(entries);
-			if (keys.length === 0) return false;
-
-			if (search) {
-				const q = search.toLowerCase();
-				keys = keys.filter((key) => {
-					if (key.toLowerCase().includes(q)) return true;
-					return Object.values(entries[key]).some((v) => v.toLowerCase().includes(q));
-				});
-			}
-
-			if (filter === "missing") {
-				keys = keys.filter((key) => locales.some((l) => entries[key][l] === undefined));
-			} else if (filter === "empty") {
-				keys = keys.filter((key) =>
-					locales.some((l) => entries[key][l] === undefined || entries[key][l] === ""),
-				);
-			} else if (filter === "unreviewed") {
-				keys = keys.filter((key) =>
-					locales.some((l) => {
-						const hasValue = entries[key][l] !== undefined;
-						const isReviewed = reviews?.[ns]?.[key]?.[l] === true;
-						return hasValue && !isReviewed;
-					}),
-				);
-			}
-
-			return keys.length > 0;
-		})
-		.sort();
-
-	if (namespaces.length === 0) {
-		return (
-			<div className="empty-state">
-				<h2>No keys</h2>
-				<p>
-					{search
-						? `No translation keys match "${search}" across any namespace.`
-						: "No translation keys found."}
-				</p>
-			</div>
-		);
-	}
-
-	return (
-		<div className="global-search-results">
-			{namespaces.map((ns) => (
-				<div key={ns}>
-					<div
-						className="search-result-namespace"
-						onContextMenu={(e) => {
-							onFocusNamespace(e, ns);
-						}}
-					>
-						{ns}
-					</div>
-					<EditorTable
-						locales={locales}
-						entries={results[ns]}
-						reviews={reviews?.[ns]}
-						namespace={ns}
-						search={search}
-						filter={filter}
-						onUpdateKey={onUpdateKey}
-						onToggleReview={onToggleReview}
-						onFocusKey={(e, key) => onFocusKey(e, key, ns)}
-						hideEmptyFiltered
-					/>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function findFirstLeaf(
-	nodes: { path: string; children?: { path: string; children?: any[] }[] }[],
-): string | null {
-	for (const node of nodes) {
-		if (!node.children || node.children.length === 0) {
-			return node.path;
-		}
-		const leaf = findFirstLeaf(node.children);
-		if (leaf) return leaf;
-	}
-	return null;
 }

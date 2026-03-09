@@ -30,7 +30,6 @@ export function useConnectorStatus(): ConnectorStatus {
 		apps: [],
 	});
 
-	// Fetch initial status
 	const fetchStatus = useCallback(async () => {
 		if (!rpcRequest) return;
 		try {
@@ -43,16 +42,13 @@ export function useConnectorStatus(): ConnectorStatus {
 				clientCount: result.connected ? 1 : 0,
 				apps: [],
 			});
-		} catch {
-			// Ignore
-		}
+		} catch {}
 	}, []);
 
 	useEffect(() => {
 		fetchStatus();
 	}, [fetchStatus]);
 
-	// Listen for live updates
 	useEffect(() => {
 		const handler: StatusCallback = (s) => setStatus(s);
 		statusListeners.add(handler);

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { RosettaSettings } from "../../shared/types";
 
-// Reuse the same RPC bridge from useStore
 let rpcRequest: ((method: string, params: unknown) => Promise<unknown>) | null = null;
 
 export function setSettingsRpcRequest(fn: (method: string, params: unknown) => Promise<unknown>) {
@@ -49,7 +48,6 @@ export function useSettings() {
 	}, [refresh]);
 
 	const updateSettings = useCallback(async (partial: Partial<RosettaSettings>) => {
-		// Optimistic
 		setSettings((prev) => (prev ? { ...prev, ...partial } : prev));
 		await callRpc("updateSettings", partial);
 	}, []);

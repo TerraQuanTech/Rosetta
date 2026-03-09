@@ -10,7 +10,6 @@ import type {
 	TranslationStore,
 } from "../../shared/types";
 
-// --- RPC bridge (wired in main.tsx) ---
 let rpcRequest: ((method: string, params: unknown) => Promise<unknown>) | null = null;
 
 export function setRpcRequest(fn: (method: string, params: unknown) => Promise<unknown>) {
@@ -24,7 +23,6 @@ async function callRpc<T>(method: string, params: unknown = {}): Promise<T> {
 	throw new Error("RPC not initialized");
 }
 
-// --- Message bridge (wired in main.tsx) ---
 type StoreUpdateCallback = (store: TranslationStore) => void;
 const storeUpdateListeners = new Set<StoreUpdateCallback>();
 
@@ -36,7 +34,6 @@ export function setMessageHandler(register: (handler: StoreUpdateCallback) => vo
 	});
 }
 
-// --- Hook ---
 export function useTranslationStore() {
 	const [store, setStore] = useState<TranslationStore | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -55,7 +52,6 @@ export function useTranslationStore() {
 		}
 	}, []);
 
-	// Listen for bun-side store updates
 	useEffect(() => {
 		const handler: StoreUpdateCallback = (newStore) => setStore(newStore);
 		storeUpdateListeners.add(handler);
@@ -65,7 +61,6 @@ export function useTranslationStore() {
 	}, []);
 
 	const updateKey = useCallback(async (update: KeyUpdate) => {
-		// Optimistic update — also clear review status when value changes
 		setStore((prev) => {
 			if (!prev) return prev;
 			const next = {
@@ -76,7 +71,6 @@ export function useTranslationStore() {
 			const ns = { ...next.translations[update.namespace] };
 			ns[update.key] = { ...ns[update.key], [update.locale]: update.value };
 			next.translations[update.namespace] = ns;
-			// Clear review for changed cell
 			if (next.reviews[update.namespace]?.[update.key]?.[update.locale]) {
 				const revNs = { ...next.reviews[update.namespace] };
 				const revKey = { ...revNs[update.key] };
@@ -96,7 +90,6 @@ export function useTranslationStore() {
 		});
 
 		if (saveModeRef.current === "manual") {
-			// Buffer change locally
 			const changeKey = `${update.namespace}\0${update.key}\0${update.locale}`;
 			setPendingChanges((prev) => {
 				const next = new Map(prev);
@@ -112,7 +105,6 @@ export function useTranslationStore() {
 		const changes = Array.from(pendingChanges.values());
 		if (changes.length === 0) return;
 
-		// Send all pending changes to backend
 		for (const update of changes) {
 			await callRpc("updateKey", update);
 		}
@@ -129,7 +121,6 @@ export function useTranslationStore() {
 	}, []);
 
 	const toggleReview = useCallback(async (toggle: ReviewToggle) => {
-		// Optimistic update
 		setStore((prev) => {
 			if (!prev) return prev;
 			const next = { ...prev, reviews: { ...prev.reviews } };

@@ -9,7 +9,6 @@ import { setMessageHandler, setRpcRequest } from "./hooks/useStore";
 import { forceRelayout } from "./hooks/useWindowsRelayoutHack";
 import "./styles/global.css";
 
-// --- Wire Electrobun RPC ---
 let storeMessageHandler: ((data: any) => void) | null = null;
 let settingsMessageHandler: ((data: any) => void) | null = null;
 let connectorStatusHandler: ((data: any) => void) | null = null;
@@ -37,20 +36,17 @@ const rpc = Electroview.defineRPC<RosettaRPC>({
 
 const view = new Electroview({ rpc });
 
-// Bridge RPC requests
 const rpcBridge = async (method: string, params: unknown) => {
 	const requestProxy = view.rpc!.request as any;
 	return requestProxy[method](params);
 };
 
-// Expose RPC bridge globally for UI components
 window.rpcBridge = rpcBridge as Window["rpcBridge"];
 
 setRpcRequest(rpcBridge);
 setSettingsRpcRequest(rpcBridge);
 setConnectorRpcRequest(rpcBridge);
 
-// Bridge incoming messages
 setMessageHandler((handler) => {
 	storeMessageHandler = handler;
 });
@@ -61,7 +57,6 @@ setConnectorMessageHandler((handler) => {
 	connectorStatusHandler = handler;
 });
 
-// Disable browser context menu (reload / inspect element) in production
 if (!location.href.startsWith("http://localhost")) {
 	document.addEventListener("contextmenu", (e) => e.preventDefault());
 }
@@ -71,7 +66,6 @@ if (navigator.platform.startsWith("Mac")) {
 	document.documentElement.style.setProperty("--titlebar-inset", "38px");
 }
 
-// --- Render ---
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
 		<App />

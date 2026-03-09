@@ -36,7 +36,6 @@ export function AddKeyDialog({
 		return Array.from(set).sort();
 	}, [existingKeys]);
 
-	// Filter prefix suggestions based on current input
 	const suggestions = useMemo(() => {
 		if (!prefix) return prefixes.slice(0, 8);
 		const q = prefix.toLowerCase();
@@ -46,7 +45,6 @@ export function AddKeyDialog({
 	const fullKey = prefix ? `${prefix}.${suffix}` : suffix;
 
 	const resetForm = useCallback(() => {
-		// Keep prefix, clear the rest
 		setSuffix("");
 		setValues(Object.fromEntries(locales.map((l) => [l, ""])));
 		setJustAdded(null);
@@ -61,7 +59,6 @@ export function AddKeyDialog({
 			setJustAdded(key);
 			if (keepOpen) {
 				resetForm();
-				// Re-focus the suffix input after a tick
 				setTimeout(() => suffixRef.current?.focus(), 0);
 			} else {
 				onClose();
@@ -70,7 +67,6 @@ export function AddKeyDialog({
 		[suffix, fullKey, values, onAdd, onClose, resetForm],
 	);
 
-	// Auto-focus suffix input on mount
 	useEffect(() => {
 		suffixRef.current?.focus();
 	}, []);
@@ -103,7 +99,6 @@ export function AddKeyDialog({
 					</div>
 				)}
 
-				{/* Prefix selector */}
 				<div className="dialog-field">
 					<label htmlFor="add-key-prefix">Prefix</label>
 					<div style={{ position: "relative" }}>
@@ -145,7 +140,6 @@ export function AddKeyDialog({
 					</div>
 				</div>
 
-				{/* Key name (suffix) */}
 				<div className="dialog-field">
 					<label htmlFor="add-key-suffix">Key{prefix ? ` (after ${prefix}.)` : ""}</label>
 					<input
@@ -176,7 +170,6 @@ export function AddKeyDialog({
 					)}
 				</div>
 
-				{/* Locale values */}
 				{locales.map((locale) => (
 					<div className="dialog-field" key={locale}>
 						<label htmlFor={`add-key-${locale}`}>{locale.toUpperCase()}</label>

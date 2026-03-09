@@ -20,7 +20,6 @@ export function startWatcher(
 		if (typeof filePath !== "string") return;
 		if (!filePath.endsWith(".json")) return;
 
-		// Skip if we just wrote this file
 		if (store.isWriteLocked(filePath)) {
 			store.clearWriteLock(filePath);
 			return;

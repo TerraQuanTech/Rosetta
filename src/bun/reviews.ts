@@ -39,7 +39,6 @@ export class ReviewManager {
 			this.reviews[namespace][key][locale] = true;
 		} else {
 			delete this.reviews[namespace][key][locale];
-			// Clean up empty objects
 			if (Object.keys(this.reviews[namespace][key]).length === 0) {
 				delete this.reviews[namespace][key];
 			}
@@ -51,7 +50,6 @@ export class ReviewManager {
 		return this.save();
 	}
 
-	/** Clear review status for a specific key+locale (called when value changes) */
 	async clearReview(namespace: string, key: string, locale: string): Promise<void> {
 		if (this.reviews[namespace]?.[key]?.[locale]) {
 			delete this.reviews[namespace][key][locale];

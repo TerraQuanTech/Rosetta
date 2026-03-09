@@ -29,7 +29,6 @@ export class ConnectorServer {
 		return this.clients.size;
 	}
 
-	/** Get info about connected clients */
 	get connectedApps(): string[] {
 		return [...this.clients].map((c) => c.appName || "Unknown").filter(Boolean);
 	}
@@ -38,7 +37,6 @@ export class ConnectorServer {
 		this._port = port;
 	}
 
-	/** Subscribe to connection status changes */
 	onStatusChange(listener: StatusListener): () => void {
 		this.statusListeners.add(listener);
 		return () => this.statusListeners.delete(listener);
@@ -64,7 +62,6 @@ export class ConnectorServer {
 					}
 					return undefined;
 				}
-				// Health check endpoint
 				if (url.pathname === "/health") {
 					return Response.json({ status: "ok", version: "0.1.0" });
 				}
@@ -81,7 +78,6 @@ export class ConnectorServer {
 					try {
 						const data = JSON.parse(String(message));
 						if (data.type === "hello") {
-							// Find the client and set the appName
 							for (const client of this.clients) {
 								if (client.ws === ws) {
 									client.appName = data.appName;
@@ -91,9 +87,7 @@ export class ConnectorServer {
 							console.log(`[connector] App identified: ${data.appName}`);
 							this.notifyStatus();
 						}
-					} catch {
-						// Ignore
-					}
+					} catch {}
 				},
 				close: (ws) => {
 					for (const client of this.clients) {
@@ -123,9 +117,7 @@ export class ConnectorServer {
 		for (const client of this.clients) {
 			try {
 				(client.ws as any).send(message);
-			} catch {
-				// Client probably disconnected
-			}
+			} catch {}
 		}
 	}
 
@@ -139,9 +131,7 @@ export class ConnectorServer {
 		for (const client of this.clients) {
 			try {
 				(client.ws as any).send(message);
-			} catch {
-				// Client probably disconnected
-			}
+			} catch {}
 		}
 	}
 

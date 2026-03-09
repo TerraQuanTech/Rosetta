@@ -1,93 +1,31 @@
-// Check for CLI mode FIRST (synchronously, before imports)
 const args = process.argv.slice(2);
 const cliCommand = args[0];
 const isCliMode = cliCommand && ["missing", "stats", "complete", "help"].includes(cliCommand);
 
 if (isCliMode) {
-	// CLI mode - only import CLI handler
 	const { handleCliMode } = await import("./cli-mode");
 	await handleCliMode();
 	process.exit(0);
 }
 
-// UI mode - safe to import UI dependencies now
 import { ApplicationMenu, BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
 import type { RosettaRPC } from "../shared/types";
 import { ConnectorServer } from "./connector";
+import { buildApplicationMenu } from "./menu";
 import { ReviewManager } from "./reviews";
+import { buildRpcHandlers } from "./rpc-handlers";
 import { SettingsManager } from "./settings";
 import { TranslationFileStore } from "./store";
 import { startWatcher } from "./watcher";
 
-// --- Application Menu (set early before any async work) ---
-const menuItems: Parameters<typeof ApplicationMenu.setApplicationMenu>[0] = [];
+ApplicationMenu.setApplicationMenu(buildApplicationMenu());
 
-// The "app name" menu is macOS-only (About, Hide, Quit live here on Mac)
-if (process.platform === "darwin") {
-	menuItems.push({
-		label: "Rosetta",
-		submenu: [
-			{ role: "about" },
-			{ type: "divider" },
-			{ role: "hide", accelerator: "cmd+h" },
-			{ role: "hideOthers", accelerator: "cmd+alt+h" },
-			{ role: "showAll" },
-			{ type: "divider" },
-			{ role: "quit", accelerator: "cmd+q" },
-		],
-	});
-}
-
-menuItems.push(
-	{
-		label: "File",
-		submenu: [
-			{
-				label: "Open Locales Folder...",
-				action: "openFolder",
-				accelerator: "cmd+o",
-			},
-			{ type: "divider" },
-			{ role: "close", accelerator: "cmd+w" },
-		],
-	},
-	{
-		label: "Edit",
-		submenu: [
-			{ role: "undo", accelerator: "cmd+z" },
-			{ role: "redo", accelerator: "cmd+shift+z" },
-			{ type: "divider" },
-			{ role: "cut", accelerator: "cmd+x" },
-			{ role: "copy", accelerator: "cmd+c" },
-			{ role: "paste", accelerator: "cmd+v" },
-			{ role: "pasteAndMatchStyle", accelerator: "cmd+shift+v" },
-			{ role: "selectAll", accelerator: "cmd+a" },
-		],
-	},
-	{
-		label: "Window",
-		submenu: [
-			{ role: "minimize", accelerator: "cmd+m" },
-			{ role: "zoom" },
-			{ type: "divider" },
-			{ role: "toggleFullScreen", accelerator: "cmd+ctrl+f" },
-			{ type: "divider" },
-			{ role: "bringAllToFront" },
-		],
-	},
-);
-
-ApplicationMenu.setApplicationMenu(menuItems);
-
-// --- Configuration ---
 const DEV_SERVER_PORT = 5174;
 const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 
-// --- Settings ---
 const settings = new SettingsManager();
 await settings.load();
 
-// Don't use process.argv[2] if in CLI mode
 let currentLocalesDir =
 	!isCliMode && process.argv[2] ? process.argv[2] : settings.get().defaultLocalesDir || "";
 let store = new TranslationFileStore(currentLocalesDir);
@@ -99,7 +37,6 @@ if (settings.get().connectorEnabled) {
 	connector.start();
 }
 
-// Forward connector status changes to UI
 connector.onStatusChange((connected, clientCount) => {
 	mainWindow?.webview.rpc?.send.connectorStatusChanged({
 		connected,
@@ -171,212 +108,25 @@ async function getMainViewUrl(): Promise<string> {
 	return "views://mainview/index.html";
 }
 
-// --- RPC Setup ---
+const url = await getMainViewUrl();
+const isMac = (await import("node:os")).platform() === "darwin";
+
 const rpc = BrowserView.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
 	handlers: {
-		requests: {
-			getStore: () => ({
-				...store.getStore(),
-				reviews: reviews.get(),
-				localesDir: currentLocalesDir,
-			}),
-
-			updateKey: async (params) => {
-				const ok = await store.updateKey(params);
-				if (ok) {
-					connector.broadcastUpdate(params);
-					// Clear review when value changes
-					await reviews.clearReview(params.namespace, params.key, params.locale);
-				}
-				return { ok };
-			},
-
-			createKey: async (params) => {
-				const ok = await store.createKey(params);
-				if (ok) {
-					for (const locale of Object.keys(params.values)) {
-						connector.broadcastReload(params.namespace, locale);
-					}
-				}
-				return { ok };
-			},
-
-			deleteKey: async (params) => {
-				const ok = await store.deleteKey(params);
-				if (ok) {
-					for (const locale of store.getStore().locales) {
-						connector.broadcastReload(params.namespace, locale);
-					}
-				}
-				return { ok };
-			},
-
-			renameKey: async (params) => {
-				const ok = await store.renameKey(params);
-				if (ok) {
-					for (const locale of store.getStore().locales) {
-						connector.broadcastReload(params.namespace, locale);
-					}
-				}
-				return { ok };
-			},
-
-			createNamespace: async (params) => {
-				const ok = await store.createNamespace(params.namespace);
-				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({
-						...store.getStore(),
-						reviews: reviews.get(),
-						localesDir: currentLocalesDir,
-					});
-				}
-				return { ok };
-			},
-
-			deleteNamespace: async (params) => {
-				const ok = await store.deleteNamespace(params.namespace);
-				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({
-						...store.getStore(),
-						reviews: reviews.get(),
-						localesDir: currentLocalesDir,
-					});
-				}
-				return { ok };
-			},
-
-			addLocale: async (params) => {
-				const ok = await store.addLocale(params.locale, params.copyFrom);
-				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({
-						...store.getStore(),
-						reviews: reviews.get(),
-						localesDir: currentLocalesDir,
-					});
-				}
-				return { ok };
-			},
-
-			removeLocale: async (params) => {
-				const ok = await store.removeLocale(params.locale);
-				if (ok) {
-					mainWindow?.webview.rpc?.send.storeUpdated({
-						...store.getStore(),
-						reviews: reviews.get(),
-						localesDir: currentLocalesDir,
-					});
-				}
-				return { ok };
-			},
-
-			openLocalesDir: async () => {
-				const paths = await Utils.openFileDialog({
-					startingFolder: currentLocalesDir || "~/",
-					canChooseFiles: false,
-					canChooseDirectory: true,
-					allowsMultipleSelection: false,
-				});
-
-				const selected = paths[0];
-				if (!selected || selected === "") return { path: null };
-
-				await loadLocalesDir(selected);
-				return { path: selected };
-			},
-
-			getConnectorStatus: () => ({
-				connected: connector.connected,
-				port: connector.port,
-			}),
-
-			getSettings: () => settings.get(),
-
-			toggleReview: async (params) => {
-				const ok = await reviews.toggle(params);
-				return { ok };
-			},
-
-			updateSettings: async (params) => {
-				const updated = await settings.update(params);
-
-				// Handle connector changes
-				if (params.connectorEnabled !== undefined || params.connectorPort !== undefined) {
-					connector.stop();
-					if (updated.connectorEnabled) {
-						connector.updatePort(updated.connectorPort);
-						connector.start();
-					}
-				}
-
-				mainWindow?.webview.rpc?.send.settingsUpdated(updated);
-				return { ok: true };
-			},
-
-			setWindowTitle: (params) => {
-				mainWindow?.setTitle(params.title);
-				return { ok: true };
-			},
-
-			windowReady: () => {
-				// HACK: On Windows, jitter the window size to force the compositor
-				// to settle. Called by the UI after React's first paint.
-				if (!isMac) {
-					const { width, height } = mainWindow.getSize();
-					mainWindow.setSize(width + 1, height);
-					mainWindow.setSize(width, height);
-				}
-				return { ok: true };
-			},
-
-			installCli: async () => {
-				try {
-					const { execSync } = await import("node:child_process");
-					const { platform } = await import("node:os");
-					const { dirname, join } = await import("node:path");
-
-					// Get the executable path and work backwards to find scripts
-					// process.execPath: /path/to/App.app/Contents/MacOS/bun
-					// We need: /path/to/App.app/Contents/Resources/app/scripts
-					const macosDir = dirname(process.execPath); // .../Contents/MacOS
-					const contentsDir = dirname(macosDir); // .../Contents
-					const scriptDir = join(contentsDir, "Resources", "app", "scripts");
-
-					if (platform() === "win32") {
-						// Windows
-						execSync(
-							`powershell -Command "Start-Process cmd.exe -ArgumentList '/c', 'call \\"${scriptDir}\\install-cli.bat\\"' -Verb RunAs -Wait"`,
-							{
-								stdio: "pipe",
-							},
-						);
-					} else {
-						// macOS/Linux
-						execSync(`bash "${scriptDir}/install-cli.sh"`, { stdio: "pipe" });
-					}
-
-					return {
-						success: true,
-						message: "CLI installed successfully. You can now use 'rosetta' in your terminal.",
-					};
-				} catch (err) {
-					const msg = err instanceof Error ? err.message : String(err);
-					// Extract the actual error message
-					const errorMsg =
-						typeof err === "object" && err !== null && "stderr" in err
-							? (err as any).stderr?.toString() || msg
-							: msg;
-					return { success: false, message: `Failed to install CLI: ${errorMsg}` };
-				}
-			},
-		},
+		requests: buildRpcHandlers({
+			getStore: () => store,
+			reviews,
+			connector,
+			settings,
+			getMainWindow: () => mainWindow,
+			getCurrentLocalesDir: () => currentLocalesDir,
+			loadLocalesDir,
+			isMac,
+		}),
 		messages: {},
 	},
 });
-
-// --- Create window ---
-const url = await getMainViewUrl();
-const isMac = (await import("node:os")).platform() === "darwin";
 
 const mainWindow = new BrowserWindow({
 	title: currentLocalesDir ? `Rosetta — ${currentLocalesDir}` : "Rosetta",

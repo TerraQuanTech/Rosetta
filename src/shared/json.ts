@@ -32,7 +32,6 @@ export function unflatten(
 ): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
-	// Use provided key order, or fall back to insertion order
 	const keys = keyOrder
 		? [...keyOrder, ...Object.keys(flat).filter((k) => !keyOrder.includes(k))]
 		: Object.keys(flat);

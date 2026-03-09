@@ -229,7 +229,6 @@ async function listKeys(
 	console.log();
 
 	if (namespace && locale) {
-		// Show keys for specific namespace and locale
 		const nsData = storeData.translations[namespace];
 		if (!nsData) {
 			console.log(`Namespace not found: ${namespace}`);
@@ -247,7 +246,6 @@ async function listKeys(
 			console.log(`  ${status} ${key}: ${preview}`);
 		}
 	} else if (namespace) {
-		// Show keys for namespace across all locales
 		const nsData = storeData.translations[namespace];
 		if (!nsData) {
 			console.log(`Namespace not found: ${namespace}`);
@@ -261,7 +259,6 @@ async function listKeys(
 			console.log(`  [${locales}] ${key}`);
 		}
 	} else {
-		// Show all namespaces and key counts
 		console.log("All namespaces:");
 		for (const nsNode of storeData.namespaces) {
 			const ns = typeof nsNode === "string" ? nsNode : nsNode.path;

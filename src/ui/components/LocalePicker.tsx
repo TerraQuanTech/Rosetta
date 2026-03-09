@@ -36,7 +36,6 @@ export function LocalePicker({
 	const toggle = useCallback(
 		(locale: string) => {
 			if (visibleLocales.includes(locale)) {
-				// Don't allow deselecting the last locale
 				if (visibleLocales.length <= 1) return;
 				onChange(visibleLocales.filter((l) => l !== locale));
 			} else {
