@@ -1,0 +1,10 @@
+{
+	"sections.notifications": "Notifications",
+	"sections.privacy": "Confidentialité",
+	"language.label": "Langue",
+	"language.description": "Choisissez votre langue préférée",
+	"theme.label": "Thème",
+	"theme.light": "Clair",
+	"theme.dark": "Sombre",
+	"theme.system": "Système"
+}

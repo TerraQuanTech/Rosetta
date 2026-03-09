@@ -1,0 +1,15 @@
+{
+  "app.name": "Mon Appli",
+  "app.description": "Une application de démonstration",
+  "nav.home": "Accueil",
+  "nav.settings": "Paramètres",
+  "nav.profile": "Profil",
+  "nav.logout": "Déconnexion",
+  "actions.save": "Enregistrer",
+  "actions.cancel": "Annuler",
+  "actions.delete": "Supprimer",
+  "actions.confirm": "Êtes-vous sûr ?",
+  "status.loading": "Chargement...",
+  "status.error": "Une erreur est survenue",
+  "status.empty": "Aucun résultat trouvé"
+}

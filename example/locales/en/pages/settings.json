@@ -1,0 +1,11 @@
+{
+	"title": "Settings",
+	"sections.general": "General",
+	"sections.notifications": "Notifications",
+	"sections.privacy": "Privacy",
+	"language.label": "Language",
+	"theme.label": "Theme",
+	"theme.light": "Light",
+	"theme.dark": "Dark",
+	"theme.system": "System"
+}
