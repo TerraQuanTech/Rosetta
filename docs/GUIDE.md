@@ -135,20 +135,30 @@ The CLI is bundled with the desktop app. Install it from Settings > Install CLI,
 
 ```bash
 # Show missing translations grouped by namespace and locale
-rosetta missing ./locales
+rosetta ./locales missing
 
 # Coverage statistics per locale
-rosetta stats ./locales
+rosetta ./locales stats
 
 # Exit with code 1 if any translations are missing (for CI)
-rosetta complete ./locales
+rosetta ./locales complete
+
+# List all locales
+rosetta ./locales list-locales
+
+# List keys in a namespace
+rosetta ./locales list-keys common
+rosetta ./locales list-keys common --locale=en
+
+# Add a new locale
+rosetta ./locales add-locale fr --copy-from en
 ```
 
 ### CI example
 
 ```yaml
 - name: Check translations
-  run: rosetta complete ./src/locales
+  run: rosetta ./src/locales complete
 ```
 
 ---

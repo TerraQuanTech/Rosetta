@@ -20,9 +20,9 @@ Grab the latest build from [Releases](https://github.com/TerraQuanTech/Rosetta/r
 Install the `rosetta` command from within the app (Settings) or run it directly:
 
 ```bash
-rosetta missing ./locales    # Show missing translations
-rosetta stats ./locales      # Coverage statistics
-rosetta complete ./locales   # Check if all translations are complete (exit code for CI)
+rosetta ./locales missing    # Show missing translations
+rosetta ./locales stats      # Coverage statistics
+rosetta ./locales complete   # Check if all translations are complete (exit code for CI)
 ```
 
 ## Live preview
