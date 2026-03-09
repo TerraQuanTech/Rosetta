@@ -47,7 +47,7 @@ describe("TranslationFileStore", () => {
 			store = new TranslationFileStore(tempDir);
 			const result = await store.load();
 
-			expect(result.locales).toEqual(["en", "ru"]);
+			expect(result.locales.sort()).toEqual(["en", "ru"]);
 			expect(result.translations.common).toBeDefined();
 			expect(result.translations.common.title).toEqual({
 				en: "Hello",
@@ -244,6 +244,126 @@ describe("TranslationFileStore", () => {
 				en: "Value",
 				ru: "Значение",
 			});
+		});
+
+		test("persists renamed key to disk", async () => {
+			await createLocaleFile("en", "common", { title: "Hello", other: "Keep" });
+			await createLocaleFile("ru", "common", { title: "Привет", other: "Оставить" });
+
+			store = new TranslationFileStore(tempDir);
+			await store.load();
+
+			await store.renameKey({
+				namespace: "common",
+				oldKey: "title",
+				newKey: "heading",
+			});
+
+			const enDisk = await readLocaleFile("en", "common");
+			const ruDisk = await readLocaleFile("ru", "common");
+			expect(enDisk.title).toBeUndefined();
+			expect(enDisk.heading).toBe("Hello");
+			expect(enDisk.other).toBe("Keep");
+			expect(ruDisk.title).toBeUndefined();
+			expect(ruDisk.heading).toBe("Привет");
+		});
+
+		test("returns false for non-existent key", async () => {
+			await createLocaleFile("en", "common", { title: "Hello" });
+
+			store = new TranslationFileStore(tempDir);
+			await store.load();
+
+			const ok = await store.renameKey({
+				namespace: "common",
+				oldKey: "nonexistent",
+				newKey: "something",
+			});
+
+			expect(ok).toBe(false);
+			expect(store.getStore().translations.common.something).toBeUndefined();
+		});
+
+		test("returns false for non-existent namespace", async () => {
+			await createLocaleFile("en", "common", { title: "Hello" });
+
+			store = new TranslationFileStore(tempDir);
+			await store.load();
+
+			const ok = await store.renameKey({
+				namespace: "missing_ns",
+				oldKey: "title",
+				newKey: "heading",
+			});
+
+			expect(ok).toBe(false);
+		});
+
+		test("renames nested dot-key preserving structure", async () => {
+			await createLocaleFile("en", "common", {
+				buttons: { save: "Save", cancel: "Cancel" },
+			});
+
+			store = new TranslationFileStore(tempDir);
+			await store.load();
+
+			const ok = await store.renameKey({
+				namespace: "common",
+				oldKey: "buttons.save",
+				newKey: "actions.confirm",
+			});
+
+			expect(ok).toBe(true);
+			expect(store.getStore().translations.common["buttons.save"]).toBeUndefined();
+			expect(store.getStore().translations.common["actions.confirm"]).toEqual({
+				en: "Save",
+			});
+
+			const enDisk = await readLocaleFile("en", "common");
+			expect((enDisk.buttons as any).save).toBeUndefined();
+			expect((enDisk.actions as any).confirm).toBe("Save");
+		});
+
+		test("handles key present in only some locales", async () => {
+			await createLocaleFile("en", "common", { partial: "English" });
+			await createLocaleFile("ru", "common", {});
+
+			store = new TranslationFileStore(tempDir);
+			await store.load();
+
+			const ok = await store.renameKey({
+				namespace: "common",
+				oldKey: "partial",
+				newKey: "renamed_partial",
+			});
+
+			expect(ok).toBe(true);
+			expect(store.getStore().translations.common.renamed_partial).toEqual({
+				en: "English",
+			});
+			expect(store.getStore().translations.common.partial).toBeUndefined();
+
+			const enDisk = await readLocaleFile("en", "common");
+			expect(enDisk.partial).toBeUndefined();
+			expect(enDisk.renamed_partial).toBe("English");
+		});
+
+		test("does not affect other keys in the namespace", async () => {
+			await createLocaleFile("en", "common", { a: "1", b: "2", c: "3" });
+
+			store = new TranslationFileStore(tempDir);
+			await store.load();
+
+			await store.renameKey({
+				namespace: "common",
+				oldKey: "b",
+				newKey: "b_renamed",
+			});
+
+			expect(store.getStore().translations.common.a).toEqual({ en: "1" });
+			expect(store.getStore().translations.common.c).toEqual({ en: "3" });
+			expect(store.getStore().translations.common.b).toBeUndefined();
+			expect(store.getStore().translations.common.b_renamed).toEqual({ en: "2" });
 		});
 	});
 });

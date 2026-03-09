@@ -35,7 +35,7 @@ export default function App() {
 
 	// Signal the bun side that the UI has painted (triggers Windows resize hack)
 	useEffect(() => {
-		(window as any).rpcBridge?.("windowReady", {});
+		window.rpcBridge?.("windowReady", {});
 	}, []);
 
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export default function App() {
 	useEffect(() => {
 		const base = store?.localesDir ? `Rosetta — ${store.localesDir}` : "Rosetta";
 		const title = saveMode === "manual" && hasUnsaved ? `${base} *` : base;
-		(window as any).rpcBridge?.("setWindowTitle", { title });
+		window.rpcBridge?.("setWindowTitle", { title });
 	}, [hasUnsaved, saveMode, store?.localesDir]);
 
 	// Wrap updateSettings to emit theme changes to the main process
@@ -331,7 +331,7 @@ export default function App() {
 						currentDir={store?.localesDir ?? null}
 						onInstallCli={async () => {
 							try {
-								const rpcBridge = (window as any).rpcBridge;
+								const rpcBridge = window.rpcBridge;
 								if (!rpcBridge) {
 									return { success: false, message: "RPC not available" };
 								}

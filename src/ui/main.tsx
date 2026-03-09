@@ -44,7 +44,7 @@ const rpcBridge = async (method: string, params: unknown) => {
 };
 
 // Expose RPC bridge globally for UI components
-(window as any).rpcBridge = rpcBridge;
+window.rpcBridge = rpcBridge as Window["rpcBridge"];
 
 setRpcRequest(rpcBridge);
 setSettingsRpcRequest(rpcBridge);
