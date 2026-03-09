@@ -321,6 +321,7 @@ describe("TranslationFileStore", () => {
 
 			const enDisk = await readLocaleFile("en", "common");
 			expect((enDisk.buttons as any).save).toBeUndefined();
+			expect((enDisk.buttons as any).cancel).toBe("Cancel");
 			expect((enDisk.actions as any).confirm).toBe("Save");
 		});
 

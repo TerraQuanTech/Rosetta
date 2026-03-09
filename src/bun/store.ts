@@ -1,6 +1,6 @@
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
-import { applyEdits, modify } from "jsonc-parser";
+import { applyEdits, findNodeAtLocation, modify, parseTree } from "jsonc-parser";
 import { flatten, unflatten } from "../shared/json";
 import type {
 	KeyCreate,
@@ -358,18 +358,115 @@ export class TranslationFileStore {
 
 		if (!this.store.translations[namespace]?.[oldKey]) return false;
 
-		this.store.translations[namespace][newKey] = this.store.translations[namespace][oldKey];
+		const values = this.store.translations[namespace][oldKey];
+		this.store.translations[namespace][newKey] = values;
 		delete this.store.translations[namespace][oldKey];
 
+		// Update remembered key order — replace old key in-place
+		for (const locale of this.store.locales) {
+			const filePath =
+				namespace === "root"
+					? join(this.localesDir, `${locale}.json`)
+					: join(this.localesDir, locale, `${namespace}.json`);
+			const order = this.keyOrders.get(filePath);
+			if (order) {
+				const idx = order.indexOf(oldKey);
+				if (idx !== -1) {
+					order[idx] = newKey;
+				}
+			}
+		}
+
+		// Surgically rename the key in each locale's JSON file
 		let ok = true;
 		for (const locale of this.store.locales) {
-			if (this.store.translations[namespace][newKey][locale] !== undefined) {
-				if (!(await this.writeNamespaceLocale(namespace, locale))) {
+			if (values[locale] !== undefined) {
+				if (!(await this.renameKeyInJsonFile(namespace, locale, oldKey, newKey))) {
 					ok = false;
 				}
 			}
 		}
 		return ok;
+	}
+
+	/**
+	 * Rename a dot-notation key in a JSON file, preserving formatting and key order.
+	 *
+	 * When only the leaf segment changes (e.g. "buttons.save" → "buttons.confirm"),
+	 * we do an in-place property name replacement that preserves all whitespace.
+	 * Otherwise we fall back to remove + add via jsonc-parser.
+	 */
+	private async renameKeyInJsonFile(
+		namespace: string,
+		locale: string,
+		oldDotKey: string,
+		newDotKey: string,
+	): Promise<boolean> {
+		const filePath =
+			namespace === "root"
+				? join(this.localesDir, `${locale}.json`)
+				: join(this.localesDir, locale, `${namespace}.json`);
+
+		try {
+			let content = stripBOM(await readFile(filePath, "utf-8"));
+			const format = this.fileFormats.get(filePath) ?? {
+				indent: "    ",
+				trailingNewline: true,
+			};
+			const fmtOpts = {
+				formattingOptions: {
+					tabSize: format.indent === "\t" ? 1 : format.indent.length,
+					insertSpaces: format.indent !== "\t",
+				},
+			};
+
+			const oldParts = oldDotKey.split(".");
+			const newParts = newDotKey.split(".");
+
+			// Check if only the leaf segment differs — safe to do an in-place rename
+			const canInPlaceRename =
+				oldParts.length === newParts.length &&
+				oldParts.slice(0, -1).every((seg, i) => seg === newParts[i]);
+
+			if (canInPlaceRename) {
+				// Just rename the leaf property key in-place
+				const tree = parseTree(content);
+				const node = tree ? findNodeAtLocation(tree, oldParts) : undefined;
+				if (node?.parent?.children?.[0]) {
+					const keyNode = node.parent.children[0];
+					const before = content.slice(0, keyNode.offset);
+					const after = content.slice(keyNode.offset + keyNode.length);
+					content = `${before}${JSON.stringify(newParts[newParts.length - 1])}${after}`;
+				}
+			} else {
+				// Different structure — read value, remove old, add new
+				const tree = parseTree(content);
+				const node = tree ? findNodeAtLocation(tree, oldParts) : undefined;
+				const value = node
+					? JSON.parse(content.slice(node.offset, node.offset + node.length))
+					: undefined;
+
+				// Remove old key
+				const removeEdits = modify(content, oldParts, undefined, fmtOpts);
+				content = applyEdits(content, removeEdits);
+
+				// Add new key
+				const addEdits = modify(content, newParts, value, fmtOpts);
+				content = applyEdits(content, addEdits);
+			}
+
+			// Preserve trailing newline preference
+			if (format.trailingNewline && !content.endsWith("\n")) content += "\n";
+			if (!format.trailingNewline && content.endsWith("\n")) content = content.replace(/\n$/, "");
+
+			this.writeLocks.add(filePath);
+			await writeFile(filePath, content, "utf-8");
+			setTimeout(() => this.writeLocks.delete(filePath), 500);
+			return true;
+		} catch (err) {
+			console.error(`Failed to rename key in ${filePath}:`, err);
+			return false;
+		}
 	}
 
 	/** Create a new empty namespace (creates empty JSON files for all locales) */
