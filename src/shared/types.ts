@@ -127,6 +127,7 @@ export type RosettaRPC = {
 			toggleReview: { params: ReviewToggle; response: { ok: boolean } };
 			getMissingKeys: { params: Record<string, never>; response: MissingKeysReport[] };
 			getCoverageStats: { params: Record<string, never>; response: CoverageStats };
+			windowReady: { params: Record<string, never>; response: { ok: boolean } };
 			installCli: {
 				params: Record<string, never>;
 				response: { success: boolean; message: string };
@@ -142,6 +143,7 @@ export type RosettaRPC = {
 			settingsUpdated: RosettaSettings;
 			connectorStatusChanged: { connected: boolean; clientCount: number; apps: string[] };
 			themeChanged: { theme: "system" | "light" | "dark" };
+			forceRelayout: Record<string, never>;
 		};
 	};
 };

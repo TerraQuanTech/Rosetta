@@ -20,8 +20,11 @@ import { TranslationFileStore } from "./store";
 import { startWatcher } from "./watcher";
 
 // --- Application Menu (set early before any async work) ---
-ApplicationMenu.setApplicationMenu([
-	{
+const menuItems: Parameters<typeof ApplicationMenu.setApplicationMenu>[0] = [];
+
+// The "app name" menu is macOS-only (About, Hide, Quit live here on Mac)
+if (process.platform === "darwin") {
+	menuItems.push({
 		label: "Rosetta",
 		submenu: [
 			{ role: "about" },
@@ -32,7 +35,10 @@ ApplicationMenu.setApplicationMenu([
 			{ type: "divider" },
 			{ role: "quit", accelerator: "cmd+q" },
 		],
-	},
+	});
+}
+
+menuItems.push(
 	{
 		label: "File",
 		submenu: [
@@ -69,7 +75,9 @@ ApplicationMenu.setApplicationMenu([
 			{ role: "bringAllToFront" },
 		],
 	},
-]);
+);
+
+ApplicationMenu.setApplicationMenu(menuItems);
 
 // --- Configuration ---
 const DEV_SERVER_PORT = 5174;
@@ -305,6 +313,17 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 				return { ok: true };
 			},
 
+			windowReady: () => {
+				// HACK: On Windows, jitter the window size to force the compositor
+				// to settle. Called by the UI after React's first paint.
+				if (!isMac) {
+					const { width, height } = mainWindow.getSize();
+					mainWindow.setSize(width + 1, height);
+					mainWindow.setSize(width, height);
+				}
+				return { ok: true };
+			},
+
 			installCli: async () => {
 				try {
 					const { execSync } = await import("node:child_process");
@@ -366,6 +385,15 @@ const mainWindow = new BrowserWindow({
 	},
 	rpc,
 });
+
+// On Windows with "default" titlebar, force webview re-layout on resize
+// to work around a compositor positioning bug.
+if (!isMac) {
+	mainWindow.on("resize", () => {
+		mainWindow?.webview.rpc?.send.forceRelayout({});
+	});
+
+}
 
 ApplicationMenu.on("application-menu-clicked", async (event: any) => {
 	const action = event.data?.action;

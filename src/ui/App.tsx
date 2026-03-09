@@ -32,6 +32,11 @@ export default function App() {
 	const { settings, updateSettings } = useSettings();
 	const connectorStatus = useConnectorStatus();
 
+	// Signal the bun side that the UI has painted (triggers Windows resize hack)
+	useEffect(() => {
+		window.rpcBridge?.("windowReady", {});
+	}, []);
+
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [filter, setFilter] = useState<"all" | "missing" | "empty" | "unreviewed">("all");

@@ -6,6 +6,7 @@ import App from "./App";
 import { setConnectorMessageHandler, setConnectorRpcRequest } from "./hooks/useConnectorStatus";
 import { setSettingsMessageHandler, setSettingsRpcRequest } from "./hooks/useSettings";
 import { setMessageHandler, setRpcRequest } from "./hooks/useStore";
+import { forceRelayout } from "./hooks/useWindowsRelayoutHack";
 import "./styles/global.css";
 
 // --- Wire Electrobun RPC ---
@@ -29,6 +30,7 @@ const rpc = Electroview.defineRPC<RosettaRPC>({
 				connectorStatusHandler?.(payload);
 			},
 			themeChanged: (_payload) => {},
+			forceRelayout,
 		},
 	},
 });
