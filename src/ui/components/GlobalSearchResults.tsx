@@ -1,4 +1,5 @@
 import type { ReviewToggle } from "../../shared/types";
+import { fuzzyMatch } from "../utils/fuzzy";
 import { EditorTable } from "./EditorTable";
 
 export function GlobalSearchResults({
@@ -29,11 +30,13 @@ export function GlobalSearchResults({
 			if (keys.length === 0) return false;
 
 			if (search) {
-				const q = search.toLowerCase();
-				keys = keys.filter((key) => {
-					if (key.toLowerCase().includes(q)) return true;
-					return Object.values(entries[key]).some((v) => v.toLowerCase().includes(q));
-				});
+				const nsMatches = fuzzyMatch(search, ns);
+				if (!nsMatches) {
+					keys = keys.filter((key) => {
+						if (fuzzyMatch(search, key)) return true;
+						return Object.values(entries[key]).some((v) => fuzzyMatch(search, v));
+					});
+				}
 			}
 
 			if (filter === "missing") {

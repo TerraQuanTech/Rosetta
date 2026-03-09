@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyRename, KeyUpdate, ReviewToggle } from "../../shared/types";
+import { fuzzyMatch } from "../utils/fuzzy";
 import { EditableCell } from "./EditableCell";
 import { ExpandedRow } from "./ExpandedRow";
 
@@ -102,11 +103,10 @@ export function EditorTable({
 		let keys = Object.keys(entries).sort();
 
 		if (search) {
-			const q = search.toLowerCase();
 			keys = keys.filter((key) => {
-				if (key.toLowerCase().includes(q)) return true;
+				if (fuzzyMatch(search, key)) return true;
 				const localeValues = entries[key];
-				return Object.values(localeValues).some((v) => v.toLowerCase().includes(q));
+				return Object.values(localeValues).some((v) => fuzzyMatch(search, v));
 			});
 		}
 
