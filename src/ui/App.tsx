@@ -205,6 +205,7 @@ export default function App() {
 	const handleSelectNamespace = useCallback((path: string) => {
 		setActiveNamespace(path);
 		setView("editor");
+		setSearchScope("current");
 	}, []);
 
 	const handleAddKey = useCallback(
