@@ -96,6 +96,93 @@ jobs:
       - name: Build
         run: bun run build
 
+      # --- macOS code signing ---
+      - name: Import signing certificate
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Decode certificate
+          CERT_FILE=$(mktemp /tmp/cert.XXXXXX.p12)
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$CERT_FILE"
+
+          # Create a temporary keychain
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          security import "$CERT_FILE" -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Allow codesign to access the key
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Add keychain to search list
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+          # Clean up cert file
+          rm -f "$CERT_FILE"
+
+      - name: Sign macOS app
+        if: runner.os == 'macOS'
+        env:
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: |
+          APP_PATH=$(find build -name "*.app" -maxdepth 2 | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found in build/"
+            exit 1
+          fi
+          echo "Signing $APP_PATH"
+
+          # Sign all binaries and dylibs inside the app bundle (deep)
+          codesign --force --deep --sign "$MACOS_SIGNING_IDENTITY" \
+            --options runtime \
+            --entitlements signing/entitlements.mac.plist \
+            "$APP_PATH"
+
+          # Verify
+          codesign --verify --deep --strict "$APP_PATH"
+          echo "Signing verified successfully"
+
+      # --- Windows code signing ---
+      - name: Sign Windows executable
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERTIFICATE_PFX: ${{ secrets.WINDOWS_CERTIFICATE_PFX }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        shell: powershell
+        run: |
+          $EXE = Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object -First 1
+          if (-not $EXE) {
+            Write-Host "No .exe found in build/"
+            exit 1
+          }
+          Write-Host "Signing $($EXE.FullName)"
+
+          # Decode certificate
+          $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX)
+          $certPath = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+
+          # Import certificate
+          $cert = Import-PfxCertificate -FilePath $certPath `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -Password (ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force)
+
+          # Sign
+          & signtool sign /sha1 $cert.Thumbprint `
+            /tr http://timestamp.digicert.com /td sha256 /fd sha256 `
+            $EXE.FullName
+
+          # Clean up
+          Remove-Item $certPath -Force
+
       - name: Find build output
         id: artifact
         shell: bash
@@ -108,6 +195,17 @@ jobs:
           else
             echo "path=." >> "$GITHUB_OUTPUT"
           fi
+
+      # Fix executable permissions before upload (upload-artifact strips +x)
+      - name: Preserve executable permissions
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          BUILD_DIR="${{ steps.artifact.outputs.path }}"
+          # Record all executable files
+          find "$BUILD_DIR" -type f -perm +111 > "$BUILD_DIR/.executable-files"
+          # Also ensure the .app MacOS binaries are executable
+          find "$BUILD_DIR" -path "*/Contents/MacOS/*" -type f -exec chmod +x {} \;
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -124,12 +222,27 @@ jobs:
         with:
           path: artifacts
 
+      - name: Restore executable permissions
+        run: |
+          for dir in artifacts/*/; do
+            if [ -f "${dir}.executable-files" ]; then
+              echo "Restoring permissions in ${dir}"
+              while IFS= read -r f; do
+                # The file paths are relative to the build dir, strip the prefix
+                base=$(basename "$f")
+                find "$dir" -name "$base" -type f -exec chmod +x {} \;
+              done < "${dir}.executable-files"
+              rm "${dir}.executable-files"
+            fi
+          done
+
       - name: Package artifacts
         run: |
           cd artifacts
           for dir in */; do
             name="${dir%/}"
-            tar -czf "../${name}-${{ needs.bump.outputs.version }}.tar.gz" -C "$dir" .
+            # Use tar with --preserve-permissions to keep +x flags
+            tar -czpf "../${name}-${{ needs.bump.outputs.version }}.tar.gz" -C "$dir" .
           done
 
       - name: Create GitHub Release
