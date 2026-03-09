@@ -5,6 +5,7 @@ interface StatusBarProps {
 	activeNamespace: string | null;
 	saveMode: "auto" | "manual";
 	pendingCount: number;
+	onShowMissing?: () => void;
 }
 
 export function StatusBar({
@@ -14,6 +15,7 @@ export function StatusBar({
 	activeNamespace,
 	saveMode,
 	pendingCount,
+	onShowMissing,
 }: StatusBarProps) {
 	return (
 		<div className="statusbar">
@@ -22,10 +24,14 @@ export function StatusBar({
 			<div className="statusbar-item">{totalKeys} keys</div>
 
 			{missingCount > 0 && (
-				<div className="statusbar-item">
+				<button
+					type="button"
+					className="statusbar-item statusbar-btn"
+					onClick={onShowMissing}
+				>
 					<span className="status-dot red" />
 					{missingCount} missing
-				</div>
+				</button>
 			)}
 
 			{missingCount === 0 && totalKeys > 0 && (

@@ -385,6 +385,11 @@ export default function App() {
 				activeNamespace={isGlobalView ? "All namespaces" : effectiveNamespace}
 				saveMode={saveMode}
 				pendingCount={pendingCount}
+				onShowMissing={() => {
+					setSearchScope("all");
+					setFilter("missing");
+					setView("editor");
+				}}
 			/>
 
 			{showAddKey && effectiveNamespace && (

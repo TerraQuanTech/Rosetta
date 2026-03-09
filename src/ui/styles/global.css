@@ -974,6 +974,21 @@ body {
     gap: 4px;
 }
 
+.statusbar-btn {
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+}
+
+.statusbar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
 .status-dot {
     width: 6px;
     height: 6px;
