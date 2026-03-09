@@ -11,6 +11,7 @@ import { UnsavedDialog } from "./components/UnsavedDialog";
 import { useConnectorStatus } from "./hooks/useConnectorStatus";
 import { useSettings } from "./hooks/useSettings";
 import { useTranslationStore } from "./hooks/useStore";
+import { useRpcTransport } from "./rpc-transport";
 import { findFirstLeaf } from "./utils/namespace";
 
 type ViewMode = "editor" | "settings";
@@ -24,6 +25,8 @@ interface ContextMenuState {
 }
 
 export default function App() {
+	const transport = useRpcTransport();
+
 	const {
 		store,
 		loading,
@@ -46,9 +49,12 @@ export default function App() {
 
 	// Signal the bun side that the UI has painted (triggers Windows resize hack)
 	useEffect(() => {
-		window.rpcBridge?.("windowReady", {});
-	}, []);
+		if (transport.capabilities.windowTitle) {
+			transport.request("windowReady", {});
+		}
+	}, [transport]);
 
+	const [sidebarWidth, setSidebarWidth] = useState(250);
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [filter, setFilter] = useState<FilterType>("all");
@@ -65,10 +71,11 @@ export default function App() {
 	const hasUnsaved = pendingCount > 0;
 
 	useEffect(() => {
+		if (!transport.capabilities.windowTitle) return;
 		const base = store?.localesDir ? `Rosetta — ${store.localesDir}` : "Rosetta";
 		const title = saveMode === "manual" && hasUnsaved ? `${base} *` : base;
-		window.rpcBridge?.("setWindowTitle", { title });
-	}, [hasUnsaved, saveMode, store?.localesDir]);
+		transport.request("setWindowTitle", { title });
+	}, [hasUnsaved, saveMode, store?.localesDir, transport]);
 
 	const handleUpdateSettings = useCallback(
 		(partial: Partial<RosettaSettings>) => {
@@ -272,6 +279,7 @@ export default function App() {
 	return (
 		<div
 			className="app"
+			style={{ gridTemplateColumns: `${sidebarWidth}px 1fr` }}
 			onClick={() => contextMenu && setContextMenu(null)}
 			onKeyDown={(e) => {
 				if (e.key === "Escape") setContextMenu(null);
@@ -293,6 +301,8 @@ export default function App() {
 					setShowAddKey(true);
 				}}
 				isSettingsActive={view === "settings"}
+				width={sidebarWidth}
+				onWidthChange={setSidebarWidth}
 			/>
 
 			<Toolbar
@@ -325,21 +335,21 @@ export default function App() {
 						onUpdate={handleUpdateSettings}
 						onBrowseFolder={openFolder}
 						currentDir={store?.localesDir ?? null}
-						onInstallCli={async () => {
-							try {
-								const rpcBridge = window.rpcBridge;
-								if (!rpcBridge) {
-									return { success: false, message: "RPC not available" };
-								}
-								const result = await rpcBridge("installCli", {});
-								return result as { success: boolean; message: string };
-							} catch (err) {
-								return {
-									success: false,
-									message: `Error: ${err instanceof Error ? err.message : String(err)}`,
-								};
-							}
-						}}
+						onInstallCli={
+							transport.capabilities.installCli
+								? async () => {
+										try {
+											const result = await transport.request("installCli", {});
+											return result;
+										} catch (err) {
+											return {
+												success: false,
+												message: `Error: ${err instanceof Error ? err.message : String(err)}`,
+											};
+										}
+									}
+								: undefined
+						}
 					/>
 				) : isGlobalView ? (
 					<GlobalSearchResults

@@ -4,7 +4,10 @@ Live-reload translations from [Rosetta](https://github.com/TerraQuanTech/Rosetta
 
 ## Rosetta App
 
-This package is the client-side connector for the [Rosetta](https://github.com/TerraQuanTech/rosetta) desktop editor. Download the app from the [releases page](https://github.com/TerraQuanTech/rosetta/releases).
+This package is the client-side connector for [Rosetta](https://github.com/TerraQuanTech/rosetta). It works with both the desktop app and the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=TerraQuantTech.rosetta-i18n).
+
+- **Desktop app** — download from the [releases page](https://github.com/TerraQuanTech/rosetta/releases)
+- **VS Code extension** — install [Rosetta i18n](https://marketplace.visualstudio.com/items?itemName=TerraQuantTech.rosetta-i18n) from the Marketplace
 
 ## Install
 

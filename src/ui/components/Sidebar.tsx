@@ -1,5 +1,5 @@
 import type { NamespaceNode } from "@shared/types";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface SidebarProps {
 	namespaces: NamespaceNode[];
@@ -10,6 +10,8 @@ interface SidebarProps {
 	onDeleteNamespace: (namespace: string) => void;
 	onAddKeyToNamespace: (namespace: string) => void;
 	isSettingsActive: boolean;
+	width: number;
+	onWidthChange: (width: number) => void;
 }
 
 export function Sidebar({
@@ -21,10 +23,35 @@ export function Sidebar({
 	onDeleteNamespace,
 	onAddKeyToNamespace,
 	isSettingsActive,
+	width,
+	onWidthChange,
 }: SidebarProps) {
 	const [showNewNs, setShowNewNs] = useState(false);
 	const [newNsName, setNewNsName] = useState("");
 	const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+	const dragging = useRef(false);
+
+	useEffect(() => {
+		const onMouseMove = (e: MouseEvent) => {
+			if (!dragging.current) return;
+			e.preventDefault();
+			const newWidth = Math.max(160, Math.min(600, e.clientX));
+			onWidthChange(newWidth);
+		};
+		const onMouseUp = () => {
+			if (dragging.current) {
+				dragging.current = false;
+				document.body.style.cursor = "";
+				document.body.style.userSelect = "";
+			}
+		};
+		window.addEventListener("mousemove", onMouseMove);
+		window.addEventListener("mouseup", onMouseUp);
+		return () => {
+			window.removeEventListener("mousemove", onMouseMove);
+			window.removeEventListener("mouseup", onMouseUp);
+		};
+	}, [onWidthChange]);
 
 	const handleCreate = useCallback(() => {
 		const name = newNsName.trim();
@@ -39,8 +66,15 @@ export function Sidebar({
 		setShowNewNs(true);
 	}, []);
 
+	const handleResizeStart = useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		dragging.current = true;
+		document.body.style.cursor = "col-resize";
+		document.body.style.userSelect = "none";
+	}, []);
+
 	return (
-		<div className="sidebar">
+		<div className="sidebar" style={{ width }}>
 			<div className="sidebar-header electrobun-webkit-app-region-drag">
 				<h1>Rosetta</h1>
 			</div>
@@ -105,6 +139,11 @@ export function Sidebar({
 					Settings
 				</button>
 			</div>
+
+			<div
+				className="sidebar-resize-handle"
+				onMouseDown={handleResizeStart}
+			/>
 
 			{confirmDelete !== null && (
 				<div

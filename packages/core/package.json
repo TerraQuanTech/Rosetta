@@ -1,0 +1,24 @@
+{
+	"name": "@terraquantech/rosetta-core",
+	"version": "0.1.0",
+	"description": "Core business logic for the Rosetta i18n translation editor",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch"
+	},
+	"files": ["src/"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/TerraQuanTech/rosetta.git",
+		"directory": "packages/core"
+	},
+	"dependencies": {
+		"jsonc-parser": "^3.3.1"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.2"
+	}
+}

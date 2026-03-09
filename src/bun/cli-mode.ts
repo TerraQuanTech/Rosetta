@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { TranslationFileStore } from "./store";
+import { NodeFsAdapter, TranslationFileStore } from "@terraquantech/rosetta-core";
 
 type MissingReport = {
 	namespace: string;
@@ -79,7 +79,7 @@ export async function handleCliMode() {
 
 async function loadStore(program: Command): Promise<TranslationFileStore> {
 	const dir = program.args[0];
-	const store = new TranslationFileStore(dir);
+	const store = new TranslationFileStore(dir, new NodeFsAdapter());
 	await store.load();
 	return store;
 }

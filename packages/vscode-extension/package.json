@@ -1,0 +1,69 @@
+{
+	"name": "rosetta-i18n",
+	"displayName": "Rosetta i18n",
+	"description": "Visual translation editor for JSON locale files with live preview support",
+	"version": "0.1.0",
+	"publisher": "TerraQuantTech",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.75.0"
+	},
+	"categories": ["Other"],
+	"activationEvents": [],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "rosetta.open",
+				"title": "Rosetta: Open Translation Editor",
+				"icon": {
+					"light": "icons/rosetta-light.svg",
+					"dark": "icons/rosetta-dark.svg"
+				}
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "rosetta.open",
+					"group": "navigation"
+				}
+			]
+		},
+		"configuration": {
+			"title": "Rosetta",
+			"properties": {
+				"rosetta.localesDir": {
+					"type": "string",
+					"default": "",
+					"description": "Path to the locales directory (relative to workspace root)"
+				},
+				"rosetta.connectorPort": {
+					"type": "number",
+					"default": 4871,
+					"description": "WebSocket port for live preview connector"
+				},
+				"rosetta.connectorEnabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enable WebSocket server for live preview in Electron apps"
+				}
+			}
+		}
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/TerraQuanTech/rosetta.git",
+		"directory": "packages/vscode-extension"
+	},
+	"dependencies": {
+		"@terraquantech/rosetta-core": "workspace:*",
+		"ws": "^8.18.0"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.85.0",
+		"@types/ws": "^8.5.13",
+		"esbuild": "^0.24.0",
+		"typescript": "^5.7.2"
+	}
+}

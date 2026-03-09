@@ -9,13 +9,13 @@ if (isCliMode) {
 }
 
 import type { RosettaRPC } from "@shared/types";
+import { NodeFsAdapter, ReviewManager, SettingsManager, TranslationFileStore } from "@terraquantech/rosetta-core";
 import { ApplicationMenu, BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { ConnectorServer } from "./connector";
 import { buildApplicationMenu } from "./menu";
-import { ReviewManager } from "./reviews";
 import { buildRpcHandlers } from "./rpc-handlers";
-import { SettingsManager } from "./settings";
-import { TranslationFileStore } from "./store";
 import { startWatcher } from "./watcher";
 
 ApplicationMenu.setApplicationMenu(buildApplicationMenu());
@@ -23,13 +23,15 @@ ApplicationMenu.setApplicationMenu(buildApplicationMenu());
 const DEV_SERVER_PORT = 5174;
 const DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 
-const settings = new SettingsManager();
+const fs = new NodeFsAdapter();
+const settingsPath = join(homedir(), ".config", "rosetta", "settings.json");
+const settings = new SettingsManager(settingsPath, fs);
 await settings.load();
 
 let currentLocalesDir =
 	!isCliMode && process.argv[2] ? process.argv[2] : settings.get().defaultLocalesDir || "";
-let store = new TranslationFileStore(currentLocalesDir);
-const reviews = new ReviewManager();
+let store = new TranslationFileStore(currentLocalesDir, fs);
+const reviews = new ReviewManager(fs);
 let watcher: ReturnType<typeof startWatcher> | null = null;
 
 const connector = new ConnectorServer(settings.get().connectorPort);
@@ -47,7 +49,7 @@ connector.onStatusChange((connected, clientCount) => {
 
 async function loadLocalesDir(dir: string) {
 	currentLocalesDir = dir;
-	store = new TranslationFileStore(dir);
+	store = new TranslationFileStore(dir, fs);
 	await store.load();
 	await reviews.load(dir);
 	console.log(`Loaded translations from: ${dir}`);
@@ -88,7 +90,7 @@ if (currentLocalesDir) {
 		console.error(`Failed to load locales from "${currentLocalesDir}":`, err);
 		// Invalid path — clear it so the app shows the folder picker
 		currentLocalesDir = "";
-		store = new TranslationFileStore("");
+		store = new TranslationFileStore("", fs);
 		// Also clear the bad setting so it doesn't crash again on next launch
 		await settings.update({ defaultLocalesDir: null });
 	}

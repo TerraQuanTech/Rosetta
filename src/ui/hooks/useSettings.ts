@@ -1,59 +1,36 @@
-import type { BunRequests, RosettaSettings, RpcRequestFn } from "@shared/types";
+import type { RosettaSettings } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
-
-let rpcRequest: RpcRequestFn | null = null;
-
-export function setSettingsRpcRequest(fn: RpcRequestFn) {
-	rpcRequest = fn;
-}
-
-function callRpc<M extends keyof BunRequests>(
-	method: M,
-	params: BunRequests[M]["params"],
-): Promise<BunRequests[M]["response"]> {
-	if (!rpcRequest) throw new Error("RPC not initialized");
-	return rpcRequest(method, params);
-}
-
-type SettingsUpdateCallback = (settings: RosettaSettings) => void;
-const settingsListeners = new Set<SettingsUpdateCallback>();
-
-export function setSettingsMessageHandler(register: (handler: SettingsUpdateCallback) => void) {
-	register((s) => {
-		for (const listener of settingsListeners) {
-			listener(s);
-		}
-	});
-}
+import { useRpcTransport } from "../rpc-transport";
 
 export function useSettings() {
+	const transport = useRpcTransport();
+
 	const [settings, setSettings] = useState<RosettaSettings | null>(null);
 
 	const refresh = useCallback(async () => {
 		try {
-			const data = await callRpc("getSettings", {});
+			const data = await transport.request("getSettings", {});
 			setSettings(data);
 		} catch (err) {
 			console.error("Failed to load settings:", err);
 		}
-	}, []);
+	}, [transport]);
 
 	useEffect(() => {
-		const handler: SettingsUpdateCallback = (s) => setSettings(s);
-		settingsListeners.add(handler);
-		return () => {
-			settingsListeners.delete(handler);
-		};
-	}, []);
+		return transport.onMessage("settingsUpdated", (s) => setSettings(s));
+	}, [transport]);
 
 	useEffect(() => {
 		refresh();
 	}, [refresh]);
 
-	const updateSettings = useCallback(async (partial: Partial<RosettaSettings>) => {
-		setSettings((prev) => (prev ? { ...prev, ...partial } : prev));
-		await callRpc("updateSettings", partial);
-	}, []);
+	const updateSettings = useCallback(
+		async (partial: Partial<RosettaSettings>) => {
+			setSettings((prev) => (prev ? { ...prev, ...partial } : prev));
+			await transport.request("updateSettings", partial);
+		},
+		[transport],
+	);
 
 	return { settings, updateSettings };
 }

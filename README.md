@@ -13,7 +13,13 @@ A lightweight desktop editor for JSON i18n locale files. Open a folder, edit tra
 
 ## Install
 
+### Desktop app
+
 Grab the latest build from [Releases](https://github.com/TerraQuanTech/Rosetta/releases). No setup required — just open the app and point it at your locales folder.
+
+### VS Code extension
+
+Install [Rosetta i18n](https://marketplace.visualstudio.com/items?itemName=TerraQuantTech.rosetta-i18n) from the VS Code Marketplace, or search "Rosetta i18n" in the extensions panel. Same editor, same features, right inside VS Code. See the [extension README](packages/vscode-extension/README.md) for details.
 
 ### CLI
 

@@ -1,5 +1,5 @@
-import type { RpcRequestFn } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
+import { useRpcTransport } from "../rpc-transport";
 
 export interface ConnectorStatus {
 	connected: boolean;
@@ -7,24 +7,9 @@ export interface ConnectorStatus {
 	apps: string[];
 }
 
-type StatusCallback = (status: ConnectorStatus) => void;
-const statusListeners = new Set<StatusCallback>();
-
-let rpcRequest: RpcRequestFn | null = null;
-
-export function setConnectorRpcRequest(fn: RpcRequestFn) {
-	rpcRequest = fn;
-}
-
-export function setConnectorMessageHandler(register: (handler: StatusCallback) => void) {
-	register((status) => {
-		for (const listener of statusListeners) {
-			listener(status);
-		}
-	});
-}
-
 export function useConnectorStatus(): ConnectorStatus {
+	const transport = useRpcTransport();
+
 	const [status, setStatus] = useState<ConnectorStatus>({
 		connected: false,
 		clientCount: 0,
@@ -32,28 +17,23 @@ export function useConnectorStatus(): ConnectorStatus {
 	});
 
 	const fetchStatus = useCallback(async () => {
-		if (!rpcRequest) return;
 		try {
-			const result = await rpcRequest("getConnectorStatus", {});
+			const result = await transport.request("getConnectorStatus", {});
 			setStatus({
 				connected: result.connected,
 				clientCount: result.connected ? 1 : 0,
 				apps: [],
 			});
 		} catch {}
-	}, []);
+	}, [transport]);
 
 	useEffect(() => {
 		fetchStatus();
 	}, [fetchStatus]);
 
 	useEffect(() => {
-		const handler: StatusCallback = (s) => setStatus(s);
-		statusListeners.add(handler);
-		return () => {
-			statusListeners.delete(handler);
-		};
-	}, []);
+		return transport.onMessage("connectorStatusChanged", (s) => setStatus(s));
+	}, [transport]);
 
 	return status;
 }

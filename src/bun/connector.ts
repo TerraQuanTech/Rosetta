@@ -1,55 +1,10 @@
-import type { KeyUpdate } from "@shared/types";
+import { ConnectorBase } from "@terraquantech/rosetta-core";
+import type { ConnectorClientInfo } from "@terraquantech/rosetta-core";
 import type { ServerWebSocket } from "bun";
 
-interface ConnectorClient<T = unknown> {
-	ws: ServerWebSocket<T>;
-	appName?: string;
-}
-
-type StatusListener = (connected: boolean, clients: number) => void;
-
-export class ConnectorServer {
-	private clients: Set<ConnectorClient> = new Set();
+export class ConnectorServer extends ConnectorBase {
 	private server: ReturnType<typeof Bun.serve> | null = null;
-	private _port: number;
-	private statusListeners: Set<StatusListener> = new Set();
-
-	constructor(port = 4871) {
-		this._port = port;
-	}
-
-	get port(): number {
-		return this._port;
-	}
-
-	get connected(): boolean {
-		return this.clients.size > 0;
-	}
-
-	get clientCount(): number {
-		return this.clients.size;
-	}
-
-	get connectedApps(): string[] {
-		return [...this.clients].map((c) => c.appName || "Unknown").filter(Boolean);
-	}
-
-	updatePort(port: number): void {
-		this._port = port;
-	}
-
-	onStatusChange(listener: StatusListener): () => void {
-		this.statusListeners.add(listener);
-		return () => this.statusListeners.delete(listener);
-	}
-
-	private notifyStatus(): void {
-		const connected = this.connected;
-		const count = this.clientCount;
-		for (const listener of this.statusListeners) {
-			listener(connected, count);
-		}
-	}
+	private wsToClient = new Map<ServerWebSocket<unknown>, ConnectorClientInfo>();
 
 	start(): void {
 		this.server = Bun.serve({
@@ -70,35 +25,21 @@ export class ConnectorServer {
 			},
 			websocket: {
 				open: (ws) => {
-					const client: ConnectorClient = { ws };
-					this.clients.add(client);
-					console.log(`[connector] App connected (${this.clients.size} total)`);
-					this.notifyStatus();
+					const client = this.addClient({ send: (data) => ws.send(data) });
+					this.wsToClient.set(ws, client);
 				},
 				message: (ws, message) => {
-					try {
-						const data = JSON.parse(String(message));
-						if (data.type === "hello") {
-							for (const client of this.clients) {
-								if (client.ws === ws) {
-									client.appName = data.appName;
-									break;
-								}
-							}
-							console.log(`[connector] App identified: ${data.appName}`);
-							this.notifyStatus();
-						}
-					} catch {}
+					const client = this.wsToClient.get(ws);
+					if (client) {
+						this.processMessage(client, String(message));
+					}
 				},
 				close: (ws) => {
-					for (const client of this.clients) {
-						if (client.ws === ws) {
-							this.clients.delete(client);
-							break;
-						}
+					const client = this.wsToClient.get(ws);
+					if (client) {
+						this.removeClient(client);
+						this.wsToClient.delete(ws);
 					}
-					console.log(`[connector] App disconnected (${this.clients.size} total)`);
-					this.notifyStatus();
 				},
 			},
 		});
@@ -106,39 +47,9 @@ export class ConnectorServer {
 		console.log(`[connector] Listening on ws://localhost:${this._port}/ws`);
 	}
 
-	broadcastUpdate(update: KeyUpdate): void {
-		const message = JSON.stringify({
-			type: "translation:update",
-			namespace: update.namespace,
-			key: update.key,
-			locale: update.locale,
-			value: update.value,
-		});
-
-		for (const client of this.clients) {
-			try {
-				client.ws.send(message);
-			} catch {}
-		}
-	}
-
-	broadcastReload(namespace: string, locale: string): void {
-		const message = JSON.stringify({
-			type: "translation:reload",
-			namespace,
-			locale,
-		});
-
-		for (const client of this.clients) {
-			try {
-				client.ws.send(message);
-			} catch {}
-		}
-	}
-
 	stop(): void {
 		this.server?.stop();
-		this.clients.clear();
-		this.notifyStatus();
+		this.wsToClient.clear();
+		this.clearClients();
 	}
 }

@@ -18,7 +18,8 @@
 		"paths": {
 			"@/*": ["./src/ui/*"],
 			"@shared/*": ["./src/shared/*"],
-			"@bun/*": ["./src/bun/*"]
+			"@bun/*": ["./src/bun/*"],
+			"@terraquantech/rosetta-core": ["./packages/core/src/index.ts"]
 		}
 	},
 	"include": ["src", "tests"],

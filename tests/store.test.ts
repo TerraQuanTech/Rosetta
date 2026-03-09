@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { TranslationFileStore } from "@bun/store";
+import { NodeFsAdapter, TranslationFileStore } from "@terraquantech/rosetta-core";
 
 let tempDir: string;
 let store: TranslationFileStore;
@@ -44,7 +44,7 @@ describe("TranslationFileStore", () => {
 				buttons: { save: "Сохранить", cancel: "Отмена" },
 			});
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			const result = await store.load();
 
 			expect(result.locales.sort()).toEqual(["en", "ru"]);
@@ -68,7 +68,7 @@ describe("TranslationFileStore", () => {
 				title: "Home",
 			});
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			const result = await store.load();
 
 			expect(result.translations["components/plot"]).toBeDefined();
@@ -82,7 +82,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "components/buttons", { c: "3" });
 			await createLocaleFile("en", "pages/home", { d: "4" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			const result = await store.load();
 
 			const rootNames = result.namespaces.map((n) => n.name);
@@ -99,7 +99,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "common", { a: "English A", b: "English B" });
 			await createLocaleFile("ru", "common", { a: "Russian A" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			const result = await store.load();
 
 			expect(result.translations.common.a).toEqual({ en: "English A", ru: "Russian A" });
@@ -108,7 +108,7 @@ describe("TranslationFileStore", () => {
 		});
 
 		test("handles empty directory", async () => {
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			const result = await store.load();
 
 			expect(result.locales).toEqual([]);
@@ -121,7 +121,7 @@ describe("TranslationFileStore", () => {
 		test("updates a value and writes to disk", async () => {
 			await createLocaleFile("en", "common", { title: "Old" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.updateKey({
@@ -144,7 +144,7 @@ describe("TranslationFileStore", () => {
 			await mkdir(join(tempDir, "ru"), { recursive: true });
 			await createLocaleFile("ru", "common", {});
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.updateKey({
@@ -164,7 +164,7 @@ describe("TranslationFileStore", () => {
 				title: "App",
 			});
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			await store.updateKey({
@@ -186,7 +186,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "common", { title: "App" });
 			await createLocaleFile("ru", "common", { title: "Приложение" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.createKey({
@@ -208,7 +208,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "common", { a: "1", b: "2" });
 			await createLocaleFile("ru", "common", { a: "1", b: "2" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.deleteKey({ namespace: "common", key: "a" });
@@ -229,7 +229,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "common", { old_name: "Value" });
 			await createLocaleFile("ru", "common", { old_name: "Значение" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.renameKey({
@@ -250,7 +250,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "common", { title: "Hello", other: "Keep" });
 			await createLocaleFile("ru", "common", { title: "Привет", other: "Оставить" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			await store.renameKey({
@@ -271,7 +271,7 @@ describe("TranslationFileStore", () => {
 		test("returns false for non-existent key", async () => {
 			await createLocaleFile("en", "common", { title: "Hello" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.renameKey({
@@ -287,7 +287,7 @@ describe("TranslationFileStore", () => {
 		test("returns false for non-existent namespace", async () => {
 			await createLocaleFile("en", "common", { title: "Hello" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.renameKey({
@@ -304,7 +304,7 @@ describe("TranslationFileStore", () => {
 				buttons: { save: "Save", cancel: "Cancel" },
 			});
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.renameKey({
@@ -329,7 +329,7 @@ describe("TranslationFileStore", () => {
 			await createLocaleFile("en", "common", { partial: "English" });
 			await createLocaleFile("ru", "common", {});
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			const ok = await store.renameKey({
@@ -352,7 +352,7 @@ describe("TranslationFileStore", () => {
 		test("does not affect other keys in the namespace", async () => {
 			await createLocaleFile("en", "common", { a: "1", b: "2", c: "3" });
 
-			store = new TranslationFileStore(tempDir);
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
 			await store.load();
 
 			await store.renameKey({

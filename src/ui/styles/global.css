@@ -136,6 +136,23 @@ body {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	position: relative;
+}
+
+.sidebar-resize-handle {
+	position: absolute;
+	top: 0;
+	right: -3px;
+	width: 6px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 10;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:active {
+	background: var(--accent);
+	opacity: 0.4;
 }
 
 .sidebar-header {
@@ -207,7 +224,17 @@ body {
 	color: var(--text-secondary);
 	font-size: 12.5px;
 	user-select: none;
+	overflow: hidden;
 	transition: background 0.1s, color 0.1s;
+}
+
+.tree-item > span:last-child {
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.tree-item-row:hover .tree-item > span:last-child {
+	text-overflow: ellipsis;
 }
 
 .tree-item:hover {
@@ -235,6 +262,10 @@ body {
 .tree-item-row .tree-item {
 	flex: 1;
 	min-width: 0;
+}
+
+.tree-item-row:hover .tree-item {
+	padding-right: 44px;
 }
 
 .tree-item-action {

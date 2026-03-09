@@ -8,11 +8,22 @@ const tsconfigPaths: Record<string, string> = {
 	"@": resolve("src/ui"),
 };
 
+const packageAliases: Record<string, string> = {
+	"@terraquantech/rosetta-core": resolve("packages/core/src/index.ts"),
+};
+
 const extensions = [".ts", ".tsx", ".js", ".jsx", ""];
 
 const tsconfigPathsPlugin: import("bun").BunPlugin = {
 	name: "tsconfig-paths",
 	setup(build) {
+		// Resolve exact package aliases
+		for (const [pkg, target] of Object.entries(packageAliases)) {
+			const filter = new RegExp(`^${pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+			build.onResolve({ filter }, () => ({ path: target }));
+		}
+
+		// Resolve prefix path aliases (@shared/*, @bun/*, @/*)
 		for (const [alias, target] of Object.entries(tsconfigPaths)) {
 			const filter = new RegExp(`^${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/`);
 			build.onResolve({ filter }, (args) => {
