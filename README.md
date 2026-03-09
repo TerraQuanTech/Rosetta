@@ -1,6 +1,6 @@
 # Rosetta
 
-A visual i18n translation editor for JSON locale files. Built with [Electrobun](https://electrobun.dev), it runs as a lightweight native desktop app (~15 MB) with a modern React-based UI.
+A visual i18n translation editor and manager for JSON i18n locale files.
 
 Rosetta connects to your running Electron app via WebSocket and hot-reloads translations in real time as you edit them — no app restart needed.
 
