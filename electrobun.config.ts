@@ -1,4 +1,32 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import type { ElectrobunConfig } from "electrobun";
+
+const tsconfigPaths: Record<string, string> = {
+	"@shared": resolve("src/shared"),
+	"@bun": resolve("src/bun"),
+	"@": resolve("src/ui"),
+};
+
+const extensions = [".ts", ".tsx", ".js", ".jsx", ""];
+
+const tsconfigPathsPlugin: import("bun").BunPlugin = {
+	name: "tsconfig-paths",
+	setup(build) {
+		for (const [alias, target] of Object.entries(tsconfigPaths)) {
+			const filter = new RegExp(`^${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/`);
+			build.onResolve({ filter }, (args) => {
+				const rel = args.path.slice(alias.length + 1);
+				const base = resolve(target, rel);
+				for (const ext of extensions) {
+					const full = base + ext;
+					if (existsSync(full)) return { path: full };
+				}
+				return { path: base };
+			});
+		}
+	},
+};
 
 export default {
 	app: {
@@ -9,13 +37,13 @@ export default {
 	build: {
 		bun: {
 			entrypoint: "src/bun/index.ts",
+			plugins: [tsconfigPathsPlugin],
 		},
 		copy: {
 			"dist/index.html": "views/mainview/index.html",
 			"dist/assets": "views/mainview/assets",
 			scripts: "scripts",
 		},
-		watchIgnore: ["dist/**"],
 		mac: {
 			bundleCEF: false,
 			icons: "assets/icon.iconset",
