@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { TranslationFileStore } from "../src/bun/store";
+import { TranslationFileStore } from "@bun/store";
 
 let tempDir: string;
 let store: TranslationFileStore;

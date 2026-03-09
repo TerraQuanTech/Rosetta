@@ -1,3 +1,4 @@
+import type { RpcRequestFn } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
 
 export interface ConnectorStatus {
@@ -9,9 +10,9 @@ export interface ConnectorStatus {
 type StatusCallback = (status: ConnectorStatus) => void;
 const statusListeners = new Set<StatusCallback>();
 
-let rpcRequest: ((method: string, params: unknown) => Promise<unknown>) | null = null;
+let rpcRequest: RpcRequestFn | null = null;
 
-export function setConnectorRpcRequest(fn: (method: string, params: unknown) => Promise<unknown>) {
+export function setConnectorRpcRequest(fn: RpcRequestFn) {
 	rpcRequest = fn;
 }
 
@@ -33,10 +34,7 @@ export function useConnectorStatus(): ConnectorStatus {
 	const fetchStatus = useCallback(async () => {
 		if (!rpcRequest) return;
 		try {
-			const result = (await rpcRequest("getConnectorStatus", {})) as {
-				connected: boolean;
-				port: number;
-			};
+			const result = await rpcRequest("getConnectorStatus", {});
 			setStatus({
 				connected: result.connected,
 				clientCount: result.connected ? 1 : 0,

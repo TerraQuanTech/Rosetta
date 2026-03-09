@@ -1,3 +1,13 @@
+import type {
+	KeyCreate,
+	KeyDelete,
+	KeyRename,
+	KeyUpdate,
+	NamespaceCreate,
+	NamespaceDelete,
+	ReviewToggle,
+	RosettaSettings,
+} from "@shared/types";
 import { Utils } from "electrobun/bun";
 import type { ConnectorServer } from "./connector";
 import type { ReviewManager } from "./reviews";
@@ -34,7 +44,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			localesDir: getCurrentLocalesDir(),
 		}),
 
-		updateKey: async (params: any) => {
+		updateKey: async (params: KeyUpdate) => {
 			const ok = await getStore().updateKey(params);
 			if (ok) {
 				connector.broadcastUpdate(params);
@@ -43,7 +53,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		createKey: async (params: any) => {
+		createKey: async (params: KeyCreate) => {
 			const ok = await getStore().createKey(params);
 			if (ok) {
 				for (const locale of Object.keys(params.values)) {
@@ -53,7 +63,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		deleteKey: async (params: any) => {
+		deleteKey: async (params: KeyDelete) => {
 			const ok = await getStore().deleteKey(params);
 			if (ok) {
 				for (const locale of getStore().getStore().locales) {
@@ -63,7 +73,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		renameKey: async (params: any) => {
+		renameKey: async (params: KeyRename) => {
 			const ok = await getStore().renameKey(params);
 			if (ok) {
 				for (const locale of getStore().getStore().locales) {
@@ -73,7 +83,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		createNamespace: async (params: any) => {
+		createNamespace: async (params: NamespaceCreate) => {
 			const ok = await getStore().createNamespace(params.namespace);
 			if (ok) {
 				getMainWindow()?.webview.rpc?.send.storeUpdated({
@@ -85,7 +95,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		deleteNamespace: async (params: any) => {
+		deleteNamespace: async (params: NamespaceDelete) => {
 			const ok = await getStore().deleteNamespace(params.namespace);
 			if (ok) {
 				getMainWindow()?.webview.rpc?.send.storeUpdated({
@@ -97,7 +107,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		addLocale: async (params: any) => {
+		addLocale: async (params: { locale: string; copyFrom?: string }) => {
 			const ok = await getStore().addLocale(params.locale, params.copyFrom);
 			if (ok) {
 				getMainWindow()?.webview.rpc?.send.storeUpdated({
@@ -109,7 +119,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok };
 		},
 
-		removeLocale: async (params: any) => {
+		removeLocale: async (params: { locale: string }) => {
 			const ok = await getStore().removeLocale(params.locale);
 			if (ok) {
 				getMainWindow()?.webview.rpc?.send.storeUpdated({
@@ -143,12 +153,12 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 
 		getSettings: () => settings.get(),
 
-		toggleReview: async (params: any) => {
+		toggleReview: async (params: ReviewToggle) => {
 			const ok = await reviews.toggle(params);
 			return { ok };
 		},
 
-		updateSettings: async (params: any) => {
+		updateSettings: async (params: Partial<RosettaSettings>) => {
 			const updated = await settings.update(params);
 
 			if (params.connectorEnabled !== undefined || params.connectorPort !== undefined) {
@@ -163,7 +173,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			return { ok: true };
 		},
 
-		setWindowTitle: (params: any) => {
+		setWindowTitle: (params: { title: string }) => {
 			getMainWindow()?.setTitle(params.title);
 			return { ok: true };
 		},
@@ -212,7 +222,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 				const msg = err instanceof Error ? err.message : String(err);
 				const errorMsg =
 					typeof err === "object" && err !== null && "stderr" in err
-						? (err as any).stderr?.toString() || msg
+						? err.stderr?.toString() || msg
 						: msg;
 				return { success: false, message: `Failed to install CLI: ${errorMsg}` };
 			}

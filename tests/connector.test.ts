@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { ConnectorServer } from "../src/bun/connector";
+import { ConnectorServer } from "@bun/connector";
 
 let server: ConnectorServer;
 const TEST_PORT = 14871;

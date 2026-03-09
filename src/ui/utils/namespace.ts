@@ -1,6 +1,6 @@
-export function findFirstLeaf(
-	nodes: { path: string; children?: { path: string; children?: any[] }[] }[],
-): string | null {
+import type { NamespaceNode } from "@shared/types";
+
+export function findFirstLeaf(nodes: NamespaceNode[]): string | null {
 	for (const node of nodes) {
 		if (!node.children || node.children.length === 0) {
 			return node.path;

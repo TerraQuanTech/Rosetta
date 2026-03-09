@@ -1,5 +1,5 @@
+import type { RosettaSettings } from "@shared/types";
 import { useCallback, useState } from "react";
-import type { RosettaSettings } from "../../shared/types";
 
 interface SettingsPanelProps {
 	settings: RosettaSettings;

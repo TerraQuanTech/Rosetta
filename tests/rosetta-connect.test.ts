@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { ConnectorServer } from "@bun/connector";
 import { setNestedValue } from "../packages/rosetta-connect/src";
-import { ConnectorServer } from "../src/bun/connector";
 
 const TEST_PORT = 14872;
 

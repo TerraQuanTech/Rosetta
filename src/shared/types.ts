@@ -94,14 +94,32 @@ export interface ReviewToggle {
 	reviewed: boolean;
 }
 
+/** Translation filter mode */
+export type FilterType = "all" | "missing" | "empty" | "unreviewed";
+
+/** Save mode for the editor */
+export type SaveMode = "auto" | "manual";
+
+/** Search scope */
+export type SearchScope = "current" | "all";
+
+/** Theme preference */
+export type Theme = "system" | "dark" | "light";
+
+/** locale -> value */
+export type LocaleValues = Record<string, string>;
+
+/** locale -> reviewed */
+export type LocaleReviews = Record<string, boolean>;
+
 /** Persistent app settings */
 export interface RosettaSettings {
 	defaultLocalesDir: string | null;
 	visibleLocales: string[] | null;
 	connectorPort: number;
 	connectorEnabled: boolean;
-	theme: "system" | "dark" | "light";
-	saveMode: "auto" | "manual";
+	theme: Theme;
+	saveMode: SaveMode;
 }
 
 /** RPC schema for Electrobun communication */
@@ -143,8 +161,17 @@ export type RosettaRPC = {
 			fileChanged: { namespace: string; locale: string };
 			settingsUpdated: RosettaSettings;
 			connectorStatusChanged: { connected: boolean; clientCount: number; apps: string[] };
-			themeChanged: { theme: "system" | "light" | "dark" };
+			themeChanged: { theme: Theme };
 			forceRelayout: Record<string, never>;
 		};
 	};
 };
+
+/** Bun-side RPC request definitions */
+export type BunRequests = RosettaRPC["bun"]["requests"];
+
+/** Typed RPC call function matching the bun request schema */
+export type RpcRequestFn = <M extends keyof BunRequests>(
+	method: M,
+	params: BunRequests[M]["params"],
+) => Promise<BunRequests[M]["response"]>;

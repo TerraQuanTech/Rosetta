@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { flatten, unflatten } from "../src/shared/json";
+import { flatten, unflatten } from "@shared/json";
 
 describe("flatten", () => {
 	test("flattens a simple nested object", () => {

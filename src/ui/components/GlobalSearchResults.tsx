@@ -1,5 +1,5 @@
-import type { ReviewToggle } from "../../shared/types";
-import { fuzzyMatch } from "../utils/fuzzy";
+import { fuzzyMatch } from "@/utils/fuzzy";
+import type { FilterType, KeyUpdate, ReviewMap, ReviewToggle, TranslationMap } from "@shared/types";
 import { EditorTable } from "./EditorTable";
 
 export function GlobalSearchResults({
@@ -13,12 +13,12 @@ export function GlobalSearchResults({
 	onFocusNamespace,
 	onFocusKey,
 }: {
-	results: Record<string, Record<string, Record<string, string>>>;
-	reviews: Record<string, Record<string, Record<string, boolean>>>;
+	results: TranslationMap;
+	reviews: ReviewMap;
 	locales: string[];
 	search: string;
-	filter: "all" | "missing" | "empty" | "unreviewed";
-	onUpdateKey: (update: { namespace: string; key: string; locale: string; value: string }) => void;
+	filter: FilterType;
+	onUpdateKey: (update: KeyUpdate) => void;
 	onToggleReview: (toggle: ReviewToggle) => void;
 	onFocusNamespace: (e: React.MouseEvent, ns: string) => void;
 	onFocusKey: (e: React.MouseEvent, key: string, namespace?: string) => void;

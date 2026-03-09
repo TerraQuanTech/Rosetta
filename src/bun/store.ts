@@ -1,7 +1,6 @@
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
-import { applyEdits, findNodeAtLocation, modify, parseTree } from "jsonc-parser";
-import { flatten, unflatten } from "../shared/json";
+import { flatten, unflatten } from "@shared/json";
 import type {
 	KeyCreate,
 	KeyDelete,
@@ -10,7 +9,8 @@ import type {
 	NamespaceNode,
 	TranslationMap,
 	TranslationStore,
-} from "../shared/types";
+} from "@shared/types";
+import { applyEdits, findNodeAtLocation, modify, parseTree } from "jsonc-parser";
 import { type FileFormat, detectFormat, stripBOM } from "./file-format";
 
 export class TranslationFileStore {

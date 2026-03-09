@@ -1,7 +1,13 @@
+import type {
+	BunRequests,
+	RosettaRPC,
+	RosettaSettings,
+	RpcRequestFn,
+	TranslationStore,
+} from "@shared/types";
 import { Electroview } from "electrobun/view";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import type { RosettaRPC } from "../shared/types";
 import App from "./App";
 import { setConnectorMessageHandler, setConnectorRpcRequest } from "./hooks/useConnectorStatus";
 import { setSettingsMessageHandler, setSettingsRpcRequest } from "./hooks/useSettings";
@@ -9,9 +15,11 @@ import { setMessageHandler, setRpcRequest } from "./hooks/useStore";
 import { forceRelayout } from "./hooks/useWindowsRelayoutHack";
 import "./styles/global.css";
 
-let storeMessageHandler: ((data: any) => void) | null = null;
-let settingsMessageHandler: ((data: any) => void) | null = null;
-let connectorStatusHandler: ((data: any) => void) | null = null;
+type ConnectorStatus = RosettaRPC["webview"]["messages"]["connectorStatusChanged"];
+
+let storeMessageHandler: ((data: TranslationStore) => void) | null = null;
+let settingsMessageHandler: ((data: RosettaSettings) => void) | null = null;
+let connectorStatusHandler: ((data: ConnectorStatus) => void) | null = null;
 
 const rpc = Electroview.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
@@ -36,12 +44,17 @@ const rpc = Electroview.defineRPC<RosettaRPC>({
 
 const view = new Electroview({ rpc });
 
-const rpcBridge = async (method: string, params: unknown) => {
-	const requestProxy = view.rpc!.request as any;
-	return requestProxy[method](params);
+const rpcBridge: RpcRequestFn = <M extends keyof BunRequests>(
+	method: M,
+	params: BunRequests[M]["params"],
+): Promise<BunRequests[M]["response"]> => {
+	const request = view.rpc!.request;
+	return (
+		request[method] as (params: BunRequests[M]["params"]) => Promise<BunRequests[M]["response"]>
+	)(params);
 };
 
-window.rpcBridge = rpcBridge as Window["rpcBridge"];
+window.rpcBridge = rpcBridge;
 
 setRpcRequest(rpcBridge);
 setSettingsRpcRequest(rpcBridge);

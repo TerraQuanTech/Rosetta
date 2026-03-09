@@ -1,5 +1,5 @@
+import type { NamespaceNode } from "@shared/types";
 import { useCallback, useState } from "react";
-import type { NamespaceNode } from "../../shared/types";
 
 interface SidebarProps {
 	namespaces: NamespaceNode[];

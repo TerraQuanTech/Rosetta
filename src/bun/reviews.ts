@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { ReviewMap, ReviewToggle } from "../shared/types";
+import type { ReviewMap, ReviewToggle } from "@shared/types";
 
 /**
  * Manages review/approval status for translations.

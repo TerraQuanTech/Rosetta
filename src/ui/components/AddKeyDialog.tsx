@@ -1,5 +1,5 @@
+import { isRtlLocale } from "@/utils/rtl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { isRtlLocale } from "../utils/rtl";
 
 interface AddKeyDialogProps {
 	namespace: string;

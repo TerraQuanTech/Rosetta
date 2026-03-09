@@ -1,4 +1,9 @@
-import type { i18n } from "i18next";
+import type { ResourceStore, i18n } from "i18next";
+
+/** ResourceStore extends EventEmitter at runtime but doesn't expose emit in types */
+interface EmittableStore extends ResourceStore {
+	emit(event: "added" | "removed", lng: string, ns: string): void;
+}
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
@@ -63,7 +68,7 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 
 	// Ensure react-i18next re-renders when resources are added.
 	// By default (v14+) bindI18nStore is '' so store events are ignored.
-	const ri = (i18next as any).options?.react;
+	const ri = i18next.options?.react;
 	if (ri && (!ri.bindI18nStore || !ri.bindI18nStore.includes("added"))) {
 		ri.bindI18nStore = ri.bindI18nStore ? `${ri.bindI18nStore} added` : "added";
 	}
@@ -138,7 +143,7 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 					// Notify react-i18next to re-render.
 					// Emitting 'added' on the store + 'languageChanged' on i18next
 					// covers both legacy and modern react-i18next versions.
-					(i18next as any).store?.emit("added", msg.locale, msg.namespace);
+					(i18next.store as EmittableStore | undefined)?.emit("added", msg.locale, msg.namespace);
 					i18next.emit("languageChanged", i18next.language);
 					log(`Reloaded ${msg.namespace} [${msg.locale}]`);
 				});
@@ -189,7 +194,7 @@ function applyUpdate(i18next: i18n, msg: TranslationUpdate, strategy: "bundle" |
 	// Notify react-i18next to re-render.
 	// Emitting 'added' on the store + 'languageChanged' on i18next
 	// covers both legacy and modern react-i18next versions.
-	(i18next as any).store?.emit("added", msg.locale, msg.namespace);
+	(i18next.store as EmittableStore | undefined)?.emit("added", msg.locale, msg.namespace);
 	i18next.emit("languageChanged", i18next.language);
 }
 

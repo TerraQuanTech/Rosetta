@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fuzzyMatch } from "../src/ui/utils/fuzzy";
+import { fuzzyMatch } from "@/utils/fuzzy";
 
 describe("fuzzyMatch", () => {
 	test("empty pattern matches anything", () => {

@@ -1,12 +1,12 @@
+import { isRtlLocale } from "@/utils/rtl";
+import type { KeyUpdate, LocaleReviews, LocaleValues, ReviewToggle } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { KeyUpdate, ReviewToggle } from "../../shared/types";
-import { isRtlLocale } from "../utils/rtl";
 
 interface ExpandedRowProps {
 	translationKey: string;
 	locales: string[];
-	values: Record<string, string>;
-	reviews: Record<string, boolean>;
+	values: LocaleValues;
+	reviews: LocaleReviews;
 	namespace: string;
 	onUpdateKey: (update: KeyUpdate) => void;
 	onToggleReview?: (toggle: ReviewToggle) => void;

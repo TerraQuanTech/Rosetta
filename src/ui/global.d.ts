@@ -1,14 +1,7 @@
-import type { RosettaRPC } from "../shared/types";
-
-type BunRequests = RosettaRPC["bun"]["requests"];
-
-type RpcBridge = <M extends keyof BunRequests>(
-	method: M,
-	params: BunRequests[M]["params"],
-) => Promise<BunRequests[M]["response"]>;
+import type { RpcRequestFn } from "@shared/types";
 
 declare global {
 	interface Window {
-		rpcBridge?: RpcBridge;
+		rpcBridge?: RpcRequestFn;
 	}
 }

@@ -1,7 +1,8 @@
-import type { KeyUpdate } from "../shared/types";
+import type { KeyUpdate } from "@shared/types";
+import type { ServerWebSocket } from "bun";
 
-interface ConnectorClient {
-	ws: unknown;
+interface ConnectorClient<T = unknown> {
+	ws: ServerWebSocket<T>;
 	appName?: string;
 }
 
@@ -116,7 +117,7 @@ export class ConnectorServer {
 
 		for (const client of this.clients) {
 			try {
-				(client.ws as any).send(message);
+				client.ws.send(message);
 			} catch {}
 		}
 	}
@@ -130,7 +131,7 @@ export class ConnectorServer {
 
 		for (const client of this.clients) {
 			try {
-				(client.ws as any).send(message);
+				client.ws.send(message);
 			} catch {}
 		}
 	}

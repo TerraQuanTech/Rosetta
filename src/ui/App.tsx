@@ -1,5 +1,5 @@
+import type { FilterType, KeyCreate, RosettaSettings, SearchScope } from "@shared/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { KeyCreate, RosettaSettings } from "../shared/types";
 import { AddKeyDialog } from "./components/AddKeyDialog";
 import { EditorTable } from "./components/EditorTable";
 import { GlobalSearchResults } from "./components/GlobalSearchResults";
@@ -14,6 +14,14 @@ import { useTranslationStore } from "./hooks/useStore";
 import { findFirstLeaf } from "./utils/namespace";
 
 type ViewMode = "editor" | "settings";
+
+interface ContextMenuState {
+	x: number;
+	y: number;
+	type: "namespace" | "key";
+	value: string;
+	namespace?: string;
+}
 
 export default function App() {
 	const {
@@ -43,20 +51,14 @@ export default function App() {
 
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
-	const [filter, setFilter] = useState<"all" | "missing" | "empty" | "unreviewed">("all");
+	const [filter, setFilter] = useState<FilterType>("all");
 	const [visibleLocales, setVisibleLocales] = useState<string[] | null>(null);
 	const [view, setView] = useState<ViewMode>("editor");
 	const [showAddKey, setShowAddKey] = useState(false);
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
-	const [searchScope, setSearchScope] = useState<"current" | "all">("current");
+	const [searchScope, setSearchScope] = useState<SearchScope>("current");
 	const [renamingKey, setRenamingKey] = useState<string | null>(null);
-	const [contextMenu, setContextMenu] = useState<{
-		x: number;
-		y: number;
-		type: "namespace" | "key";
-		value: string;
-		namespace?: string;
-	} | null>(null);
+	const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
 	const saveMode = settings?.saveMode ?? "auto";
 	const pendingCount = pendingChanges.size;

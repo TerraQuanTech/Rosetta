@@ -1,9 +1,11 @@
+import type { SaveMode } from "@shared/types";
+
 interface StatusBarProps {
 	totalKeys: number;
 	missingCount: number;
 	connectorConnected: boolean;
 	activeNamespace: string | null;
-	saveMode: "auto" | "manual";
+	saveMode: SaveMode;
 	pendingCount: number;
 	onShowMissing?: () => void;
 }

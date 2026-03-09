@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import type {
+	BunRequests,
 	KeyCreate,
 	KeyDelete,
 	KeyRename,
@@ -7,20 +7,24 @@ import type {
 	NamespaceCreate,
 	NamespaceDelete,
 	ReviewToggle,
+	RpcRequestFn,
+	SaveMode,
 	TranslationStore,
-} from "../../shared/types";
+} from "@shared/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-let rpcRequest: ((method: string, params: unknown) => Promise<unknown>) | null = null;
+let rpcRequest: RpcRequestFn | null = null;
 
-export function setRpcRequest(fn: (method: string, params: unknown) => Promise<unknown>) {
+export function setRpcRequest(fn: RpcRequestFn) {
 	rpcRequest = fn;
 }
 
-async function callRpc<T>(method: string, params: unknown = {}): Promise<T> {
-	if (rpcRequest) {
-		return rpcRequest(method, params) as Promise<T>;
-	}
-	throw new Error("RPC not initialized");
+function callRpc<M extends keyof BunRequests>(
+	method: M,
+	params: BunRequests[M]["params"],
+): Promise<BunRequests[M]["response"]> {
+	if (!rpcRequest) throw new Error("RPC not initialized");
+	return rpcRequest(method, params);
 }
 
 type StoreUpdateCallback = (store: TranslationStore) => void;
@@ -39,11 +43,11 @@ export function useTranslationStore() {
 	const [loading, setLoading] = useState(true);
 	/** Pending changes in manual save mode: "ns\0key\0locale" -> KeyUpdate */
 	const [pendingChanges, setPendingChanges] = useState<Map<string, KeyUpdate>>(new Map());
-	const saveModeRef = useRef<"auto" | "manual">("auto");
+	const saveModeRef = useRef<SaveMode>("auto");
 
 	const refresh = useCallback(async () => {
 		try {
-			const data = await callRpc<TranslationStore>("getStore");
+			const data = await callRpc("getStore", {});
 			setStore(data);
 		} catch (err) {
 			console.error("Failed to load store:", err);
@@ -116,7 +120,7 @@ export function useTranslationStore() {
 		await refresh();
 	}, [refresh]);
 
-	const setSaveMode = useCallback((mode: "auto" | "manual") => {
+	const setSaveMode = useCallback((mode: SaveMode) => {
 		saveModeRef.current = mode;
 	}, []);
 
@@ -195,7 +199,7 @@ export function useTranslationStore() {
 	}, []);
 
 	const openFolder = useCallback(async () => {
-		await callRpc<{ path: string | null }>("openLocalesDir");
+		await callRpc("openLocalesDir", {});
 	}, []);
 
 	useEffect(() => {

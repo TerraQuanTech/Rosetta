@@ -8,8 +8,8 @@ if (isCliMode) {
 	process.exit(0);
 }
 
+import type { RosettaRPC } from "@shared/types";
 import { ApplicationMenu, BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
-import type { RosettaRPC } from "../shared/types";
 import { ConnectorServer } from "./connector";
 import { buildApplicationMenu } from "./menu";
 import { ReviewManager } from "./reviews";

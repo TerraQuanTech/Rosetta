@@ -1,15 +1,18 @@
+import type { BunRequests, RosettaSettings, RpcRequestFn } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
-import type { RosettaSettings } from "../../shared/types";
 
-let rpcRequest: ((method: string, params: unknown) => Promise<unknown>) | null = null;
+let rpcRequest: RpcRequestFn | null = null;
 
-export function setSettingsRpcRequest(fn: (method: string, params: unknown) => Promise<unknown>) {
+export function setSettingsRpcRequest(fn: RpcRequestFn) {
 	rpcRequest = fn;
 }
 
-async function callRpc<T>(method: string, params: unknown = {}): Promise<T> {
-	if (rpcRequest) return rpcRequest(method, params) as Promise<T>;
-	throw new Error("RPC not initialized");
+function callRpc<M extends keyof BunRequests>(
+	method: M,
+	params: BunRequests[M]["params"],
+): Promise<BunRequests[M]["response"]> {
+	if (!rpcRequest) throw new Error("RPC not initialized");
+	return rpcRequest(method, params);
 }
 
 type SettingsUpdateCallback = (settings: RosettaSettings) => void;
@@ -28,7 +31,7 @@ export function useSettings() {
 
 	const refresh = useCallback(async () => {
 		try {
-			const data = await callRpc<RosettaSettings>("getSettings");
+			const data = await callRpc("getSettings", {});
 			setSettings(data);
 		} catch (err) {
 			console.error("Failed to load settings:", err);

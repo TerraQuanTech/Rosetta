@@ -1,18 +1,25 @@
+import { fuzzyMatch } from "@/utils/fuzzy";
+import type {
+	FilterType,
+	KeyRename,
+	KeyUpdate,
+	LocaleReviews,
+	LocaleValues,
+	ReviewToggle,
+} from "@shared/types";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { KeyRename, KeyUpdate, ReviewToggle } from "../../shared/types";
-import { fuzzyMatch } from "../utils/fuzzy";
 import { EditableCell } from "./EditableCell";
 import { ExpandedRow } from "./ExpandedRow";
 
 interface EditorTableProps {
 	locales: string[];
 	/** flat key -> locale -> value */
-	entries: Record<string, Record<string, string>>;
+	entries: Record<string, LocaleValues>;
 	/** key -> locale -> reviewed */
-	reviews?: Record<string, Record<string, boolean>>;
+	reviews?: Record<string, LocaleReviews>;
 	namespace: string;
 	search: string;
-	filter: "all" | "missing" | "empty" | "unreviewed";
+	filter: FilterType;
 	onUpdateKey: (update: KeyUpdate) => void;
 	onRenameKey?: (rename: KeyRename) => void;
 	onToggleReview?: (toggle: ReviewToggle) => void;

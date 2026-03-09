@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import type { RosettaSettings } from "../shared/types";
+import type { RosettaSettings } from "@shared/types";
 
 const SETTINGS_PATH = join(homedir(), ".config", "rosetta", "settings.json");
 

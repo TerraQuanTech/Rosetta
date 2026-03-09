@@ -1,8 +1,6 @@
+import type { FilterType, SaveMode, SearchScope } from "@shared/types";
 import { useEffect, useRef } from "react";
 import { LocalePicker } from "./LocalePicker";
-
-type FilterType = "all" | "missing" | "empty" | "unreviewed";
-type SearchScope = "current" | "all";
 
 interface ToolbarProps {
 	search: string;
@@ -18,7 +16,7 @@ interface ToolbarProps {
 	onVisibleLocalesChange: (locales: string[]) => void;
 	onAddLocale?: (locale: string) => void;
 	onRemoveLocale?: (locale: string) => void;
-	saveMode: "auto" | "manual";
+	saveMode: SaveMode;
 	pendingCount: number;
 	onSave: () => void;
 	onDiscard: () => void;
