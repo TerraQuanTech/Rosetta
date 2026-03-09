@@ -54,14 +54,26 @@ export function Toolbar({
 
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+			if (!(e.metaKey || e.ctrlKey)) return;
+			if (e.key === "f") {
 				e.preventDefault();
 				searchRef.current?.focus();
+			} else if (e.key === "l") {
+				e.preventDefault();
+				onSearchScopeChange("all");
+				searchRef.current?.focus();
+			} else if (e.key === "k") {
+				e.preventDefault();
+				onSearchScopeChange("current");
+				searchRef.current?.focus();
+			} else if (e.key === "m") {
+				e.preventDefault();
+				onFilterChange(filter === "missing" ? "all" : "missing");
 			}
 		};
 		document.addEventListener("keydown", handler);
 		return () => document.removeEventListener("keydown", handler);
-	}, []);
+	}, [onSearchScopeChange, onFilterChange, filter]);
 
 	if (hidden) {
 		return <div className="toolbar electrobun-webkit-app-region-drag" />;

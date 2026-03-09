@@ -57,6 +57,13 @@ export default function App() {
 	const pendingCount = pendingChanges.size;
 	const hasUnsaved = pendingCount > 0;
 
+	// Update window title with unsaved indicator
+	useEffect(() => {
+		const base = store?.localesDir ? `Rosetta — ${store.localesDir}` : "Rosetta";
+		const title = saveMode === "manual" && hasUnsaved ? `${base} *` : base;
+		(window as any).rpcBridge?.("setWindowTitle", { title });
+	}, [hasUnsaved, saveMode, store?.localesDir]);
+
 	// Wrap updateSettings to emit theme changes to the main process
 	const handleUpdateSettings = useCallback(
 		(partial: Partial<RosettaSettings>) => {
@@ -104,6 +111,18 @@ export default function App() {
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
 	}, [saveMode, hasUnsaved, saveAll]);
+
+	// Cmd/Ctrl+. to toggle settings
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === ".") {
+				e.preventDefault();
+				setView((v) => (v === "settings" ? "editor" : "settings"));
+			}
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, []);
 
 	// Apply theme
 	const theme = settings?.theme;

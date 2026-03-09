@@ -313,6 +313,11 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 				return { ok: true };
 			},
 
+			setWindowTitle: (params) => {
+				mainWindow?.setTitle(params.title);
+				return { ok: true };
+			},
+
 			windowReady: () => {
 				// HACK: On Windows, jitter the window size to force the compositor
 				// to settle. Called by the UI after React's first paint.

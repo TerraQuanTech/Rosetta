@@ -128,6 +128,7 @@ export type RosettaRPC = {
 			getMissingKeys: { params: Record<string, never>; response: MissingKeysReport[] };
 			getCoverageStats: { params: Record<string, never>; response: CoverageStats };
 			windowReady: { params: Record<string, never>; response: { ok: boolean } };
+			setWindowTitle: { params: { title: string }; response: { ok: boolean } };
 			installCli: {
 				params: Record<string, never>;
 				response: { success: boolean; message: string };
