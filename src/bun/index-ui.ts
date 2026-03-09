@@ -356,6 +356,7 @@ const url = await getMainViewUrl();
 const mainWindow = new BrowserWindow({
 	title: currentLocalesDir ? `Rosetta — ${currentLocalesDir}` : "Rosetta",
 	url,
+	titleBarStyle: "hiddenInset",
 	frame: {
 		width: 1200,
 		height: 800,
