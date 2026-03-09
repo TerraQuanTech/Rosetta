@@ -388,7 +388,6 @@ export default function App() {
 				saveMode={saveMode}
 				pendingCount={pendingCount}
 				onShowMissing={() => {
-					setSearchScope("all");
 					setFilter("missing");
 					setView("editor");
 				}}
