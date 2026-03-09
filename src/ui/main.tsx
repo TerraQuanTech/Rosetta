@@ -64,6 +64,11 @@ if (!location.href.startsWith("http://localhost")) {
 	document.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
+// macOS hiddenInset titlebar needs padding for traffic light buttons
+if (navigator.platform.startsWith("Mac")) {
+	document.documentElement.style.setProperty("--titlebar-inset", "38px");
+}
+
 // --- Render ---
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>

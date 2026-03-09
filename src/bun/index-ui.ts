@@ -352,7 +352,6 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 
 // --- Create window ---
 const url = await getMainViewUrl();
-
 const mainWindow = new BrowserWindow({
 	title: currentLocalesDir ? `Rosetta — ${currentLocalesDir}` : "Rosetta",
 	url,

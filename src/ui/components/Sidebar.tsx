@@ -41,7 +41,7 @@ export function Sidebar({
 
 	return (
 		<div className="sidebar">
-			<div className="sidebar-header">
+			<div className="sidebar-header electrobun-webkit-app-region-drag">
 				<h1>Rosetta</h1>
 			</div>
 			<div className="sidebar-tree">

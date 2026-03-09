@@ -51,11 +51,11 @@ export function Toolbar({
 	const hasUnsaved = saveMode === "manual" && pendingCount > 0;
 
 	if (hidden) {
-		return <div className="toolbar" />;
+		return <div className="toolbar electrobun-webkit-app-region-drag" />;
 	}
 
 	return (
-		<div className="toolbar">
+		<div className="toolbar electrobun-webkit-app-region-drag">
 			<div className="search-group">
 				<input
 					className="search-input"

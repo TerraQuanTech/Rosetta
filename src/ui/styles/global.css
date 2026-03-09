@@ -34,7 +34,7 @@
 	--sidebar-width: 240px;
 	--toolbar-height: 48px;
 	--statusbar-height: 28px;
-	--titlebar-inset: 38px;
+	--titlebar-inset: 0px;
 }
 
 @media (prefers-color-scheme: light) {
