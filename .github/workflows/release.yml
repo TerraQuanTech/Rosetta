@@ -203,7 +203,7 @@ jobs:
         run: |
           BUILD_DIR="${{ steps.artifact.outputs.path }}"
           # Record all executable files
-          find "$BUILD_DIR" -type f -perm +111 > "$BUILD_DIR/.executable-files"
+          find "$BUILD_DIR" -type f -executable > "$BUILD_DIR/.executable-files"
           # Also ensure the .app MacOS binaries are executable
           find "$BUILD_DIR" -path "*/Contents/MacOS/*" -type f -exec chmod +x {} \;
 
