@@ -517,6 +517,38 @@ export class TranslationFileStore {
 		return true;
 	}
 
+	/** Remove a locale — deletes files/directories and purges from in-memory store */
+	async removeLocale(locale: string): Promise<boolean> {
+		if (!this.store.locales.includes(locale)) return false;
+		if (this.store.locales.length <= 1) return false; // don't remove the last locale
+
+		try {
+			const isFlat = Object.keys(this.store.translations).includes("root");
+
+			if (isFlat) {
+				const filePath = join(this.localesDir, `${locale}.json`);
+				await rm(filePath).catch(() => {});
+			} else {
+				const localeDir = join(this.localesDir, locale);
+				await rm(localeDir, { recursive: true }).catch(() => {});
+			}
+		} catch {
+			return false;
+		}
+
+		// Remove from in-memory store
+		this.store.locales = this.store.locales.filter((l) => l !== locale);
+
+		// Remove locale entries from all translations
+		for (const ns of Object.keys(this.store.translations)) {
+			for (const key of Object.keys(this.store.translations[ns])) {
+				delete this.store.translations[ns][key][locale];
+			}
+		}
+
+		return true;
+	}
+
 	/** Find all locale directories (en, ru, de, ...) */
 	private async discoverLocales(): Promise<string[]> {
 		if (!this.localesDir) return [];

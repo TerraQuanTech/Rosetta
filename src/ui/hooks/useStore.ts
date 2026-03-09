@@ -199,6 +199,10 @@ export function useTranslationStore() {
 		await callRpc("addLocale", { locale, copyFrom });
 	}, []);
 
+	const removeLocale = useCallback(async (locale: string) => {
+		await callRpc("removeLocale", { locale });
+	}, []);
+
 	const openFolder = useCallback(async () => {
 		await callRpc<{ path: string | null }>("openLocalesDir");
 	}, []);
@@ -218,6 +222,7 @@ export function useTranslationStore() {
 		createNamespace,
 		deleteNamespace,
 		addLocale,
+		removeLocale,
 		toggleReview,
 		openFolder,
 		pendingChanges,

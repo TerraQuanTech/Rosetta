@@ -250,6 +250,18 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 				return { ok };
 			},
 
+			removeLocale: async (params) => {
+				const ok = await store.removeLocale(params.locale);
+				if (ok) {
+					mainWindow?.webview.rpc?.send.storeUpdated({
+						...store.getStore(),
+						reviews: reviews.get(),
+						localesDir: currentLocalesDir,
+					});
+				}
+				return { ok };
+			},
+
 			openLocalesDir: async () => {
 				const paths = await Utils.openFileDialog({
 					startingFolder: currentLocalesDir || "~/",

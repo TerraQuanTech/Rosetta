@@ -21,6 +21,7 @@ export default function App() {
 		createNamespace,
 		deleteNamespace,
 		addLocale,
+		removeLocale,
 		toggleReview,
 		openFolder,
 		pendingChanges,
@@ -30,6 +31,7 @@ export default function App() {
 	} = useTranslationStore();
 	const { settings, updateSettings } = useSettings();
 	const connectorStatus = useConnectorStatus();
+
 	const [activeNamespace, setActiveNamespace] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [filter, setFilter] = useState<"all" | "missing" | "empty" | "unreviewed">("all");
@@ -279,6 +281,7 @@ export default function App() {
 				visibleLocales={effectiveLocales}
 				onVisibleLocalesChange={setVisibleLocales}
 				onAddLocale={addLocale}
+				onRemoveLocale={removeLocale}
 				saveMode={saveMode}
 				pendingCount={pendingCount}
 				onSave={saveAll}

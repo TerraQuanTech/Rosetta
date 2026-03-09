@@ -116,6 +116,7 @@ export type RosettaRPC = {
 			createNamespace: { params: NamespaceCreate; response: { ok: boolean } };
 			deleteNamespace: { params: NamespaceDelete; response: { ok: boolean } };
 			addLocale: { params: { locale: string; copyFrom?: string }; response: { ok: boolean } };
+			removeLocale: { params: { locale: string }; response: { ok: boolean } };
 			openLocalesDir: { params: Record<string, never>; response: { path: string | null } };
 			getConnectorStatus: {
 				params: Record<string, never>;

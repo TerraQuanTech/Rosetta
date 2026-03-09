@@ -16,6 +16,7 @@ interface ToolbarProps {
 	visibleLocales: string[];
 	onVisibleLocalesChange: (locales: string[]) => void;
 	onAddLocale?: (locale: string) => void;
+	onRemoveLocale?: (locale: string) => void;
 	saveMode: "auto" | "manual";
 	pendingCount: number;
 	onSave: () => void;
@@ -38,6 +39,7 @@ export function Toolbar({
 	visibleLocales,
 	onVisibleLocalesChange,
 	onAddLocale,
+	onRemoveLocale,
 	saveMode,
 	pendingCount,
 	onSave,
@@ -128,6 +130,7 @@ export function Toolbar({
 				visibleLocales={visibleLocales}
 				onChange={onVisibleLocalesChange}
 				onAddLocale={onAddLocale}
+				onRemoveLocale={onRemoveLocale}
 			/>
 
 			{onAddKey && (

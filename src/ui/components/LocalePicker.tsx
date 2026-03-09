@@ -5,6 +5,7 @@ interface LocalePickerProps {
 	visibleLocales: string[];
 	onChange: (locales: string[]) => void;
 	onAddLocale?: (locale: string, copyFrom?: string) => void;
+	onRemoveLocale?: (locale: string) => void;
 }
 
 export function LocalePicker({
@@ -12,6 +13,7 @@ export function LocalePicker({
 	visibleLocales,
 	onChange,
 	onAddLocale,
+	onRemoveLocale,
 }: LocalePickerProps) {
 	const [open, setOpen] = useState(false);
 	const [showAddInput, setShowAddInput] = useState(false);
@@ -68,20 +70,36 @@ export function LocalePicker({
 						</>
 					)}
 					{allLocales.map((locale) => (
-						<button
-							type="button"
-							key={locale}
-							className="locale-picker-item"
-							onClick={() => toggle(locale)}
-						>
-							<input
-								type="checkbox"
-								checked={visibleLocales.includes(locale)}
-								readOnly
-								tabIndex={-1}
-							/>
-							{locale.toUpperCase()}
-						</button>
+						<div key={locale} className="locale-picker-item-row">
+							<button
+								type="button"
+								className="locale-picker-item"
+								onClick={() => toggle(locale)}
+							>
+								<input
+									type="checkbox"
+									checked={visibleLocales.includes(locale)}
+									readOnly
+									tabIndex={-1}
+								/>
+								{locale.toUpperCase()}
+							</button>
+							{onRemoveLocale && allLocales.length > 1 && (
+								<button
+									type="button"
+									className="locale-remove-btn"
+									title={`Remove ${locale.toUpperCase()}`}
+									onClick={(e) => {
+										e.stopPropagation();
+										if (window.confirm(`Remove locale "${locale.toUpperCase()}"? This will delete all translation files for this locale.`)) {
+											onRemoveLocale(locale);
+										}
+									}}
+								>
+									&times;
+								</button>
+							)}
+						</div>
 					))}
 					{onAddLocale && (
 						<>
