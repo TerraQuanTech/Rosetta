@@ -1,6 +1,6 @@
 {
 	"name": "rosetta-i18n",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "A visual i18n translation editor for JSON locale files, with live preview support for Electron apps",
 	"scripts": {
 		"start": "vite build && electrobun dev",
