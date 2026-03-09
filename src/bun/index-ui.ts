@@ -305,30 +305,6 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 				return { ok: true };
 			},
 
-			getPlatform: async () => {
-				const { platform } = await import("node:os");
-				return { platform: platform() };
-			},
-
-			windowMinimize: () => {
-				mainWindow?.minimize();
-				return { ok: true };
-			},
-
-			windowMaximize: () => {
-				if (mainWindow?.isMaximized()) {
-					mainWindow.unmaximize();
-				} else {
-					mainWindow?.maximize();
-				}
-				return { ok: true };
-			},
-
-			windowClose: () => {
-				mainWindow?.close();
-				return { ok: true };
-			},
-
 			installCli: async () => {
 				try {
 					const { execSync } = await import("node:child_process");
@@ -376,10 +352,12 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 
 // --- Create window ---
 const url = await getMainViewUrl();
+const isMac = (await import("node:os")).platform() === "darwin";
+
 const mainWindow = new BrowserWindow({
 	title: currentLocalesDir ? `Rosetta — ${currentLocalesDir}` : "Rosetta",
 	url,
-	titleBarStyle: "hiddenInset",
+	titleBarStyle: isMac ? "hiddenInset" : "default",
 	frame: {
 		width: 1200,
 		height: 800,

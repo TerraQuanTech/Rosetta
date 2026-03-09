@@ -1,5 +1,4 @@
 import { LocalePicker } from "./LocalePicker";
-import { WindowControls } from "./WindowControls";
 
 type FilterType = "all" | "missing" | "empty" | "unreviewed";
 type SearchScope = "current" | "all";
@@ -139,8 +138,6 @@ export function Toolbar({
 					+ Add Key
 				</button>
 			)}
-
-			<WindowControls />
 		</div>
 	);
 }
