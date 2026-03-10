@@ -1,5 +1,5 @@
 {
-	"name": "@terraquantech/rosetta-connect",
+	"name": "@tqt-llc/rosetta-connect",
 	"version": "0.1.0",
 	"description": "Connect your Electron/i18next app to Rosetta for live translation preview",
 	"main": "dist/index.js",

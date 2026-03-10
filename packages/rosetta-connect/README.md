@@ -16,7 +16,7 @@ This package is the client-side connector for [Rosetta](https://github.com/Terra
 ## Install
 
 ```bash
-npm install @terraquantech/rosetta-connect
+npm install @tqt-llc/rosetta-connect
 ```
 
 Peer dependency: `i18next >= 21`

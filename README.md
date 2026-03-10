@@ -38,10 +38,10 @@ rosetta ./locales complete   # Check if all translations are complete (exit code
 
 ## Live preview
 
-Install [`@terraquantech/rosetta-connect`](packages/rosetta-connect) in your app to get real-time translation updates while editing:
+Install [`@tqt-llc/rosetta-connect`](packages/rosetta-connect) in your app to get real-time translation updates while editing:
 
 ```bash
-npm install @terraquantech/rosetta-connect
+npm install @tqt-llc/rosetta-connect
 ```
 
 ```ts

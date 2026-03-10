@@ -83,8 +83,8 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: rosetta-connect ${{ steps.version.outputs.version }}
           body: |
-            ## @terraquantech/rosetta-connect ${{ steps.version.outputs.version }}
+            ## @tqt-llc/rosetta-connect ${{ steps.version.outputs.version }}
 
             ```bash
-            npm install @terraquantech/rosetta-connect
+            npm install @tqt-llc/rosetta-connect
             ```
