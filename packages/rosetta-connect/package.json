@@ -1,6 +1,6 @@
 {
 	"name": "@terraquant/rosetta-connect",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Connect your Electron/i18next app to Rosetta for live translation preview",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -8,7 +8,9 @@
 		"build": "tsc",
 		"dev": "tsc --watch"
 	},
-	"files": ["dist/"],
+	"files": [
+		"dist/"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
