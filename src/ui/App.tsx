@@ -260,6 +260,13 @@ export default function App() {
 		setContextMenu(null);
 	}, []);
 
+	// Listen for key:focus from connected apps (inspect mode)
+	useEffect(() => {
+		return transport.onMessage("connectorFocusKey", ({ namespace, key }) => {
+			handleFocusKey(key, namespace);
+		});
+	}, [transport, handleFocusKey]);
+
 	if (loading) {
 		return (
 			<div className="app">

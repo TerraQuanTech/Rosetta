@@ -1,4 +1,5 @@
 import type { ResourceStore, i18n } from "i18next";
+import { type InspectOptions, enableInspect } from "./inspect";
 
 /** ResourceStore extends EventEmitter at runtime but doesn't expose emit in types */
 interface EmittableStore extends ResourceStore {
@@ -24,6 +25,12 @@ export interface ConnectOptions {
 	updateStrategy?: "bundle" | "resource";
 	/** Called when connection status changes */
 	onStatusChange?: (status: ConnectionStatus) => void;
+	/**
+	 * Enable inspect mode: highlights i18n text in the DOM and adds a
+	 * context menu to jump to keys in Rosetta. Toggle with Cmd/Ctrl+I.
+	 * Pass `true` for defaults or an options object.
+	 */
+	inspect?: boolean | InspectOptions;
 }
 
 interface TranslationUpdate {
@@ -64,6 +71,7 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 		appName,
 		updateStrategy = "bundle",
 		onStatusChange,
+		inspect,
 	} = options;
 
 	// Ensure react-i18next re-renders when resources are added.
@@ -160,10 +168,24 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 	function disconnect() {
 		stopped = true;
 		if (reconnectTimer) clearTimeout(reconnectTimer);
+		cleanupInspect?.();
 		ws?.close();
 		ws = null;
 		emitStatus("disconnected");
 		log("Disconnected");
+	}
+
+	// --- Inspect mode ---
+	let cleanupInspect: (() => void) | null = null;
+	if (inspect && typeof document !== "undefined") {
+		const inspectOpts: InspectOptions = typeof inspect === "object" ? inspect : {};
+		cleanupInspect = enableInspect(
+			i18next,
+			(namespace, key) => {
+				ws?.send(JSON.stringify({ type: "key:focus", namespace, key }));
+			},
+			inspectOpts,
+		);
 	}
 
 	connect();
@@ -229,5 +251,8 @@ function removeNestedValue(obj: Record<string, unknown>, dotKey: string): void {
 
 	delete current[parts[parts.length - 1]];
 }
+
+export { enableInspect } from "./inspect";
+export type { InspectOptions } from "./inspect";
 
 export default connectRosetta;

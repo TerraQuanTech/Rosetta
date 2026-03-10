@@ -76,6 +76,7 @@ export type RosettaRPC = {
 			fileChanged: { namespace: string; locale: string };
 			settingsUpdated: RosettaSettings;
 			connectorStatusChanged: { connected: boolean; clientCount: number; apps: string[] };
+			connectorFocusKey: { namespace: string; key: string };
 			themeChanged: { theme: Theme };
 			forceRelayout: Record<string, never>;
 		};

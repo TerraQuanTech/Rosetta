@@ -65,6 +65,10 @@ connector.onStatusChange((connected, clientCount) => {
 	});
 });
 
+connector.onFocusKey((namespace, key) => {
+	mainWindow?.webview.rpc?.send.connectorFocusKey({ namespace, key });
+});
+
 async function loadLocalesDir(dir: string) {
 	currentLocalesDir = dir;
 	store = new TranslationFileStore(dir, fs);

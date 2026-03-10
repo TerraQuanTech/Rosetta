@@ -127,6 +127,10 @@ export class RosettaPanel implements vscode.Disposable {
 				apps: this.connector.connectedApps,
 			});
 		});
+
+		this.connector.onFocusKey((namespace, key) => {
+			this.postMessage("connectorFocusKey", { namespace, key });
+		});
 	}
 
 	private async loadLocalesDir(dir: string): Promise<void> {

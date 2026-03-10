@@ -25,6 +25,7 @@ function createListeners(): Listeners {
 		storeUpdated: new Set(),
 		settingsUpdated: new Set(),
 		connectorStatusChanged: new Set(),
+		connectorFocusKey: new Set(),
 		fileChanged: new Set(),
 		themeChanged: new Set(),
 		forceRelayout: new Set(),
@@ -49,6 +50,7 @@ export function createElectrobunTransport(): RpcTransport {
 				fileChanged: (payload) => dispatch("fileChanged", payload),
 				settingsUpdated: (payload) => dispatch("settingsUpdated", payload),
 				connectorStatusChanged: (payload) => dispatch("connectorStatusChanged", payload),
+				connectorFocusKey: (payload) => dispatch("connectorFocusKey", payload),
 				themeChanged: (payload) => dispatch("themeChanged", payload),
 				forceRelayout: () => {
 					forceRelayout();

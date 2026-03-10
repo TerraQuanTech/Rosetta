@@ -6,6 +6,7 @@ export interface MessagePayloads {
 	storeUpdated: TranslationStore;
 	settingsUpdated: RosettaSettings;
 	connectorStatusChanged: { connected: boolean; clientCount: number; apps: string[] };
+	connectorFocusKey: { namespace: string; key: string };
 	fileChanged: { namespace: string; locale: string };
 	themeChanged: { theme: Theme };
 	forceRelayout: Record<string, never>;

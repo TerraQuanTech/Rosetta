@@ -10,10 +10,12 @@ export interface ConnectorClientInfo {
 }
 
 type StatusListener = (connected: boolean, clients: number) => void;
+type FocusKeyListener = (namespace: string, key: string) => void;
 
 export abstract class ConnectorBase {
 	protected clients = new Set<ConnectorClientInfo>();
 	private statusListeners = new Set<StatusListener>();
+	private focusKeyListeners = new Set<FocusKeyListener>();
 	protected _port: number;
 
 	constructor(port = 4871) {
@@ -45,6 +47,11 @@ export abstract class ConnectorBase {
 		return () => this.statusListeners.delete(listener);
 	}
 
+	onFocusKey(listener: FocusKeyListener): () => void {
+		this.focusKeyListeners.add(listener);
+		return () => this.focusKeyListeners.delete(listener);
+	}
+
 	protected notifyStatus(): void {
 		const connected = this.connected;
 		const count = this.clientCount;
@@ -74,6 +81,10 @@ export abstract class ConnectorBase {
 				client.appName = data.appName;
 				console.log(`[connector] App identified: ${data.appName}`);
 				this.notifyStatus();
+			} else if (data.type === "key:focus" && data.namespace && data.key) {
+				for (const listener of this.focusKeyListeners) {
+					listener(data.namespace, data.key);
+				}
 			}
 		} catch {}
 	}

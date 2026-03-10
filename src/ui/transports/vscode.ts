@@ -18,6 +18,7 @@ function createListeners(): Listeners {
 		storeUpdated: new Set(),
 		settingsUpdated: new Set(),
 		connectorStatusChanged: new Set(),
+		connectorFocusKey: new Set(),
 		fileChanged: new Set(),
 		themeChanged: new Set(),
 		forceRelayout: new Set(),
