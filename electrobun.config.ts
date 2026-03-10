@@ -43,7 +43,7 @@ export default {
 	app: {
 		name: "Rosetta",
 		identifier: "dev.rosetta.i18n",
-		version: "0.3.3",
+		version: "0.3.4",
 	},
 	release: {
 		baseUrl: "https://github.com/TerraQuanTech/rosetta/releases",
