@@ -2,7 +2,7 @@
 	"name": "rosetta-i18n",
 	"displayName": "Rosetta i18n",
 	"description": "Visual translation editor for JSON locale files with live preview support",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"publisher": "TerraQuantTech",
 	"icon": "icons/icon.png",
 	"license": "MIT",
