@@ -16,7 +16,8 @@
 		"directory": "packages/rosetta-connect"
 	},
 	"publishConfig": {
-		"registry": "https://npm.pkg.github.com"
+		"registry": "https://registry.npmjs.org",
+		"access": "public"
 	},
 	"peerDependencies": {
 		"i18next": ">=21.0.0"

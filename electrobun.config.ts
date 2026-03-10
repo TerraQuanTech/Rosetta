@@ -44,6 +44,8 @@ export default {
 		name: "Rosetta",
 		identifier: "dev.rosetta.i18n",
 		version: "0.2.3",
+	},
+	release: {
 		baseUrl: "https://github.com/TerraQuanTech/rosetta/releases",
 	},
 	build: {
