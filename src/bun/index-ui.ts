@@ -18,6 +18,18 @@ import { buildApplicationMenu } from "./menu";
 import { buildRpcHandlers } from "./rpc-handlers";
 import { startWatcher } from "./watcher";
 
+/**
+ * Wrap non-ASCII data in an ASCII-safe envelope to avoid Electrobun IPC
+ * encoding corruption on Windows. The UI side must unwrap via decodeIpcPayload().
+ */
+function sanitizeForIpc<T>(obj: T): T {
+	if (process.platform !== "win32") return obj;
+	const asciiJson = JSON.stringify(obj).replace(/[\u0080-\uffff]/g, (ch) =>
+		`\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`
+	);
+	return { __encoded: asciiJson } as unknown as T;
+}
+
 ApplicationMenu.setApplicationMenu(buildApplicationMenu());
 
 const DEV_SERVER_PORT = 5174;
@@ -60,26 +72,26 @@ async function loadLocalesDir(dir: string) {
 
 	watcher = startWatcher(dir, store, {
 		onFileChanged(_namespace) {
-			mainWindow?.webview.rpc?.send.storeUpdated({
+			mainWindow?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
 				...store.getStore(),
 				reviews: reviews.get(),
 				localesDir: currentLocalesDir,
-			});
+			}));
 		},
 		onReloadNeeded() {
-			mainWindow?.webview.rpc?.send.storeUpdated({
+			mainWindow?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
 				...store.getStore(),
 				reviews: reviews.get(),
 				localesDir: currentLocalesDir,
-			});
+			}));
 		},
 	});
 
-	mainWindow?.webview.rpc?.send.storeUpdated({
+	mainWindow?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
 		...store.getStore(),
 		reviews: reviews.get(),
 		localesDir: currentLocalesDir,
-	});
+	}));
 	mainWindow?.setTitle(`Rosetta — ${dir}`);
 }
 

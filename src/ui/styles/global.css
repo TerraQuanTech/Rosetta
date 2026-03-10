@@ -29,7 +29,7 @@
 	--radius-lg: 10px;
 
 	--font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
-	--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", "Arial Unicode MS", system-ui, sans-serif;
+	--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 
 	--sidebar-width: 250px;
 	--toolbar-height: 52px;

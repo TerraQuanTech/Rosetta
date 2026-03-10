@@ -3,6 +3,14 @@ import { Electroview } from "electrobun/view";
 import { forceRelayout } from "../hooks/useWindowsRelayoutHack";
 import type { MessagePayloads, MessageType, RpcTransport } from "../rpc-transport";
 
+/** Unwrap ASCII-safe envelope produced by sanitizeForIpc() on the Bun side (Windows). */
+function decodeIpcPayload<T>(obj: T): T {
+	if (obj && typeof obj === "object" && "__encoded" in obj && typeof (obj as any).__encoded === "string") {
+		return JSON.parse((obj as any).__encoded);
+	}
+	return obj;
+}
+
 type Listeners = {
 	[K in MessageType]: Set<(data: MessagePayloads[K]) => void>;
 };
@@ -32,7 +40,7 @@ export function createElectrobunTransport(): RpcTransport {
 		handlers: {
 			requests: {},
 			messages: {
-				storeUpdated: (payload) => dispatch("storeUpdated", payload),
+				storeUpdated: (payload) => dispatch("storeUpdated", decodeIpcPayload(payload)),
 				fileChanged: (payload) => dispatch("fileChanged", payload),
 				settingsUpdated: (payload) => dispatch("settingsUpdated", payload),
 				connectorStatusChanged: (payload) => dispatch("connectorStatusChanged", payload),
@@ -47,14 +55,15 @@ export function createElectrobunTransport(): RpcTransport {
 
 	const view = new Electroview({ rpc });
 
-	const request: RpcRequestFn = <M extends keyof BunRequests>(
+	const request: RpcRequestFn = async <M extends keyof BunRequests>(
 		method: M,
 		params: BunRequests[M]["params"],
 	): Promise<BunRequests[M]["response"]> => {
 		const req = view.rpc!.request;
-		return (
+		const result = await (
 			req[method] as (params: BunRequests[M]["params"]) => Promise<BunRequests[M]["response"]>
 		)(params);
+		return decodeIpcPayload(result);
 	};
 
 	return {
