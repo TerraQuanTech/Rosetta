@@ -4,6 +4,7 @@
 	"description": "Visual translation editor for JSON locale files with live preview support",
 	"version": "0.1.1",
 	"publisher": "TerraQuantTech",
+	"icon": "icons/icon.png",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^1.75.0"
