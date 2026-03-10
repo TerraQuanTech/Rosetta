@@ -50,8 +50,36 @@ connectRosetta(i18next, {
     verbose: true, // Log to console (default: true)
     appName: "My App", // Shown in Rosetta status bar
     updateStrategy: "bundle", // "bundle" (default) or "resource"
+    inspect: true, // Enable inspect mode (default: false)
 });
 ```
+
+## Inspect Mode
+
+Inspect mode highlights every translated string in your running app with a rainbow border. Right-click any highlighted text to copy its key path or jump straight to it in Rosetta.
+
+Toggle inspect mode at any time with <kbd>Cmd</kbd>+<kbd>I</kbd> (Mac) / <kbd>Ctrl</kbd>+<kbd>I</kbd> (Windows/Linux).
+
+```ts
+connectRosetta(i18next, {
+    inspect: true, // enable with defaults
+});
+
+// or configure it:
+connectRosetta(i18next, {
+    inspect: {
+        toggleKey: "i", // keyboard shortcut key (default: "i")
+        startActive: false, // start with inspect active (default: false)
+    },
+});
+```
+
+### How it works
+
+- Hooks into i18next via a post-processor plugin to track which rendered strings map to which namespace/key
+- Uses a `MutationObserver` to annotate matching DOM text nodes with `<rosetta-i18n>` wrapper elements
+- Handles both exact matches and substring matches (e.g. translated units concatenated with dynamic values like `"42.5 MHz"`)
+- Right-click context menu sends a `key:focus` message over the WebSocket connection, causing Rosetta to navigate to that key
 
 ## How it works
 
