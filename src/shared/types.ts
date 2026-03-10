@@ -23,12 +23,12 @@ export type {
 } from "@terraquantech/rosetta-core";
 
 import type {
-	MissingKeysReport,
 	CoverageStats,
 	KeyCreate,
 	KeyDelete,
 	KeyRename,
 	KeyUpdate,
+	MissingKeysReport,
 	NamespaceCreate,
 	NamespaceDelete,
 	ReviewToggle,

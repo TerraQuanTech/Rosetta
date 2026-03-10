@@ -5,7 +5,12 @@ import type { MessagePayloads, MessageType, RpcTransport } from "../rpc-transpor
 
 /** Unwrap ASCII-safe envelope produced by sanitizeForIpc() on the Bun side (Windows). */
 function decodeIpcPayload<T>(obj: T): T {
-	if (obj && typeof obj === "object" && "__encoded" in obj && typeof (obj as any).__encoded === "string") {
+	if (
+		obj &&
+		typeof obj === "object" &&
+		"__encoded" in obj &&
+		typeof (obj as any).__encoded === "string"
+	) {
 		return JSON.parse((obj as any).__encoded);
 	}
 	return obj;

@@ -8,11 +8,16 @@ if (isCliMode) {
 	process.exit(0);
 }
 
-import type { RosettaRPC } from "@shared/types";
-import { NodeFsAdapter, ReviewManager, SettingsManager, TranslationFileStore } from "@terraquantech/rosetta-core";
-import { ApplicationMenu, BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import type { RosettaRPC } from "@shared/types";
+import {
+	NodeFsAdapter,
+	ReviewManager,
+	SettingsManager,
+	TranslationFileStore,
+} from "@terraquantech/rosetta-core";
+import { ApplicationMenu, BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
 import { ConnectorServer } from "./connector";
 import { buildApplicationMenu } from "./menu";
 import { buildRpcHandlers } from "./rpc-handlers";
@@ -24,8 +29,9 @@ import { startWatcher } from "./watcher";
  */
 function sanitizeForIpc<T>(obj: T): T {
 	if (process.platform !== "win32") return obj;
-	const asciiJson = JSON.stringify(obj).replace(/[\u0080-\uffff]/g, (ch) =>
-		`\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`
+	const asciiJson = JSON.stringify(obj).replace(
+		/[\u0080-\uffff]/g,
+		(ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`,
 	);
 	return { __encoded: asciiJson } as unknown as T;
 }
@@ -72,26 +78,32 @@ async function loadLocalesDir(dir: string) {
 
 	watcher = startWatcher(dir, store, {
 		onFileChanged(_namespace) {
-			mainWindow?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-				...store.getStore(),
-				reviews: reviews.get(),
-				localesDir: currentLocalesDir,
-			}));
+			mainWindow?.webview.rpc?.send.storeUpdated(
+				sanitizeForIpc({
+					...store.getStore(),
+					reviews: reviews.get(),
+					localesDir: currentLocalesDir,
+				}),
+			);
 		},
 		onReloadNeeded() {
-			mainWindow?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-				...store.getStore(),
-				reviews: reviews.get(),
-				localesDir: currentLocalesDir,
-			}));
+			mainWindow?.webview.rpc?.send.storeUpdated(
+				sanitizeForIpc({
+					...store.getStore(),
+					reviews: reviews.get(),
+					localesDir: currentLocalesDir,
+				}),
+			);
 		},
 	});
 
-	mainWindow?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-		...store.getStore(),
-		reviews: reviews.get(),
-		localesDir: currentLocalesDir,
-	}));
+	mainWindow?.webview.rpc?.send.storeUpdated(
+		sanitizeForIpc({
+			...store.getStore(),
+			reviews: reviews.get(),
+			localesDir: currentLocalesDir,
+		}),
+	);
 	mainWindow?.setTitle(`Rosetta — ${dir}`);
 }
 

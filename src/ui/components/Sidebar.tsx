@@ -140,10 +140,7 @@ export function Sidebar({
 				</button>
 			</div>
 
-			<div
-				className="sidebar-resize-handle"
-				onMouseDown={handleResizeStart}
-			/>
+			<div className="sidebar-resize-handle" onMouseDown={handleResizeStart} />
 
 			{confirmDelete !== null && (
 				<div

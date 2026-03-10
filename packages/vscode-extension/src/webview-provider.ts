@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import { join } from "node:path";
 import {
 	NodeFsAdapter,
 	ReviewManager,
@@ -16,7 +16,7 @@ import type {
 	RosettaSettings,
 	TranslationStore,
 } from "@terraquantech/rosetta-core";
-import { join } from "node:path";
+import * as vscode from "vscode";
 import { NodeConnectorServer } from "./connector";
 
 interface RpcRequest {
@@ -108,8 +108,7 @@ export class RosettaPanel implements vscode.Disposable {
 		if (dirToLoad) {
 			const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 			const isRelative = !dirToLoad.startsWith("/");
-			const resolvedDir =
-				isRelative && workspaceRoot ? join(workspaceRoot, dirToLoad) : dirToLoad;
+			const resolvedDir = isRelative && workspaceRoot ? join(workspaceRoot, dirToLoad) : dirToLoad;
 			try {
 				await this.loadLocalesDir(resolvedDir);
 			} catch (err) {

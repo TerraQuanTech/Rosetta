@@ -31,8 +31,9 @@ export interface RpcHandlersDeps {
  */
 function sanitizeForIpc<T>(obj: T): T {
 	if (process.platform !== "win32") return obj;
-	const asciiJson = JSON.stringify(obj).replace(/[\u0080-\uffff]/g, (ch) =>
-		`\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`
+	const asciiJson = JSON.stringify(obj).replace(
+		/[\u0080-\uffff]/g,
+		(ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`,
 	);
 	return { __encoded: asciiJson } as unknown as T;
 }
@@ -50,11 +51,12 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 	} = deps;
 
 	return {
-		getStore: () => sanitizeForIpc({
-			...getStore().getStore(),
-			reviews: reviews.get(),
-			localesDir: getCurrentLocalesDir(),
-		}),
+		getStore: () =>
+			sanitizeForIpc({
+				...getStore().getStore(),
+				reviews: reviews.get(),
+				localesDir: getCurrentLocalesDir(),
+			}),
 
 		updateKey: async (params: KeyUpdate) => {
 			const ok = await getStore().updateKey(params);
@@ -98,11 +100,13 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 		createNamespace: async (params: NamespaceCreate) => {
 			const ok = await getStore().createNamespace(params.namespace);
 			if (ok) {
-				getMainWindow()?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-					...getStore().getStore(),
-					reviews: reviews.get(),
-					localesDir: getCurrentLocalesDir(),
-				}));
+				getMainWindow()?.webview.rpc?.send.storeUpdated(
+					sanitizeForIpc({
+						...getStore().getStore(),
+						reviews: reviews.get(),
+						localesDir: getCurrentLocalesDir(),
+					}),
+				);
 			}
 			return { ok };
 		},
@@ -110,11 +114,13 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 		deleteNamespace: async (params: NamespaceDelete) => {
 			const ok = await getStore().deleteNamespace(params.namespace);
 			if (ok) {
-				getMainWindow()?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-					...getStore().getStore(),
-					reviews: reviews.get(),
-					localesDir: getCurrentLocalesDir(),
-				}));
+				getMainWindow()?.webview.rpc?.send.storeUpdated(
+					sanitizeForIpc({
+						...getStore().getStore(),
+						reviews: reviews.get(),
+						localesDir: getCurrentLocalesDir(),
+					}),
+				);
 			}
 			return { ok };
 		},
@@ -122,11 +128,13 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 		addLocale: async (params: { locale: string; copyFrom?: string }) => {
 			const ok = await getStore().addLocale(params.locale, params.copyFrom);
 			if (ok) {
-				getMainWindow()?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-					...getStore().getStore(),
-					reviews: reviews.get(),
-					localesDir: getCurrentLocalesDir(),
-				}));
+				getMainWindow()?.webview.rpc?.send.storeUpdated(
+					sanitizeForIpc({
+						...getStore().getStore(),
+						reviews: reviews.get(),
+						localesDir: getCurrentLocalesDir(),
+					}),
+				);
 			}
 			return { ok };
 		},
@@ -134,11 +142,13 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 		removeLocale: async (params: { locale: string }) => {
 			const ok = await getStore().removeLocale(params.locale);
 			if (ok) {
-				getMainWindow()?.webview.rpc?.send.storeUpdated(sanitizeForIpc({
-					...getStore().getStore(),
-					reviews: reviews.get(),
-					localesDir: getCurrentLocalesDir(),
-				}));
+				getMainWindow()?.webview.rpc?.send.storeUpdated(
+					sanitizeForIpc({
+						...getStore().getStore(),
+						reviews: reviews.get(),
+						localesDir: getCurrentLocalesDir(),
+					}),
+				);
 			}
 			return { ok };
 		},

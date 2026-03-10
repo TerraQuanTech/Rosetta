@@ -40,10 +40,7 @@ export class SettingsManager {
 		this.settings = { ...this.settings, ...partial };
 		try {
 			await this.fs.mkdir(dirname(this.settingsPath));
-			await this.fs.writeFile(
-				this.settingsPath,
-				`${JSON.stringify(this.settings, null, "\t")}\n`,
-			);
+			await this.fs.writeFile(this.settingsPath, `${JSON.stringify(this.settings, null, "\t")}\n`);
 		} catch (err) {
 			console.error("Failed to save settings:", err);
 		}

@@ -18,7 +18,10 @@ export interface RpcTransport {
 	request: RpcRequestFn;
 
 	/** Subscribe to a typed push message from the backend. Returns an unsubscribe function. */
-	onMessage<T extends MessageType>(type: T, handler: (data: MessagePayloads[T]) => void): () => void;
+	onMessage<T extends MessageType>(
+		type: T,
+		handler: (data: MessagePayloads[T]) => void,
+	): () => void;
 
 	/** Platform capabilities — features that may not exist in all hosts. */
 	capabilities: {

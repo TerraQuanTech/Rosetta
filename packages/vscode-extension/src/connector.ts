@@ -1,6 +1,6 @@
 import { ConnectorBase } from "@terraquantech/rosetta-core";
 import type { ConnectorClientInfo } from "@terraquantech/rosetta-core";
-import { WebSocketServer, type WebSocket } from "ws";
+import { type WebSocket, WebSocketServer } from "ws";
 
 export class NodeConnectorServer extends ConnectorBase {
 	private server: WebSocketServer | null = null;

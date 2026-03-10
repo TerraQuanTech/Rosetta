@@ -1,6 +1,6 @@
-import * as esbuild from "esbuild";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import * as esbuild from "esbuild";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

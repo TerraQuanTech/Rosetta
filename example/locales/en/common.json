@@ -1,15 +1,15 @@
 {
-  "app.name": "My App",
-  "app.description": "A simple demo application",
-  "nav.home": "Home",
-  "nav.settings": "Settings",
-  "nav.profile": "Profile",
-  "nav.logout": "Log out",
-  "actions.save": "Save",
-  "actions.cancel": "Cancel",
-  "actions.delete": "Delete",
-  "actions.confirm": "Are you sure?",
-  "status.loading": "Loading...",
-  "status.error": "Something went wrong",
-  "status.empty": "No results found"
+	"app.name": "My App",
+	"app.description": "A simple demo application",
+	"nav.home": "Home",
+	"nav.settings": "Settings",
+	"nav.profile": "Profile",
+	"nav.logout": "Log out",
+	"actions.save": "Save",
+	"actions.cancel": "Cancel",
+	"actions.delete": "Delete",
+	"actions.confirm": "Are you sure?",
+	"status.loading": "Loading...",
+	"status.error": "Something went wrong",
+	"status.empty": "No results found"
 }

@@ -8,9 +8,7 @@
 		"build": "tsc",
 		"dev": "tsc --watch"
 	},
-	"files": [
-		"dist/"
-	],
+	"files": ["dist/"],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

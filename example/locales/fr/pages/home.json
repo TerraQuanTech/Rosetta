@@ -1,9 +1,9 @@
 {
-  "hero.title": "Bienvenue sur Mon Appli",
-  "hero.subtitle": "Créez quelque chose d'incroyable",
-  "hero.cta": "Commencer",
-  "features.title": "Fonctionnalités",
-  "features.speed": "Performances ultra-rapides",
-  "features.security": "Sécurité de niveau entreprise",
-  "features.support": "Support client 24h/24"
+	"hero.title": "Bienvenue sur Mon Appli",
+	"hero.subtitle": "Créez quelque chose d'incroyable",
+	"hero.cta": "Commencer",
+	"features.title": "Fonctionnalités",
+	"features.speed": "Performances ultra-rapides",
+	"features.security": "Sécurité de niveau entreprise",
+	"features.support": "Support client 24h/24"
 }

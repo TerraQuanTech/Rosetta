@@ -1,5 +1,5 @@
-import { Command } from "commander";
 import { NodeFsAdapter, TranslationFileStore } from "@terraquantech/rosetta-core";
+import { Command } from "commander";
 
 type MissingReport = {
 	namespace: string;
