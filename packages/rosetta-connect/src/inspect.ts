@@ -208,18 +208,77 @@ export function enableInspect(
 		const text = textNode.textContent?.trim();
 		if (!text) return;
 
-		const ref = textToRef.get(text);
-		if (!ref) return;
-
 		// Already wrapped
 		const parent = textNode.parentElement;
 		if (parent?.tagName === WRAPPER_TAG.toUpperCase()) return;
 
-		const wrapper = document.createElement(WRAPPER_TAG);
-		wrapper.setAttribute(ATTR_NS, ref.namespace);
-		wrapper.setAttribute(ATTR_KEY, ref.key);
-		textNode.parentNode?.insertBefore(wrapper, textNode);
-		wrapper.appendChild(textNode);
+		// Exact match — wrap the whole node
+		const ref = textToRef.get(text);
+		if (ref) {
+			const wrapper = document.createElement(WRAPPER_TAG);
+			wrapper.setAttribute(ATTR_NS, ref.namespace);
+			wrapper.setAttribute(ATTR_KEY, ref.key);
+			textNode.parentNode?.insertBefore(wrapper, textNode);
+			wrapper.appendChild(textNode);
+			return;
+		}
+
+		// Substring match — find translated fragments inside mixed text
+		// (e.g. "42.1234 МГц" contains translated unit "МГц")
+		wrapSubstrings(textNode, text);
+	}
+
+	function wrapSubstrings(textNode: Text, text: string) {
+		// Find all translation values that appear as substrings, pick the longest matches
+		const matches: Array<{ start: number; end: number; ref: TranslationRef }> = [];
+		for (const [value, ref] of textToRef) {
+			if (value.length < 2) continue; // skip single-char matches
+			let idx = text.indexOf(value);
+			while (idx !== -1) {
+				matches.push({ start: idx, end: idx + value.length, ref });
+				idx = text.indexOf(value, idx + 1);
+			}
+		}
+		if (matches.length === 0) return;
+
+		// Sort by start position, then prefer longer matches
+		matches.sort((a, b) => a.start - b.start || b.end - a.end);
+
+		// Remove overlapping matches (keep longest/earliest)
+		const filtered: typeof matches = [];
+		let lastEnd = 0;
+		for (const m of matches) {
+			if (m.start >= lastEnd) {
+				filtered.push(m);
+				lastEnd = m.end;
+			}
+		}
+
+		// Split the text node and wrap matched portions
+		const parentNode = textNode.parentNode;
+		if (!parentNode) return;
+
+		let currentNode: Text = textNode;
+		let offset = 0;
+		for (const m of filtered) {
+			// Split off any text before the match
+			if (m.start > offset) {
+				currentNode = currentNode.splitText(m.start - offset);
+				offset = m.start;
+			}
+			// Split off the matched portion
+			const afterMatch = currentNode.splitText(m.end - offset);
+			const matchedNode = currentNode;
+			offset = m.end;
+			currentNode = afterMatch;
+
+			// Wrap the matched text node
+			const wrapper = document.createElement(WRAPPER_TAG);
+			wrapper.setAttribute(ATTR_NS, m.ref.namespace);
+			wrapper.setAttribute(ATTR_KEY, m.ref.key);
+			parentNode.insertBefore(wrapper, matchedNode);
+			wrapper.appendChild(matchedNode);
+		}
 	}
 
 	function scanNode(root: Node) {
