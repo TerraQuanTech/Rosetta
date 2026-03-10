@@ -146,39 +146,6 @@ jobs:
           codesign --verify --deep --strict "$APP_PATH"
           echo "Signing verified successfully"
 
-      # --- Windows code signing ---
-      - name: Sign Windows executable
-        if: runner.os == 'Windows'
-        env:
-          WINDOWS_CERTIFICATE_PFX: ${{ secrets.WINDOWS_CERTIFICATE_PFX }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-        shell: powershell
-        run: |
-          $EXE = Get-ChildItem -Path build -Recurse -Filter "*.exe" | Select-Object -First 1
-          if (-not $EXE) {
-            Write-Host "No .exe found in build/"
-            exit 1
-          }
-          Write-Host "Signing $($EXE.FullName)"
-
-          # Decode certificate
-          $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX)
-          $certPath = Join-Path $env:RUNNER_TEMP "cert.pfx"
-          [IO.File]::WriteAllBytes($certPath, $certBytes)
-
-          # Import certificate
-          $cert = Import-PfxCertificate -FilePath $certPath `
-            -CertStoreLocation Cert:\CurrentUser\My `
-            -Password (ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force)
-
-          # Sign
-          & signtool sign /sha1 $cert.Thumbprint `
-            /tr http://timestamp.digicert.com /td sha256 /fd sha256 `
-            $EXE.FullName
-
-          # Clean up
-          Remove-Item $certPath -Force
-
       - name: Find build output
         id: artifact
         shell: bash
