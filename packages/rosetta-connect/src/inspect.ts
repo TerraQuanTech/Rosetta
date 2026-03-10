@@ -40,48 +40,90 @@ export function enableInspect(
 	let active = startActive;
 	let observer: MutationObserver | null = null;
 
-	// --- 1. Monkey-patch i18next.t() ---
-	const originalT = i18next.t.bind(i18next);
+	// --- 0. Pre-populate map from already-loaded resources ---
+	function populateFromResources() {
+		const storeData = (i18next.store as any)?.data;
+		if (!storeData) return;
 
-	const patchedT = (...args: unknown[]) => {
-		const result = (originalT as unknown as (...a: unknown[]) => string)(...args);
-
-		if (typeof result === "string" && result.length > 0) {
-			const firstArg = args[0];
-			let ns: string | undefined;
-			let key: string;
-
-			if (typeof firstArg === "string") {
-				// t("ns:key") or t("key")
-				if (firstArg.includes(":")) {
-					const idx = firstArg.indexOf(":");
-					ns = firstArg.slice(0, idx);
-					key = firstArg.slice(idx + 1);
-				} else {
-					key = firstArg;
-				}
-			} else {
-				return result;
+		// Walk current language + fallbacks
+		const langs = i18next.languages || [i18next.language].filter(Boolean);
+		for (const lang of langs) {
+			const langData = storeData[lang];
+			if (!langData) continue;
+			for (const [ns, bundle] of Object.entries(langData)) {
+				if (typeof bundle !== "object" || !bundle) continue;
+				walkBundle(ns, "", bundle as Record<string, unknown>);
 			}
-
-			// Resolve namespace from options or i18next defaults
-			if (!ns) {
-				const opts = args[1];
-				if (typeof opts === "object" && opts !== null && "ns" in opts) {
-					ns = String((opts as { ns: string }).ns);
-				} else {
-					const defaultNs = i18next.options?.defaultNS;
-					ns = String((Array.isArray(defaultNs) ? defaultNs[0] : defaultNs) || "translation");
-				}
-			}
-
-			textToRef.set(result, { namespace: ns!, key });
 		}
+	}
 
-		return result;
+	function walkBundle(ns: string, prefix: string, obj: Record<string, unknown>) {
+		for (const [k, v] of Object.entries(obj)) {
+			const fullKey = prefix ? `${prefix}.${k}` : k;
+			if (typeof v === "string" && v.length > 0) {
+				textToRef.set(v, { namespace: ns, key: fullKey });
+			} else if (typeof v === "object" && v !== null) {
+				walkBundle(ns, fullKey, v as Record<string, unknown>);
+			}
+		}
+	}
+
+	populateFromResources();
+
+	// Re-populate when i18next loads new namespaces or changes language
+	const repopulateAndRescan = () => {
+		populateFromResources();
+		if (active) scanNode(document.body);
+	};
+	i18next.on("loaded", repopulateAndRescan);
+	i18next.on("languageChanged", repopulateAndRescan);
+
+	// --- 1. PostProcessor plugin to intercept ALL t() calls (including getFixedT/useTranslation) ---
+	const POST_PROCESSOR_NAME = "rosetta-inspect";
+
+	const postProcessor = {
+		type: "postProcessor" as const,
+		name: POST_PROCESSOR_NAME,
+		process(value: string, keys: string[], options: Record<string, any>) {
+			if (typeof value === "string" && value.length > 0 && keys.length > 0) {
+				const rawKey = keys[0];
+				let ns: string | undefined;
+				let key: string;
+
+				// Parse "ns:key" format
+				const nsSep = i18next.options?.nsSeparator ?? ":";
+				if (typeof nsSep === "string" && rawKey.includes(nsSep)) {
+					const idx = rawKey.indexOf(nsSep);
+					ns = rawKey.slice(0, idx);
+					key = rawKey.slice(idx + nsSep.length);
+				} else {
+					key = rawKey;
+				}
+
+				// Resolve namespace from options or defaults
+				if (!ns) {
+					if (options?.ns) {
+						ns = String(Array.isArray(options.ns) ? options.ns[0] : options.ns);
+					} else {
+						const defaultNs = i18next.options?.defaultNS;
+						ns = String((Array.isArray(defaultNs) ? defaultNs[0] : defaultNs) || "translation");
+					}
+				}
+
+				textToRef.set(value, { namespace: ns, key });
+			}
+			return value;
+		},
 	};
 
-	(i18next as any).t = patchedT;
+	i18next.use(postProcessor);
+	// Enable the post-processor globally
+	const existingPP = i18next.options?.postProcess;
+	const ppList = Array.isArray(existingPP) ? existingPP : existingPP ? [existingPP] : [];
+	if (!ppList.includes(POST_PROCESSOR_NAME)) {
+		ppList.push(POST_PROCESSOR_NAME);
+	}
+	(i18next.options as any).postProcess = ppList;
 
 	// --- 2. CSS injection ---
 	function injectStyles() {
@@ -90,15 +132,30 @@ export function enableInspect(
 		style.id = STYLE_ID;
 		style.textContent = `
 			${WRAPPER_TAG} {
-				outline: 1.5px dashed rgba(123, 108, 240, 0.5);
-				outline-offset: 1px;
-				border-radius: 2px;
+				position: relative;
+				border-radius: 3px;
 				cursor: pointer;
-				transition: outline-color 0.15s, background-color 0.15s;
+				transition: background-color 0.15s;
+			}
+			${WRAPPER_TAG}::after {
+				content: '';
+				position: absolute;
+				inset: -2px;
+				border-radius: 4px;
+				background: conic-gradient(#f44, #f90, #ee0, #4c4, #48f, #c4f, #f44);
+				-webkit-mask:
+					linear-gradient(#000 0 0) content-box,
+					linear-gradient(#000 0 0);
+				-webkit-mask-composite: xor;
+				mask:
+					linear-gradient(#000 0 0) content-box,
+					linear-gradient(#000 0 0);
+				mask-composite: exclude;
+				padding: 1.5px;
+				pointer-events: none;
 			}
 			${WRAPPER_TAG}:hover {
-				outline-color: rgba(123, 108, 240, 0.9);
-				background-color: rgba(123, 108, 240, 0.08);
+				background-color: rgba(200, 160, 255, 0.08);
 			}
 			#${MENU_ID} {
 				position: fixed;
@@ -202,6 +259,10 @@ export function enableInspect(
 
 		observer = new MutationObserver((mutations) => {
 			for (const mutation of mutations) {
+				if (mutation.type === "characterData" && mutation.target.nodeType === Node.TEXT_NODE) {
+					wrapTextNode(mutation.target as Text);
+					continue;
+				}
 				for (const node of mutation.addedNodes) {
 					if (node.nodeType === Node.TEXT_NODE) {
 						wrapTextNode(node as Text);
@@ -215,6 +276,7 @@ export function enableInspect(
 		observer.observe(document.body, {
 			childList: true,
 			subtree: true,
+			characterData: true,
 		});
 	}
 
@@ -299,6 +361,7 @@ export function enableInspect(
 
 	function activate() {
 		active = true;
+		populateFromResources();
 		injectStyles();
 		startObserver();
 		document.addEventListener("contextmenu", handleContextMenu, true);
@@ -330,7 +393,14 @@ export function enableInspect(
 	return () => {
 		deactivate();
 		document.removeEventListener("keydown", handleKeyDown);
-		(i18next as any).t = originalT;
+		i18next.off("loaded", repopulateAndRescan);
+		i18next.off("languageChanged", repopulateAndRescan);
+		// Remove our post-processor from the active list
+		const pp = (i18next.options as any)?.postProcess;
+		if (Array.isArray(pp)) {
+			const idx = pp.indexOf(POST_PROCESSOR_NAME);
+			if (idx !== -1) pp.splice(idx, 1);
+		}
 		textToRef.clear();
 	};
 }
