@@ -3,7 +3,7 @@
 Live-reload translations from [Rosetta](https://github.com/TerraQuanTech/Rosetta) into your running app. Edit a translation in Rosetta, see it in your app instantly — no restart needed.
 
 <p align="center">
-  <img src="../../assets/screenshots/editing.png" width="720" alt="Rosetta — inline editing" />
+  <img src="https://raw.githubusercontent.com/TerraQuanTech/rosetta/main/assets/screenshots/editing.png" width="720" alt="Rosetta — inline editing" />
 </p>
 
 ## Rosetta App

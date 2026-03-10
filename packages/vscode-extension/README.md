@@ -4,8 +4,8 @@ A visual translation editor for JSON locale files, directly inside VS Code. Brow
 
 | | |
 |:---:|:---:|
-| ![Dark mode](../../assets/screenshots/dark.png) | ![Inline editing](../../assets/screenshots/editing.png) |
-| ![Light mode](../../assets/screenshots/light.png) ||
+| ![Dark mode](https://raw.githubusercontent.com/TerraQuanTech/rosetta/main/assets/screenshots/dark.png) | ![Inline editing](https://raw.githubusercontent.com/TerraQuanTech/rosetta/main/assets/screenshots/editing.png) |
+| ![Light mode](https://raw.githubusercontent.com/TerraQuanTech/rosetta/main/assets/screenshots/light.png) ||
 
 ## Features
 
