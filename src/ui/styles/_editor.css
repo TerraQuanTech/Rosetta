@@ -26,6 +26,16 @@
 	user-select: none;
 }
 
+.locale-header {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.locale-header .locale-flag-emoji {
+	font-size: 14px;
+}
+
 .editor-table th.key-col {
 	width: 30%;
 	min-width: 200px;
@@ -41,8 +51,25 @@
 	background: rgba(255, 255, 255, 0.015);
 }
 
+.editor-table tbody tr:nth-child(even) td.value-cell.missing,
+.editor-table tbody tr:nth-child(even) td.value-cell.empty {
+	background: var(--missing-bg);
+}
+
+.editor-table tbody tr:nth-child(even) td.value-cell.empty {
+	background: var(--empty-bg);
+}
+
 .editor-table tr:hover td {
 	background: var(--bg-hover);
+}
+
+.editor-table tr:hover td.value-cell.missing {
+	background: var(--missing-bg);
+}
+
+.editor-table tr:hover td.value-cell.empty {
+	background: var(--empty-bg);
 }
 
 .editor-table td.key-cell {
@@ -243,6 +270,16 @@
 	letter-spacing: 0.03em;
 	border-right: 1px solid var(--border);
 	background: var(--bg-tertiary);
+}
+
+.expanded-entry-locale-content {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.expanded-entry-locale-content .locale-flag-emoji {
+	font-size: 14px;
 }
 
 .expanded-entry-value {

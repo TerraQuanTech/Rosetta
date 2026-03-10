@@ -1,3 +1,4 @@
+import { getLocaleInfo } from "@/utils/locales";
 import { isRtlLocale } from "@/utils/rtl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -170,26 +171,32 @@ export function AddKeyDialog({
 					)}
 				</div>
 
-				{locales.map((locale) => (
-					<div className="dialog-field" key={locale}>
-						<label htmlFor={`add-key-${locale}`}>{locale.toUpperCase()}</label>
-						<input
-							id={`add-key-${locale}`}
-							type="text"
-							dir={isRtlLocale(locale) ? "rtl" : "ltr"}
-							placeholder={`Translation for ${locale}`}
-							value={values[locale] ?? ""}
-							onChange={(e) => setValues((v) => ({ ...v, [locale]: e.target.value }))}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" && e.metaKey) {
-									handleAdd(false);
-								} else if (e.key === "Enter") {
-									handleAdd(true);
-								}
-							}}
-						/>
-					</div>
-				))}
+				{locales.map((locale) => {
+					const info = getLocaleInfo(locale);
+					return (
+						<div className="dialog-field" key={locale}>
+							<label htmlFor={`add-key-${locale}`}>
+								{info && <span className="locale-flag-emoji">{info.flag}</span>}
+								{locale.toUpperCase()}
+							</label>
+							<input
+								id={`add-key-${locale}`}
+								type="text"
+								dir={isRtlLocale(locale) ? "rtl" : "ltr"}
+								placeholder={`Translation for ${locale}`}
+								value={values[locale] ?? ""}
+								onChange={(e) => setValues((v) => ({ ...v, [locale]: e.target.value }))}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && e.metaKey) {
+										handleAdd(false);
+									} else if (e.key === "Enter") {
+										handleAdd(true);
+									}
+								}}
+							/>
+						</div>
+					);
+				})}
 
 				<div className="dialog-actions">
 					<button type="button" className="toolbar-btn" onClick={onClose}>

@@ -147,6 +147,14 @@ export default function App() {
 		}
 	}, [settings, visibleLocales]);
 
+	useEffect(() => {
+		if (!store?.locales) return;
+		setVisibleLocales((prev) => {
+			if (!prev) return null;
+			return prev.filter((l) => store.locales.includes(l));
+		});
+	}, [store?.locales]);
+
 	const effectiveNamespace = activeNamespace ?? findFirstLeaf(store?.namespaces ?? []);
 	const effectiveLocales = visibleLocales ?? store?.locales ?? [];
 

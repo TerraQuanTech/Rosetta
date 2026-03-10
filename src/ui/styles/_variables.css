@@ -16,13 +16,13 @@
 	--accent-hover: #a5b4fc;
 	--accent-subtle: rgba(129, 140, 248, 0.12);
 
-	--missing: #fca5a5;
+	--missing: #e03f3f;
 	--missing-bg: rgba(252, 165, 165, 0.08);
 	--empty-bg: rgba(252, 211, 77, 0.08);
 	--empty-color: #fcd34d;
 
-	--success: #6ee7b7;
-	--warning: #fcd34d;
+	--success: rgb(85, 227, 63);
+	--warning: #f5c72e;
 
 	--radius-sm: 5px;
 	--radius-md: 8px;

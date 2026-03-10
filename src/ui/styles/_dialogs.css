@@ -30,13 +30,19 @@
 }
 
 .dialog-field label {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 6px;
 	font-size: 11px;
 	font-weight: 500;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	color: var(--text-muted);
 	margin-bottom: 4px;
+}
+
+.dialog-field label .locale-flag-emoji {
+	font-size: 14px;
 }
 
 .dialog-field input,

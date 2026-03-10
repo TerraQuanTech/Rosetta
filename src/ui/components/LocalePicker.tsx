@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { getLocaleInfo, searchLocales } from "@/utils/locales";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface LocalePickerProps {
 	allLocales: string[];
@@ -6,6 +7,22 @@ interface LocalePickerProps {
 	onChange: (locales: string[]) => void;
 	onAddLocale?: (locale: string, copyFrom?: string) => void;
 	onRemoveLocale?: (locale: string) => void;
+}
+
+function LocaleWithFlag({ code }: { code: string }) {
+	const info = getLocaleInfo(code);
+	return (
+		<span className="locale-flag">
+			{info ? (
+				<>
+					<span className="locale-flag-emoji">{info.flag}</span>
+					<span className="locale-flag-code">{code.toUpperCase()}</span>
+				</>
+			) : (
+				code.toUpperCase()
+			)}
+		</span>
+	);
 }
 
 export function LocalePicker({
@@ -20,7 +37,14 @@ export function LocalePicker({
 	const [newLocale, setNewLocale] = useState("");
 	const [copyFrom, setCopyFrom] = useState<string | undefined>(undefined);
 	const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const ref = useRef<HTMLDivElement>(null);
+
+	const suggestions = useMemo(() => {
+		if (!newLocale.trim()) return [];
+		return searchLocales(newLocale, allLocales);
+	}, [newLocale, allLocales]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -32,6 +56,12 @@ export function LocalePicker({
 		document.addEventListener("mousedown", handleClick);
 		return () => document.removeEventListener("mousedown", handleClick);
 	}, [open]);
+
+	useEffect(() => {
+		if (showAddInput && inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, [showAddInput]);
 
 	const toggle = useCallback(
 		(locale: string) => {
@@ -48,6 +78,32 @@ export function LocalePicker({
 	const showAll = useCallback(() => {
 		onChange([...allLocales]);
 	}, [allLocales, onChange]);
+
+	const handleAddFromSuggestion = useCallback(
+		(code: string) => {
+			if (onAddLocale) {
+				onAddLocale(code, copyFrom);
+				setNewLocale("");
+				setCopyFrom(undefined);
+				setShowAddInput(false);
+				setShowSuggestions(false);
+			}
+		},
+		[onAddLocale, copyFrom],
+	);
+
+	const handleManualAdd = useCallback(() => {
+		const code = newLocale.trim().toLowerCase();
+		if (code && !allLocales.includes(code)) {
+			if (onAddLocale) {
+				onAddLocale(code, copyFrom);
+				setNewLocale("");
+				setCopyFrom(undefined);
+				setShowAddInput(false);
+				setShowSuggestions(false);
+			}
+		}
+	}, [newLocale, allLocales, onAddLocale, copyFrom]);
 
 	const allVisible = visibleLocales.length === allLocales.length;
 	const label = allVisible
@@ -78,7 +134,7 @@ export function LocalePicker({
 									readOnly
 									tabIndex={-1}
 								/>
-								{locale.toUpperCase()}
+								<LocaleWithFlag code={locale} />
 							</button>
 							{onRemoveLocale && allLocales.length > 1 && (
 								<button
@@ -101,48 +157,102 @@ export function LocalePicker({
 						<>
 							<div className="locale-picker-divider" />
 							{showAddInput ? (
-								<div style={{ padding: "8px" }}>
-									<input
-										type="text"
-										className="search-input"
-										placeholder="e.g. de"
-										value={newLocale}
-										onChange={(e) => setNewLocale(e.target.value.toLowerCase())}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												const code = newLocale.trim();
-												if (code && !allLocales.includes(code)) {
-													onAddLocale(code, copyFrom);
+								<div className="locale-add-form">
+									<div className="locale-add-input-wrapper">
+										<input
+											ref={inputRef}
+											type="text"
+											className="search-input"
+											placeholder="e.g. de, German, 日本語"
+											value={newLocale}
+											onChange={(e) => {
+												setNewLocale(e.target.value);
+												setShowSuggestions(true);
+											}}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													if (suggestions.length === 1) {
+														handleAddFromSuggestion(suggestions[0].code);
+													} else {
+														handleManualAdd();
+													}
+												}
+												if (e.key === "Escape") {
+													setShowAddInput(false);
 													setNewLocale("");
 													setCopyFrom(undefined);
-													setShowAddInput(false);
+													setShowSuggestions(false);
 												}
-											}
-											if (e.key === "Escape") {
+											}}
+											onFocus={() => setShowSuggestions(true)}
+											onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+										/>
+										{showSuggestions && suggestions.length > 0 && (
+											<div className="locale-suggestions">
+												{suggestions.map((suggestion) => (
+													<button
+														key={suggestion.code}
+														type="button"
+														className="locale-suggestion-item"
+														onClick={() => handleAddFromSuggestion(suggestion.code)}
+														title={suggestion.nativeName}
+													>
+														<span className="locale-flag-emoji">{suggestion.flag}</span>
+														<span className="locale-suggestion-name">{suggestion.name}</span>
+														<span className="locale-suggestion-code">{suggestion.code}</span>
+													</button>
+												))}
+											</div>
+										)}
+									</div>
+									{allLocales.length > 0 && (
+										<>
+											<div className="locale-copy-label">Copy from (optional):</div>
+											<div className="locale-copy-options">
+												{allLocales.map((locale) => (
+													<button
+														key={locale}
+														type="button"
+														className="locale-picker-item"
+														onClick={() => setCopyFrom(copyFrom === locale ? undefined : locale)}
+													>
+														<input
+															type="checkbox"
+															checked={copyFrom === locale}
+															readOnly
+															tabIndex={-1}
+														/>
+														<LocaleWithFlag code={locale} />
+													</button>
+												))}
+											</div>
+										</>
+									)}
+									<div className="locale-add-actions">
+										<button
+											type="button"
+											className="toolbar-btn"
+											onClick={() => {
 												setShowAddInput(false);
 												setNewLocale("");
 												setCopyFrom(undefined);
-											}
-										}}
-										style={{ width: "100%", height: 24, fontSize: 12, marginBottom: 8 }}
-									/>
-									{allLocales.length > 0 && (
-										<div style={{ fontSize: 12, marginBottom: 6, color: "#999" }}>
-											Copy from (optional):
-										</div>
-									)}
-									{allLocales.map((locale) => (
-										<button
-											key={locale}
-											type="button"
-											className="locale-picker-item"
-											onClick={() => setCopyFrom(copyFrom === locale ? undefined : locale)}
-											style={{ fontSize: 12, paddingLeft: 12 }}
+												setShowSuggestions(false);
+											}}
 										>
-											<input type="checkbox" checked={copyFrom === locale} readOnly tabIndex={-1} />
-											{locale.toUpperCase()}
+											Cancel
 										</button>
-									))}
+										<button
+											type="button"
+											className="toolbar-btn primary"
+											onClick={handleManualAdd}
+											disabled={
+												!newLocale.trim() || allLocales.includes(newLocale.trim().toLowerCase())
+											}
+										>
+											Add
+										</button>
+									</div>
 								</div>
 							) : (
 								<button

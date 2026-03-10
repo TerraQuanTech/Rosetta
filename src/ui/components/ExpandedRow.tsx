@@ -1,3 +1,4 @@
+import { getLocaleInfo } from "@/utils/locales";
 import { isRtlLocale } from "@/utils/rtl";
 import type { KeyUpdate, LocaleReviews, LocaleValues, ReviewToggle } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -118,10 +119,20 @@ function ExpandedEntry({
 
 	const statusClass = isMissing ? " missing" : isEmpty ? " empty" : reviewed ? " reviewed" : "";
 
+	function LocaleLabel({ code }: { code: string }) {
+		const info = getLocaleInfo(code);
+		return (
+			<span className="expanded-entry-locale-content">
+				{info && <span className="locale-flag-emoji">{info.flag}</span>}
+				{code.toUpperCase()}
+			</span>
+		);
+	}
+
 	return (
 		<div className={`expanded-entry${statusClass}`}>
 			<div className="expanded-entry-locale">
-				{locale.toUpperCase()}
+				<LocaleLabel code={locale} />
 				{onToggleReview && !isMissing && (
 					<button
 						type="button"

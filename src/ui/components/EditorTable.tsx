@@ -1,4 +1,5 @@
 import { fuzzyMatch } from "@/utils/fuzzy";
+import { getLocaleInfo } from "@/utils/locales";
 import type {
 	FilterType,
 	KeyRename,
@@ -152,13 +153,29 @@ export function EditorTable({
 
 	const colCount = locales.length + 1;
 
+	function LocaleHeader({ code }: { code: string }) {
+		const info = getLocaleInfo(code);
+		return (
+			<th key={code}>
+				{info ? (
+					<span className="locale-header">
+						<span className="locale-flag-emoji">{info.flag}</span>
+						<span>{code.toUpperCase()}</span>
+					</span>
+				) : (
+					code.toUpperCase()
+				)}
+			</th>
+		);
+	}
+
 	return (
 		<table className="editor-table">
 			<thead>
 				<tr>
 					<th className="key-col">Key</th>
 					{locales.map((locale) => (
-						<th key={locale}>{locale.toUpperCase()}</th>
+						<LocaleHeader key={locale} code={locale} />
 					))}
 				</tr>
 			</thead>

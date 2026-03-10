@@ -7,7 +7,7 @@
 	top: 100%;
 	right: 0;
 	margin-top: 6px;
-	min-width: 180px;
+	min-width: 220px;
 	background: var(--bg-secondary);
 	border: 1px solid var(--border);
 	border-radius: var(--radius-md);
@@ -16,11 +16,26 @@
 	padding: 6px;
 }
 
+.locale-flag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.locale-flag-emoji {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.locale-flag-code {
+	font-weight: 500;
+}
+
 .locale-picker-item {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 5px 8px;
+	padding: 6px 10px;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	color: var(--text-secondary);
@@ -30,7 +45,7 @@
 	border: none;
 	text-align: left;
 	font: inherit;
-	font-size: 12px;
+	font-size: 12.5px;
 }
 
 .locale-picker-item:hover {
@@ -88,25 +103,128 @@
 .locale-picker-divider {
 	height: 1px;
 	background: var(--border);
-	margin: 4px 0;
+	margin: 6px 0;
 }
 
 .locale-picker-action {
 	display: block;
 	width: 100%;
-	padding: 5px 8px;
+	padding: 6px 10px;
 	background: none;
 	border: none;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	font-size: 11px;
+	font-size: 12px;
 	color: var(--accent);
 	text-align: left;
 	font-family: var(--font-sans);
+	font-weight: 500;
 }
 
 .locale-picker-action:hover {
 	background: var(--bg-hover);
+}
+
+.locale-add-form {
+	padding: 4px 0;
+}
+
+.locale-add-input-wrapper {
+	position: relative;
+	margin-bottom: 10px;
+}
+
+.locale-add-input-wrapper .search-input {
+	width: 100%;
+	height: 32px;
+	font-size: 13px;
+}
+
+.locale-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	margin-top: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+	box-shadow: var(--shadow-md);
+	z-index: 10;
+}
+
+.locale-suggestion-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 12px;
+	background: none;
+	border: none;
+	text-align: left;
+	cursor: pointer;
+	font-size: 13px;
+	color: var(--text-primary);
+}
+
+.locale-suggestion-item:hover {
+	background: var(--accent-subtle);
+}
+
+.locale-suggestion-code {
+	font-family: var(--font-mono);
+	font-weight: 600;
+	font-size: 12px;
+}
+
+.locale-suggestion-item:hover {
+	background: var(--accent-subtle);
+}
+
+.locale-suggestion-name {
+	flex: 1;
+}
+
+.locale-suggestion-code {
+	font-size: 11px;
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
+.locale-copy-label {
+	font-size: 11px;
+	color: var(--text-muted);
+	margin-bottom: 6px;
+	font-weight: 500;
+}
+
+.locale-copy-options {
+	margin-bottom: 12px;
+}
+
+.locale-copy-options .locale-picker-item {
+	padding: 4px 8px;
+	font-size: 12px;
+}
+
+.locale-add-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 6px;
+	margin-top: 10px;
+}
+
+.locale-add-actions .toolbar-btn {
+	height: 30px;
+	padding: 0 12px;
+	font-size: 12px;
+}
+
+.locale-add-actions .toolbar-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .prefix-suggestions {
