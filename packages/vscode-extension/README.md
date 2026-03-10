@@ -12,7 +12,7 @@ A visual translation editor for JSON locale files, directly inside VS Code. Brow
 - **Spreadsheet-style editor** — edit translation keys across all locales side by side
 - **Namespace tree** — folder-based grouping with search and filters (missing, unreviewed)
 - **Review tracking** — mark translations as reviewed per key/locale
-- **Live preview** — edits push to your running app via WebSocket (works with [`@tqt-llc/rosetta-connect`](../rosetta-connect))
+- **Live preview** — edits push to your running app via WebSocket (works with [`@terraquant/rosetta-connect`](../rosetta-connect))
 - **Add/remove** keys, locales, and namespaces without leaving the editor
 - **Manual save mode** — batch changes and save with Cmd/Ctrl+S
 
@@ -51,7 +51,7 @@ The extension remembers the last opened locales directory per workspace. You can
 To see translation changes reflected in your running app as you type, install the connector in your project:
 
 ```bash
-npm install @tqt-llc/rosetta-connect
+npm install @terraquant/rosetta-connect
 ```
 
 ```ts

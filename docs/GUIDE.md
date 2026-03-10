@@ -61,7 +61,7 @@ The connector lets your running app receive translation updates from Rosetta in 
 ### Install
 
 ```bash
-npm install @tqt-llc/rosetta-connect
+npm install @terraquant/rosetta-connect
 ```
 
 ### Basic setup (i18next)
