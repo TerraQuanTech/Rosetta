@@ -11,6 +11,11 @@ A lightweight desktop editor for JSON i18n locale files. Open a folder, edit tra
 - CLI for CI: check missing keys, coverage stats, completeness
 - macOS, Windows, Linux
 
+| | |
+|:---:|:---:|
+| ![Dark mode](assets/screenshots/dark.png) | ![Inline editing](assets/screenshots/editing.png) |
+| ![Light mode](assets/screenshots/light.png) ||
+
 ## Install
 
 ### Desktop app

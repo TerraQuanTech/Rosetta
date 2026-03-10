@@ -2,6 +2,10 @@
 
 Live-reload translations from [Rosetta](https://github.com/TerraQuanTech/Rosetta) into your running app. Edit a translation in Rosetta, see it in your app instantly — no restart needed.
 
+<p align="center">
+  <img src="../../assets/screenshots/editing.png" width="720" alt="Rosetta — inline editing" />
+</p>
+
 ## Rosetta App
 
 This package is the client-side connector for [Rosetta](https://github.com/TerraQuanTech/rosetta). It works with both the desktop app and the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=TerraQuantTech.rosetta-i18n).

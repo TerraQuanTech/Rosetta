@@ -2,6 +2,11 @@
 
 A visual translation editor for JSON locale files, directly inside VS Code. Browse namespaces, edit translations inline, track reviews, and see changes live in your running app.
 
+| | |
+|:---:|:---:|
+| ![Dark mode](../../assets/screenshots/dark.png) | ![Inline editing](../../assets/screenshots/editing.png) |
+| ![Light mode](../../assets/screenshots/light.png) ||
+
 ## Features
 
 - **Spreadsheet-style editor** — edit translation keys across all locales side by side
