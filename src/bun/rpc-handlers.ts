@@ -142,6 +142,7 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 		removeLocale: async (params: { locale: string }) => {
 			const ok = await getStore().removeLocale(params.locale);
 			if (ok) {
+				await reviews.removeLocale(params.locale);
 				getMainWindow()?.webview.rpc?.send.storeUpdated(
 					sanitizeForIpc({
 						...getStore().getStore(),

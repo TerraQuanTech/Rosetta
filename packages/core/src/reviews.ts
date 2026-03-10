@@ -68,6 +68,28 @@ export class ReviewManager {
 		}
 	}
 
+	async removeLocale(locale: string): Promise<boolean> {
+		let changed = false;
+		for (const namespace of Object.keys(this.reviews)) {
+			for (const key of Object.keys(this.reviews[namespace])) {
+				if (this.reviews[namespace][key][locale]) {
+					delete this.reviews[namespace][key][locale];
+					changed = true;
+				}
+				if (Object.keys(this.reviews[namespace][key]).length === 0) {
+					delete this.reviews[namespace][key];
+				}
+			}
+			if (Object.keys(this.reviews[namespace]).length === 0) {
+				delete this.reviews[namespace];
+			}
+		}
+		if (changed) {
+			return this.save();
+		}
+		return true;
+	}
+
 	private async save(): Promise<boolean> {
 		if (!this.filePath) return false;
 		try {
