@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   publish:
@@ -64,9 +65,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: packages/rosetta-connect
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+        run: npm publish --provenance
 
       - name: Commit and tag
         run: |
