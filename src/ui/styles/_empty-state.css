@@ -1,0 +1,46 @@
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	gap: 16px;
+	color: var(--text-muted);
+	padding: 40px;
+}
+
+.empty-state h2 {
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--text-secondary);
+	letter-spacing: -0.02em;
+}
+
+.empty-state p {
+	font-size: 14px;
+	max-width: 400px;
+	text-align: center;
+	line-height: 1.6;
+	color: var(--text-muted);
+}
+
+.open-folder-btn {
+	margin-top: 12px;
+	padding: 10px 24px;
+	background: var(--accent);
+	border: none;
+	border-radius: var(--radius-md);
+	color: white;
+	font-size: 13.5px;
+	font-weight: 500;
+	font-family: var(--font-sans);
+	cursor: pointer;
+	transition: all 0.15s ease;
+	box-shadow: 0 2px 6px rgba(129, 140, 248, 0.3);
+}
+
+.open-folder-btn:hover {
+	background: var(--accent-hover);
+	box-shadow: 0 4px 10px rgba(129, 140, 248, 0.4);
+	transform: translateY(-1px);
+}

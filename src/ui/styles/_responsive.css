@@ -1,0 +1,31 @@
+@media (max-width: 1064px) {
+	.toolbar-spacer {
+		display: none;
+	}
+
+	.search-input {
+		min-width: unset !important;
+	}
+
+	.search-input::placeholder {
+		color: transparent;
+	}
+
+	.search-shortcut-hint {
+		right: auto;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}
+
+@media (max-width: 910px) {
+	.filter-group {
+		display: none;
+	}
+}
+
+@media (max-width: 700px) {
+	.scope-toggle {
+		display: none;
+	}
+}

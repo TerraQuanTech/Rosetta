@@ -1,0 +1,7 @@
+.app {
+	display: grid;
+	grid-template-columns: var(--sidebar-width) 1fr;
+	grid-template-rows: var(--toolbar-height) minmax(0, 1fr) var(--statusbar-height);
+	height: 100%;
+	overflow: hidden;
+}

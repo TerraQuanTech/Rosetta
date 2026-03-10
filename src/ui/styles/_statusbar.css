@@ -1,0 +1,50 @@
+.statusbar {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	padding: 0 20px;
+	background: var(--bg-secondary);
+	border-top: 1px solid var(--border);
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.statusbar-item {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.statusbar-btn {
+	background: none;
+	border: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	padding: 2px 4px;
+	border-radius: var(--radius-sm);
+}
+
+.statusbar-btn:hover {
+	background: var(--bg-hover);
+	color: var(--text-primary);
+}
+
+.status-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	position: relative;
+	top: 1px;
+}
+
+.status-dot.green {
+	background: var(--success);
+}
+.status-dot.yellow {
+	background: var(--warning);
+}
+.status-dot.red {
+	background: var(--missing);
+}

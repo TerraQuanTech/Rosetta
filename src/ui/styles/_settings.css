@@ -1,0 +1,83 @@
+.settings-panel {
+	padding: 32px;
+	overflow-y: auto;
+	height: 100%;
+	width: 100%;
+}
+
+.settings-panel h2 {
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 24px;
+	color: var(--text-primary);
+}
+
+.settings-section {
+	margin-bottom: 24px;
+	max-width: 600px;
+}
+
+.settings-section h3 {
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	margin-bottom: 12px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid var(--border);
+}
+
+.settings-field {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 0;
+	gap: 12px;
+}
+
+.settings-field > div:first-child {
+	min-width: 0;
+	flex: 1;
+}
+
+.settings-field-label {
+	font-size: 13px;
+	color: var(--text-primary);
+}
+
+.settings-field-desc {
+	font-size: 11px;
+	color: var(--text-muted);
+	margin-top: 2px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.settings-field input[type="text"],
+.settings-field input[type="number"] {
+	padding: 5px 10px;
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	color: var(--text-primary);
+	font-size: 13px;
+	font-family: var(--font-sans);
+	outline: none;
+	width: 200px;
+}
+
+.settings-field input:focus {
+	border-color: var(--border-focus);
+}
+
+.settings-path-field {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.settings-path-field input {
+	flex: 1;
+}

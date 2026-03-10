@@ -1,0 +1,143 @@
+.tree-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	width: 100%;
+	background: none;
+	border: none;
+	text-align: left;
+	font: inherit;
+	outline: none;
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	color: var(--text-secondary);
+	font-size: 12.5px;
+	user-select: none;
+	overflow: hidden;
+	transition: background 0.1s, color 0.1s;
+}
+
+.tree-item > span:last-child {
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.tree-item-row:hover .tree-item > span:last-child {
+	text-overflow: ellipsis;
+}
+
+.tree-item:hover {
+	background: var(--bg-hover);
+	color: var(--text-primary);
+}
+
+.tree-item.active {
+	background: var(--accent-subtle);
+	color: var(--accent);
+	font-weight: 500;
+}
+
+.tree-item.folder {
+	font-weight: 500;
+	color: var(--text-secondary);
+}
+
+.tree-item-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.tree-item-row .tree-item {
+	flex: 1;
+	min-width: 0;
+}
+
+.tree-item-row:hover .tree-item {
+	padding-right: 44px;
+}
+
+.tree-item-action {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 20px;
+	background: none;
+	border: none;
+	border-radius: var(--radius-sm);
+	color: var(--text-muted);
+	font-size: 14px;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.1s, color 0.1s, background 0.1s;
+	padding: 0;
+}
+
+.tree-item-action.delete {
+	right: 4px;
+}
+
+.tree-item-action.add {
+	right: 24px;
+}
+
+.tree-item-row:hover .tree-item-action {
+	opacity: 1;
+}
+
+.tree-item-action.delete:hover {
+	color: var(--missing);
+	background: var(--missing-bg);
+}
+
+.tree-item-action.add:hover {
+	color: var(--accent);
+	background: var(--accent-subtle);
+}
+
+.add-namespace-btn {
+	color: var(--text-muted) !important;
+	font-size: 12px !important;
+	margin-top: 4px;
+}
+
+.add-namespace-btn:hover {
+	color: var(--accent) !important;
+}
+
+.new-namespace-input {
+	padding: 4px 8px;
+}
+
+.new-namespace-input input {
+	width: 100%;
+	padding: 4px 8px;
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border-focus);
+	border-radius: var(--radius-sm);
+	color: var(--text-primary);
+	font-size: 12px;
+	font-family: var(--font-mono);
+	outline: none;
+}
+
+.tree-children {
+	padding-left: 14px;
+}
+
+.tree-chevron {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	transition: transform 0.15s;
+}
+
+.tree-chevron.open {
+	transform: rotate(90deg);
+}
