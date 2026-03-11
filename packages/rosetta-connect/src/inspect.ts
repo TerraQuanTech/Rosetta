@@ -31,6 +31,7 @@ const MENU_ID = "rosetta-inspect-menu";
 export function enableInspect(
 	i18next: i18n,
 	sendFocusKey: (namespace: string, key: string) => void,
+	isConnected: () => boolean,
 	options: InspectOptions = {},
 ): () => void {
 	const { toggleKey = "i", startActive = false } = options;
@@ -84,20 +85,21 @@ export function enableInspect(
 	const postProcessor = {
 		type: "postProcessor" as const,
 		name: POST_PROCESSOR_NAME,
-		process(value: string, keys: string[], options: Record<string, any>) {
-			if (typeof value === "string" && value.length > 0 && keys.length > 0) {
-				const rawKey = keys[0];
+		process(value: string, rawKeys: string | string[], options: Record<string, any>) {
+			if (typeof value === "string" && value.length > 0) {
+				const rawKey = typeof rawKeys === "string" ? rawKeys : rawKeys[0];
+				if (!rawKey) return value;
 				let ns: string | undefined;
-				let key: string;
+				let resolvedKey: string;
 
 				// Parse "ns:key" format
 				const nsSep = i18next.options?.nsSeparator ?? ":";
 				if (typeof nsSep === "string" && rawKey.includes(nsSep)) {
 					const idx = rawKey.indexOf(nsSep);
 					ns = rawKey.slice(0, idx);
-					key = rawKey.slice(idx + nsSep.length);
+					resolvedKey = rawKey.slice(idx + nsSep.length);
 				} else {
-					key = rawKey;
+					resolvedKey = rawKey;
 				}
 
 				// Resolve namespace from options or defaults
@@ -110,7 +112,7 @@ export function enableInspect(
 					}
 				}
 
-				textToRef.set(value, { namespace: ns, key });
+				textToRef.set(value, { namespace: ns, key: resolvedKey });
 			}
 			return value;
 		},
@@ -181,8 +183,12 @@ export function enableInspect(
 				cursor: pointer;
 				font: inherit;
 			}
-			#${MENU_ID} button:hover {
+			#${MENU_ID} button:hover:not(:disabled) {
 				background: #303036;
+			}
+			#${MENU_ID} button:disabled {
+				color: #555;
+				cursor: default;
 			}
 			#${MENU_ID} .rosetta-menu-label {
 				color: #78787f;
@@ -201,7 +207,10 @@ export function enableInspect(
 	// --- 3. DOM scanning ---
 	function isIgnoredElement(el: Element): boolean {
 		const tag = el.tagName;
-		return tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE";
+		if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE") return true;
+		// Don't highlight text inside our own context menu
+		if (el.closest(`#${MENU_ID}`)) return true;
+		return false;
 	}
 
 	function wrapTextNode(textNode: Text) {
@@ -364,10 +373,16 @@ export function enableInspect(
 
 		const focusBtn = document.createElement("button");
 		focusBtn.textContent = "Open in Rosetta";
-		focusBtn.addEventListener("click", () => {
-			sendFocusKey(ns, key);
-			hideContextMenu();
-		});
+		const connected = isConnected();
+		if (connected) {
+			focusBtn.addEventListener("click", () => {
+				sendFocusKey(ns, key);
+				hideContextMenu();
+			});
+		} else {
+			focusBtn.disabled = true;
+			focusBtn.title = "Not connected to Rosetta";
+		}
 		menu.appendChild(focusBtn);
 
 		const copyBtn = document.createElement("button");

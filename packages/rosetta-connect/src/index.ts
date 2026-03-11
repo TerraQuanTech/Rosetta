@@ -184,6 +184,7 @@ export function connectRosetta(i18next: i18n, options: ConnectOptions = {}): () 
 			(namespace, key) => {
 				ws?.send(JSON.stringify({ type: "key:focus", namespace, key }));
 			},
+			() => ws !== null && ws.readyState === WebSocket.OPEN,
 			inspectOpts,
 		);
 	}
