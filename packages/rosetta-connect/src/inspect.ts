@@ -5,6 +5,8 @@ export interface InspectOptions {
 	toggleKey?: string;
 	/** Start with inspect mode active. Default: false */
 	startActive?: boolean;
+	/** Match translated substrings inside mixed text (e.g. "42.5 MHz"). Default: true */
+	substringMatch?: boolean;
 }
 
 interface TranslationRef {
@@ -34,7 +36,7 @@ export function enableInspect(
 	isConnected: () => boolean,
 	options: InspectOptions = {},
 ): () => void {
-	const { toggleKey = "i", startActive = false } = options;
+	const { toggleKey = "i", startActive = false, substringMatch = true } = options;
 
 	// Map of rendered text → translation reference
 	const textToRef = new Map<string, TranslationRef>();
@@ -234,7 +236,9 @@ export function enableInspect(
 
 		// Substring match — find translated fragments inside mixed text
 		// (e.g. "42.1234 МГц" contains translated unit "МГц")
-		wrapSubstrings(textNode, text);
+		if (substringMatch) {
+			wrapSubstrings(textNode, text);
+		}
 	}
 
 	function wrapSubstrings(textNode: Text, text: string) {
