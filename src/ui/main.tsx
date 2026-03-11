@@ -1,9 +1,12 @@
+import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { RpcTransportContext } from "./rpc-transport";
 import "./styles/global.css";
 import { createElectrobunTransport } from "./transports/electrobun";
+
+polyfillCountryFlagEmojis();
 
 const transport = createElectrobunTransport();
 

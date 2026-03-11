@@ -23,6 +23,7 @@
 }
 
 .locale-flag-emoji {
+	font-family: "Twemoji Country Flags", system-ui, sans-serif;
 	font-size: 16px;
 	line-height: 1;
 }

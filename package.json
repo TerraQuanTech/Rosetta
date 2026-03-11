@@ -23,6 +23,7 @@
 		"@terraquantech/rosetta-core": "workspace:*",
 		"chokidar": "^4.0.0",
 		"commander": "^12.1.0",
+		"country-flag-emoji-polyfill": "^0.1.8",
 		"electrobun": "latest",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
