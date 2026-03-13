@@ -9,7 +9,7 @@ if (isCliMode) {
 }
 
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { RosettaRPC } from "@shared/types";
 import {
 	NodeFsAdapter,
@@ -125,7 +125,21 @@ if (currentLocalesDir) {
 }
 
 async function getMainViewUrl(): Promise<string> {
-	const channel = await Updater.localInfo.channel();
+	let channel: string;
+	try {
+		channel = await Updater.localInfo.channel();
+	} catch {
+		// Fallback when cwd-relative version.json lookup fails (e.g. macOS Finder launch sets cwd="/")
+		try {
+			const { readFileSync } = await import("node:fs");
+			const execDir = dirname(process.argv0);
+			const versionJsonPath = join(execDir, "..", "Resources", "version.json");
+			const parsed = JSON.parse(readFileSync(versionJsonPath, "utf-8"));
+			channel = parsed.channel ?? "stable";
+		} catch {
+			channel = "stable";
+		}
+	}
 	if (channel === "dev") {
 		try {
 			await fetch(DEV_SERVER_URL, { method: "HEAD" });

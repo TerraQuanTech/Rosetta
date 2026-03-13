@@ -68,8 +68,9 @@ connectRosetta(i18next, {
 // or configure it:
 connectRosetta(i18next, {
     inspect: {
-        toggleKey: "i", // keyboard shortcut key (default: "i")
-        startActive: false, // start with inspect active (default: false)
+        toggleKey: "i",       // keyboard shortcut key (default: "i")
+        startActive: false,   // start with inspect active (default: false)
+        substringMatch: true, // highlight translated substrings inside mixed text, e.g. "42.5 MHz" (default: true)
     },
 });
 ```

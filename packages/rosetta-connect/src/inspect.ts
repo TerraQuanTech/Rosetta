@@ -33,7 +33,7 @@ const MENU_ID = "rosetta-inspect-menu";
 export function enableInspect(
 	i18next: i18n,
 	sendFocusKey: (namespace: string, key: string) => void,
-	isConnected: () => boolean,
+i	isConnected: () => boolean,
 	options: InspectOptions = {},
 ): () => void {
 	const { toggleKey = "i", startActive = false, substringMatch = true } = options;

@@ -11,58 +11,63 @@ export async function handleCliMode() {
 	const program = new Command()
 		.name("rosetta")
 		.description("Translation editor and CLI tool for JSON locale files")
-		.version("0.1.1")
-		.argument("<dir>", "Path to the locales directory");
+		.version("0.1.1");
 
 	program
 		.command("stats")
 		.description("Show translation coverage statistics")
-		.action(async () => {
-			const store = await loadStore(program);
+		.argument("<dir>", "Path to the locales directory")
+		.action(async (dir: string) => {
+			const store = await loadStore(dir);
 			await showStats(store);
 		});
 
 	program
 		.command("missing")
 		.description("Show missing keys by locale and namespace")
-		.action(async () => {
-			const store = await loadStore(program);
+		.argument("<dir>", "Path to the locales directory")
+		.action(async (dir: string) => {
+			const store = await loadStore(dir);
 			await showMissing(store);
 		});
 
 	program
 		.command("complete")
 		.description("List locales with 100% coverage")
-		.action(async () => {
-			const store = await loadStore(program);
+		.argument("<dir>", "Path to the locales directory")
+		.action(async (dir: string) => {
+			const store = await loadStore(dir);
 			await showComplete(store);
 		});
 
 	program
 		.command("list-locales")
 		.description("List all available locales")
-		.action(async () => {
-			const store = await loadStore(program);
+		.argument("<dir>", "Path to the locales directory")
+		.action(async (dir: string) => {
+			const store = await loadStore(dir);
 			await listLocales(store);
 		});
 
 	program
 		.command("list-keys")
 		.description("List all keys in namespaces and locales")
+		.argument("<dir>", "Path to the locales directory")
 		.argument("[namespace]", "Filter by specific namespace")
 		.option("--locale <code>", "Filter by specific locale")
-		.action(async (namespace: string | undefined, options: { locale?: string }) => {
-			const store = await loadStore(program);
+		.action(async (dir: string, namespace: string | undefined, options: { locale?: string }) => {
+			const store = await loadStore(dir);
 			await listKeys(store, namespace, options.locale);
 		});
 
 	program
 		.command("add-locale")
 		.description("Create a new locale")
+		.argument("<dir>", "Path to the locales directory")
 		.argument("<code>", "Locale code to create")
 		.option("--copy-from <source>", "Copy content from existing locale")
-		.action(async (code: string, options: { copyFrom?: string }) => {
-			const store = await loadStore(program);
+		.action(async (dir: string, code: string, options: { copyFrom?: string }) => {
+			const store = await loadStore(dir);
 			await addLocaleCommand(store, code, options.copyFrom);
 		});
 
@@ -77,8 +82,7 @@ export async function handleCliMode() {
 	}
 }
 
-async function loadStore(program: Command): Promise<TranslationFileStore> {
-	const dir = program.args[0];
+async function loadStore(dir: string): Promise<TranslationFileStore> {
 	const store = new TranslationFileStore(dir, new NodeFsAdapter());
 	await store.load();
 	return store;
@@ -264,8 +268,8 @@ async function listKeys(
 			console.log(`  - ${ns} (${keyCount} keys)`);
 		}
 		console.log("\nUsage:");
-		console.log("  rosetta <dir> list-keys <namespace>");
-		console.log("  rosetta <dir> list-keys <namespace> --locale=en");
+		console.log("  rosetta list-keys <dir> <namespace>");
+		console.log("  rosetta list-keys <dir> <namespace> --locale=en");
 	}
 
 	console.log();
