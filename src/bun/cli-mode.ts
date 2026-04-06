@@ -1,11 +1,47 @@
 import { NodeFsAdapter, TranslationFileStore } from "@terraquantech/rosetta-core";
 import { Command } from "commander";
 
-type MissingReport = {
+export type MissingReport = {
 	namespace: string;
 	locale: string;
 	missingKeys: string[];
 };
+
+/** Compute missing keys across all namespaces and locales. */
+export function computeMissing(store: TranslationFileStore): MissingReport[] {
+	const storeData = store.getStore();
+	const missing: MissingReport[] = [];
+
+	for (const ns of Object.keys(storeData.translations)) {
+		const nsData = storeData.translations[ns];
+		for (const locale of storeData.locales) {
+			const missingKeys = Object.keys(nsData).filter((key) => !nsData[key]?.[locale]);
+			if (missingKeys.length > 0) {
+				missing.push({ namespace: ns, locale, missingKeys });
+			}
+		}
+	}
+	return missing;
+}
+
+/** Compute coverage per locale. */
+export function computeCoverage(store: TranslationFileStore): Record<string, { translated: number; total: number }> {
+	const storeData = store.getStore();
+	const result: Record<string, { translated: number; total: number }> = {};
+
+	for (const locale of storeData.locales) {
+		let translated = 0;
+		let total = 0;
+		for (const nsData of Object.values(storeData.translations)) {
+			for (const key in nsData) {
+				total++;
+				if (nsData[key]?.[locale]) translated++;
+			}
+		}
+		result[locale] = { translated, total };
+	}
+	return result;
+}
 
 export async function handleCliMode() {
 	const program = new Command()
@@ -89,27 +125,7 @@ async function loadStore(dir: string): Promise<TranslationFileStore> {
 }
 
 async function showMissing(store: TranslationFileStore) {
-	const storeData = store.getStore();
-	const missing: MissingReport[] = [];
-
-	for (const nsNode of storeData.namespaces) {
-		const ns = typeof nsNode === "string" ? nsNode : nsNode.path;
-		const nsData = storeData.translations[ns] || {};
-
-		for (const locale of storeData.locales) {
-			const localeKeys = new Set<string>();
-			for (const key in nsData) {
-				if (nsData[key]?.[locale]) {
-					localeKeys.add(key);
-				}
-			}
-
-			const missingKeys = Object.keys(nsData).filter((key) => !localeKeys.has(key));
-			if (missingKeys.length > 0) {
-				missing.push({ namespace: ns, locale, missingKeys });
-			}
-		}
-	}
+	const missing = computeMissing(store);
 
 	if (missing.length === 0) {
 		console.log("✓ All keys are present in all locales");
@@ -143,10 +159,11 @@ async function showMissing(store: TranslationFileStore) {
 
 async function showStats(store: TranslationFileStore) {
 	const storeData = store.getStore();
+	const coverage = computeCoverage(store);
 
 	console.log("\nTranslation Statistics:\n");
 	console.log(`  Locales: ${storeData.locales.join(", ")}`);
-	console.log(`  Namespaces: ${storeData.namespaces.length}`);
+	console.log(`  Namespaces: ${Object.keys(storeData.translations).length}`);
 
 	const totalKeys = Object.values(storeData.translations).reduce(
 		(sum, ns) => sum + Object.keys(ns).length,
@@ -156,46 +173,19 @@ async function showStats(store: TranslationFileStore) {
 
 	console.log("\n  Coverage by locale:");
 	for (const locale of storeData.locales) {
-		let translated = 0;
-		let total = 0;
-		for (const nsNode of storeData.namespaces) {
-			const ns = typeof nsNode === "string" ? nsNode : nsNode.path;
-			const nsData = storeData.translations[ns] || {};
-			for (const key in nsData) {
-				total++;
-				const value = nsData[key]?.[locale];
-				if (value && value !== "") {
-					translated++;
-				}
-			}
-		}
-		const coverage = total > 0 ? Math.round((translated / total) * 100) : 0;
-		console.log(`    ${locale.toUpperCase()}: ${translated}/${total} (${coverage}%)`);
+		const { translated, total } = coverage[locale] ?? { translated: 0, total: 0 };
+		const pct = total > 0 ? Math.round((translated / total) * 100) : 0;
+		console.log(`    ${locale.toUpperCase()}: ${translated}/${total} (${pct}%)`);
 	}
 	console.log();
 }
 
 async function showComplete(store: TranslationFileStore) {
 	const storeData = store.getStore();
-	const completeLocales: string[] = [];
-
-	for (const locale of storeData.locales) {
-		let isComplete = true;
-		for (const nsNode of storeData.namespaces) {
-			const ns = typeof nsNode === "string" ? nsNode : nsNode.path;
-			const nsData = storeData.translations[ns] || {};
-			for (const key in nsData) {
-				if (!nsData[key] || !nsData[key][locale]) {
-					isComplete = false;
-					break;
-				}
-			}
-			if (!isComplete) break;
-		}
-		if (isComplete) {
-			completeLocales.push(locale);
-		}
-	}
+	const coverage = computeCoverage(store);
+	const completeLocales = storeData.locales.filter(
+		(locale) => coverage[locale] && coverage[locale].translated === coverage[locale].total && coverage[locale].total > 0,
+	);
 
 	console.log("\nComplete locales (100% coverage):");
 	if (completeLocales.length === 0) {

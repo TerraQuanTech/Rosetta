@@ -33,7 +33,7 @@ const MENU_ID = "rosetta-inspect-menu";
 export function enableInspect(
 	i18next: i18n,
 	sendFocusKey: (namespace: string, key: string) => void,
-i	isConnected: () => boolean,
+	isConnected: () => boolean,
 	options: InspectOptions = {},
 ): () => void {
 	const { toggleKey = "i", startActive = false, substringMatch = true } = options;
@@ -209,7 +209,8 @@ i	isConnected: () => boolean,
 	// --- 3. DOM scanning ---
 	function isIgnoredElement(el: Element): boolean {
 		const tag = el.tagName;
-		if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE") return true;
+		if (tag === "SCRIPT" || tag === "STYLE" || tag === "NOSCRIPT" || tag === "TEMPLATE")
+			return true;
 		// Don't highlight text inside our own context menu
 		if (el.closest(`#${MENU_ID}`)) return true;
 		return false;

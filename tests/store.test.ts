@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NodeFsAdapter, TranslationFileStore } from "@terraquantech/rosetta-core";
+import { computeCoverage, computeMissing } from "../src/bun/cli-mode";
 
 let tempDir: string;
 let store: TranslationFileStore;
@@ -365,6 +366,40 @@ describe("TranslationFileStore", () => {
 			expect(store.getStore().translations.common.c).toEqual({ en: "3" });
 			expect(store.getStore().translations.common.b).toBeUndefined();
 			expect(store.getStore().translations.common.b_renamed).toEqual({ en: "2" });
+		});
+	});
+
+	describe("CLI stats/missing with nested namespaces", () => {
+		test("coverage counts all keys including nested namespaces", async () => {
+			await createLocaleFile("en", "common", { greeting: "Hello" });
+			await createLocaleFile("en", "components/plot", { real: "Real", imag: "Imaginary" });
+			await createLocaleFile("en", "pages/home", { title: "Home" });
+
+			await createLocaleFile("fr", "common", { greeting: "Bonjour" });
+			await createLocaleFile("fr", "components/plot", { real: "Réel" }); // missing 'imag'
+			await createLocaleFile("fr", "pages/home", { title: "Accueil" });
+
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
+			await store.load();
+
+			const coverage = computeCoverage(store);
+			expect(coverage.en.total).toBe(4);
+			expect(coverage.en.translated).toBe(4);
+			expect(coverage.fr.total).toBe(4);
+			expect(coverage.fr.translated).toBe(3); // missing components/plot.imag
+		});
+
+		test("missing detection finds keys in nested namespaces", async () => {
+			await createLocaleFile("en", "components/plot", { real: "Real", imag: "Imaginary" });
+			await createLocaleFile("fr", "components/plot", { real: "Réel" }); // missing 'imag'
+
+			store = new TranslationFileStore(tempDir, new NodeFsAdapter());
+			await store.load();
+
+			const missing = computeMissing(store);
+			expect(missing).toEqual([
+				{ namespace: "components/plot", locale: "fr", missingKeys: ["imag"] },
+			]);
 		});
 	});
 });
