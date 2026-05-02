@@ -1,0 +1,172 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+	font-size: 13px;
+	color: #242424;
+	background: #fafafa;
+	padding: 16px;
+}
+
+#app {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.header h1 {
+	font-size: 18px;
+	font-weight: 600;
+}
+
+.status {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.status-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #ccc;
+}
+
+.status.connected .status-dot {
+	background: #0f7b0f;
+}
+
+.status.connecting .status-dot {
+	background: #f7630c;
+	animation: pulse 1s infinite;
+}
+
+.status.disconnected .status-dot {
+	background: #c42b1c;
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.4; }
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #616161;
+}
+
+.input-row {
+	display: flex;
+	gap: 8px;
+}
+
+input[type="number"],
+select {
+	flex: 1;
+	padding: 6px 10px;
+	border: 1px solid #d1d1d1;
+	border-radius: 4px;
+	font-size: 13px;
+	background: #fff;
+	color: #242424;
+	outline: none;
+}
+
+input[type="number"]:focus,
+select:focus {
+	border-color: #0078d4;
+	box-shadow: 0 0 0 1px #0078d4;
+}
+
+.btn {
+	padding: 6px 16px;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: #0078d4;
+	color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+	background: #106ebe;
+}
+
+.btn-secondary {
+	background: #fff;
+	color: #242424;
+	border-color: #d1d1d1;
+}
+
+.btn-secondary:hover:not(:disabled) {
+	background: #f0f0f0;
+}
+
+.btn-full {
+	width: 100%;
+	background: #fff;
+	color: #242424;
+	border-color: #d1d1d1;
+}
+
+.btn-full:hover:not(:disabled) {
+	background: #f0f0f0;
+}
+
+.toggle-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.hint {
+	font-size: 11px;
+	color: #8a8a8a;
+	line-height: 1.4;
+}
+
+.actions {
+	gap: 8px;
+}
+
+.info {
+	padding: 10px;
+	background: #f0f0f0;
+	border-radius: 6px;
+	text-align: center;
+	font-size: 12px;
+	color: #616161;
+}
+
+.info strong {
+	color: #242424;
+}

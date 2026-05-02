@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Rosetta Translate</title>
+	<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</head>
+<body>
+	<div id="app">
+		<header class="header">
+			<h1>Rosetta</h1>
+			<div id="status" class="status disconnected">
+				<span class="status-dot"></span>
+				<span id="status-text">Disconnected</span>
+			</div>
+		</header>
+
+		<section class="section">
+			<label class="label" for="port-input">Connector Port</label>
+			<div class="input-row">
+				<input id="port-input" type="number" value="4871" min="1024" max="65535" />
+				<button id="connect-btn" class="btn btn-primary">Connect</button>
+			</div>
+		</section>
+
+		<section class="section">
+			<label class="label" for="locale-select">Preview Locale</label>
+			<select id="locale-select" disabled>
+				<option value="">Connect to load locales</option>
+			</select>
+		</section>
+
+		<section class="section">
+			<div class="toggle-row">
+				<label class="label" for="auto-apply">Auto-apply updates</label>
+				<input id="auto-apply" type="checkbox" checked />
+			</div>
+			<p class="hint">When enabled, translation changes from Rosetta are applied to slides immediately.</p>
+		</section>
+
+		<section class="section actions">
+			<button id="sync-btn" class="btn btn-full" disabled>Sync Slides to Rosetta</button>
+			<button id="apply-all-btn" class="btn btn-full btn-secondary" disabled>Apply All Translations</button>
+		</section>
+
+		<section id="slide-info" class="section info" hidden>
+			<p><strong id="slide-count">0</strong> slides &middot; <strong id="shape-count">0</strong> text elements</p>
+		</section>
+	</div>
+</body>
+</html>
