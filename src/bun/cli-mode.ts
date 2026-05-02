@@ -15,7 +15,7 @@ export function computeMissing(store: TranslationFileStore): MissingReport[] {
 	for (const ns of Object.keys(storeData.translations)) {
 		const nsData = storeData.translations[ns];
 		for (const locale of storeData.locales) {
-			const missingKeys = Object.keys(nsData).filter((key) => !nsData[key]?.[locale]);
+			const missingKeys = Object.keys(nsData).filter((key) => nsData[key]?.[locale] === undefined);
 			if (missingKeys.length > 0) {
 				missing.push({ namespace: ns, locale, missingKeys });
 			}
@@ -35,7 +35,7 @@ export function computeCoverage(store: TranslationFileStore): Record<string, { t
 		for (const nsData of Object.values(storeData.translations)) {
 			for (const key in nsData) {
 				total++;
-				if (nsData[key]?.[locale]) translated++;
+				if (nsData[key]?.[locale] !== undefined) translated++;
 			}
 		}
 		result[locale] = { translated, total };
