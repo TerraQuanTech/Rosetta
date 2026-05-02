@@ -10,6 +10,7 @@ const tsconfigPaths: Record<string, string> = {
 
 const packageAliases: Record<string, string> = {
 	"@terraquantech/rosetta-core": resolve("packages/core/src/index.ts"),
+	"@terraquantech/rosetta-pptx": resolve("packages/pptx/src/index.ts"),
 };
 
 const extensions = [".ts", ".tsx", ".js", ".jsx", ""];
@@ -57,6 +58,7 @@ export default {
 			"dist/index.html": "views/mainview/index.html",
 			"dist/assets": "views/mainview/assets",
 			scripts: "scripts",
+			"pptx-addin/dist": "pptx-addin-dist",
 		},
 		mac: {
 			bundleCEF: false,
