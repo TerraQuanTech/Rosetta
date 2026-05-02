@@ -7,6 +7,7 @@ interface SettingsPanelProps {
 	onBrowseFolder: () => void;
 	currentDir: string | null;
 	onInstallCli?: () => Promise<{ success: boolean; message: string }>;
+	onInstallPptxAddin?: () => Promise<{ success: boolean; message: string }>;
 }
 
 export function SettingsPanel({
@@ -15,14 +16,29 @@ export function SettingsPanel({
 	onBrowseFolder,
 	currentDir,
 	onInstallCli,
+	onInstallPptxAddin,
 }: SettingsPanelProps) {
 	const [cliInstalling, setCliInstalling] = useState(false);
 	const [cliMessage, setCliMessage] = useState<string | null>(null);
+	const [addinInstalling, setAddinInstalling] = useState(false);
+	const [addinMessage, setAddinMessage] = useState<string | null>(null);
 
 	const setTheme = useCallback(
 		(theme: RosettaSettings["theme"]) => onUpdate({ theme }),
 		[onUpdate],
 	);
+
+	const handleInstallAddin = useCallback(async () => {
+		if (!onInstallPptxAddin) return;
+		setAddinInstalling(true);
+		try {
+			const result = await onInstallPptxAddin();
+			setAddinMessage(result.message);
+			setTimeout(() => setAddinMessage(null), 6000);
+		} finally {
+			setAddinInstalling(false);
+		}
+	}, [onInstallPptxAddin]);
 
 	const handleInstallCli = useCallback(async () => {
 		if (!onInstallCli) return;
@@ -173,6 +189,44 @@ export function SettingsPanel({
 					</div>
 				</div>
 			</div>
+
+			{onInstallPptxAddin && (
+				<div className="settings-section">
+					<h3>PowerPoint Add-in</h3>
+
+					<div className="settings-field">
+						<div>
+							<div className="settings-field-label">Install add-in</div>
+							<div className="settings-field-desc">
+								Adds Rosetta Translate to PowerPoint for live translation preview
+							</div>
+						</div>
+						<div
+							style={{ display: "flex", gap: 8, flexDirection: "column", alignItems: "flex-start" }}
+						>
+							<button
+								type="button"
+								className="toolbar-btn"
+								onClick={handleInstallAddin}
+								disabled={addinInstalling}
+							>
+								{addinInstalling ? "Installing..." : "Install Add-in"}
+							</button>
+							{addinMessage && (
+								<div
+									style={{
+										fontSize: 12,
+										color: addinMessage.includes("success") || addinMessage.includes("installed") ? "#28a745" : "#dc3545",
+										marginTop: 4,
+									}}
+								>
+									{addinMessage}
+								</div>
+							)}
+						</div>
+					</div>
+				</div>
+			)}
 
 			<div className="settings-section">
 				<h3>Live Preview Connector</h3>

@@ -1,0 +1,20 @@
+{
+	"name": "@terraquantech/rosetta-pptx",
+	"version": "0.1.0",
+	"description": "PowerPoint translation store for Rosetta — parser, exporter, and store provider",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch"
+	},
+	"dependencies": {
+		"@terraquantech/rosetta-core": "workspace:*",
+		"jszip": "^3.10.1",
+		"fast-xml-parser": "^4.5.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.2"
+	},
+	"license": "MIT"
+}

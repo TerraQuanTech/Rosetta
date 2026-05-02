@@ -69,6 +69,7 @@ export default function App() {
 	const saveMode = settings?.saveMode ?? "auto";
 	const pendingCount = pendingChanges.size;
 	const hasUnsaved = pendingCount > 0;
+	const storeMode = store?.mode ?? "json";
 
 	useEffect(() => {
 		if (!transport.capabilities.windowTitle) return;
@@ -318,6 +319,7 @@ export default function App() {
 				isSettingsActive={view === "settings"}
 				width={sidebarWidth}
 				onWidthChange={setSidebarWidth}
+				mode={storeMode}
 			/>
 
 			<Toolbar
@@ -341,6 +343,8 @@ export default function App() {
 				hidden={view === "settings"}
 				searchScope={searchScope}
 				onSearchScopeChange={setSearchScope}
+				mode={storeMode}
+				onExport={storeMode === "pptx" ? () => {/* TODO: open export dialog */} : undefined}
 			/>
 
 			<div className="editor-area">
@@ -355,6 +359,21 @@ export default function App() {
 								? async () => {
 										try {
 											const result = await transport.request("installCli", {});
+											return result;
+										} catch (err) {
+											return {
+												success: false,
+												message: `Error: ${err instanceof Error ? err.message : String(err)}`,
+											};
+										}
+									}
+								: undefined
+						}
+						onInstallPptxAddin={
+							transport.capabilities.installCli
+								? async () => {
+										try {
+											const result = await transport.request("installPptxAddin", {});
 											return result;
 										} catch (err) {
 											return {
@@ -387,7 +406,7 @@ export default function App() {
 						search={search}
 						filter={filter}
 						onUpdateKey={updateKey}
-						onRenameKey={renameKey}
+						onRenameKey={storeMode !== "pptx" ? renameKey : undefined}
 						onToggleReview={toggleReview}
 						onFocusKey={(e, key) => handleContextMenu(e, "key", key, effectiveNamespace!)}
 						renamingKey={renamingKey}
@@ -464,7 +483,7 @@ export default function App() {
 					>
 						Focus on {contextMenu.type === "namespace" ? "namespace" : "key"}
 					</button>
-					{contextMenu.type === "key" && (
+					{contextMenu.type === "key" && storeMode !== "pptx" && (
 						<button
 							type="button"
 							className="context-menu-item"

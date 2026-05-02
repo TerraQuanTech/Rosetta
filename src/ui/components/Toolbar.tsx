@@ -23,6 +23,8 @@ interface ToolbarProps {
 	hidden?: boolean;
 	searchScope: SearchScope;
 	onSearchScopeChange: (scope: SearchScope) => void;
+	mode?: "json" | "pptx";
+	onExport?: () => void;
 }
 
 export function Toolbar({
@@ -46,6 +48,8 @@ export function Toolbar({
 	hidden,
 	searchScope,
 	onSearchScopeChange,
+	mode,
+	onExport,
 }: ToolbarProps) {
 	const searchRef = useRef<HTMLInputElement>(null);
 	const hasUnsaved = saveMode === "manual" && pendingCount > 0;
@@ -178,7 +182,13 @@ export function Toolbar({
 				onRemoveLocale={onRemoveLocale}
 			/>
 
-			{onAddKey && (
+			{mode === "pptx" && onExport && (
+				<button type="button" className="toolbar-btn" onClick={onExport}>
+					Export
+				</button>
+			)}
+
+			{mode !== "pptx" && onAddKey && (
 				<button type="button" className="toolbar-btn primary" onClick={onAddKey}>
 					+ Add Key
 				</button>

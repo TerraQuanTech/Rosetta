@@ -12,6 +12,7 @@ interface SidebarProps {
 	isSettingsActive: boolean;
 	width: number;
 	onWidthChange: (width: number) => void;
+	mode?: "json" | "pptx";
 }
 
 export function Sidebar({
@@ -25,6 +26,7 @@ export function Sidebar({
 	isSettingsActive,
 	width,
 	onWidthChange,
+	mode,
 }: SidebarProps) {
 	const [showNewNs, setShowNewNs] = useState(false);
 	const [newNsName, setNewNsName] = useState("");
@@ -89,9 +91,10 @@ export function Sidebar({
 						onAddKey={onAddKeyToNamespace}
 						onCreateNamespace={openCreateWithPrefix}
 						depth={0}
+						readOnly={mode === "pptx"}
 					/>
 				))}
-				{showNewNs ? (
+				{mode !== "pptx" && (showNewNs ? (
 					<div className="new-namespace-input">
 						<input
 							type="text"
@@ -121,7 +124,7 @@ export function Sidebar({
 						<span style={{ width: 14, textAlign: "center", fontSize: 13 }}>+</span>
 						<span>Add namespace</span>
 					</button>
-				)}
+				))}
 			</div>
 			<div className="sidebar-footer">
 				<button
@@ -202,6 +205,7 @@ interface TreeNodeProps {
 	onAddKey: (namespace: string) => void;
 	onCreateNamespace: (prefill: string) => void;
 	depth: number;
+	readOnly?: boolean;
 }
 
 function TreeNode({
@@ -212,6 +216,7 @@ function TreeNode({
 	onAddKey,
 	onCreateNamespace,
 	depth,
+	readOnly,
 }: TreeNodeProps) {
 	const [expanded, setExpanded] = useState(true);
 	const hasChildren = node.children && node.children.length > 0;
@@ -247,32 +252,36 @@ function TreeNode({
 					{!hasChildren && <span style={{ width: 14 }} />}
 					<span>{node.name}</span>
 				</button>
-				<button
-					type="button"
-					className="tree-item-action add"
-					onClick={(e) => {
-						e.stopPropagation();
-						if (isLeaf) {
-							onAddKey(node.path);
-						} else {
-							onCreateNamespace(`${node.path}/`);
-						}
-					}}
-					title={isLeaf ? `Add key to ${node.path}` : `Add namespace under ${node.path}/`}
-				>
-					+
-				</button>
-				<button
-					type="button"
-					className="tree-item-action delete"
-					onClick={(e) => {
-						e.stopPropagation();
-						onDelete(node.path);
-					}}
-					title={isLeaf ? `Delete ${node.path}` : `Delete ${node.path}/ and all children`}
-				>
-					&times;
-				</button>
+				{!readOnly && (
+					<>
+						<button
+							type="button"
+							className="tree-item-action add"
+							onClick={(e) => {
+								e.stopPropagation();
+								if (isLeaf) {
+									onAddKey(node.path);
+								} else {
+									onCreateNamespace(`${node.path}/`);
+								}
+							}}
+							title={isLeaf ? `Add key to ${node.path}` : `Add namespace under ${node.path}/`}
+						>
+							+
+						</button>
+						<button
+							type="button"
+							className="tree-item-action delete"
+							onClick={(e) => {
+								e.stopPropagation();
+								onDelete(node.path);
+							}}
+							title={isLeaf ? `Delete ${node.path}` : `Delete ${node.path}/ and all children`}
+						>
+							&times;
+						</button>
+					</>
+				)}
 			</div>
 			{hasChildren && expanded && (
 				<div className="tree-children">
@@ -286,6 +295,7 @@ function TreeNode({
 							onAddKey={onAddKey}
 							onCreateNamespace={onCreateNamespace}
 							depth={depth + 1}
+							readOnly={readOnly}
 						/>
 					))}
 				</div>
