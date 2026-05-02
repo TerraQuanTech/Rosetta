@@ -1,4 +1,4 @@
-import type { KeyUpdate } from "./types";
+import type { KeyUpdate, PptxSyncPayload } from "./types";
 
 export interface ConnectorTransport {
 	send(data: string): void;
@@ -11,11 +11,13 @@ export interface ConnectorClientInfo {
 
 type StatusListener = (connected: boolean, clients: number) => void;
 type FocusKeyListener = (namespace: string, key: string) => void;
+type PptxSyncListener = (payload: PptxSyncPayload) => void;
 
 export abstract class ConnectorBase {
 	protected clients = new Set<ConnectorClientInfo>();
 	private statusListeners = new Set<StatusListener>();
 	private focusKeyListeners = new Set<FocusKeyListener>();
+	private pptxSyncListeners = new Set<PptxSyncListener>();
 	protected _port: number;
 
 	constructor(port = 4871) {
@@ -52,6 +54,11 @@ export abstract class ConnectorBase {
 		return () => this.focusKeyListeners.delete(listener);
 	}
 
+	onPptxSync(listener: PptxSyncListener): () => void {
+		this.pptxSyncListeners.add(listener);
+		return () => this.pptxSyncListeners.delete(listener);
+	}
+
 	protected notifyStatus(): void {
 		const connected = this.connected;
 		const count = this.clientCount;
@@ -85,6 +92,16 @@ export abstract class ConnectorBase {
 				for (const listener of this.focusKeyListeners) {
 					listener(data.namespace, data.key);
 				}
+			} else if (data.type === "pptx:sync" && data.slides) {
+				console.log(`[connector] PPTX sync received: ${data.slides.length} slides`);
+				for (const listener of this.pptxSyncListeners) {
+					listener({
+						sourceLocale: data.sourceLocale ?? "en",
+						slides: data.slides,
+						savedTranslations: data.savedTranslations,
+						savedLocales: data.savedLocales,
+					});
+				}
 			}
 		} catch {}
 	}
@@ -96,6 +113,19 @@ export abstract class ConnectorBase {
 			key: update.key,
 			locale: update.locale,
 			value: update.value,
+		});
+		for (const client of this.clients) {
+			try {
+				client.transport.send(message);
+			} catch {}
+		}
+	}
+
+	broadcastLocales(locales: string[], sourceLocale: string): void {
+		const message = JSON.stringify({
+			type: "pptx:locales",
+			locales,
+			sourceLocale,
 		});
 		for (const client of this.clients) {
 			try {

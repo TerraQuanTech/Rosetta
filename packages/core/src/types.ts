@@ -24,6 +24,10 @@ export interface TranslationStore {
 	reviews: ReviewMap;
 	/** The filesystem path to the locales directory */
 	localesDir?: string;
+	/** Store mode: "json" for locale files, "pptx" for PowerPoint presentations */
+	mode?: "json" | "pptx";
+	/** Path to the source file (e.g., .pptx path) */
+	sourceFile?: string;
 }
 
 /** namespace -> flatKey -> locale -> value */
@@ -120,4 +124,59 @@ export interface RosettaSettings {
 	connectorEnabled: boolean;
 	theme: Theme;
 	saveMode: SaveMode;
+}
+
+/** Common interface for translation store backends (JSON files, PPTX, etc.) */
+export interface TranslationStoreProvider {
+	getStore(): TranslationStore;
+	load(): Promise<TranslationStore>;
+	updateKey(update: KeyUpdate): Promise<boolean>;
+	createKey(create: KeyCreate): Promise<boolean>;
+	deleteKey(del: KeyDelete): Promise<boolean>;
+	renameKey(rename: KeyRename): Promise<boolean>;
+	addLocale(locale: string, copyFrom?: string): Promise<boolean>;
+	removeLocale(locale: string): Promise<boolean>;
+	createNamespace(ns: string): Promise<boolean>;
+	deleteNamespace(ns: string): Promise<boolean>;
+}
+
+/** PPTX run-level formatting */
+export interface PptxRunData {
+	text: string;
+	bold?: boolean;
+	italic?: boolean;
+	underline?: boolean;
+	fontSize?: number;
+	fontFamily?: string;
+	color?: string;
+}
+
+/** PPTX paragraph data */
+export interface PptxParagraphData {
+	text: string;
+	runs: PptxRunData[];
+	alignment?: "left" | "center" | "right" | "justify";
+}
+
+/** PPTX shape data */
+export interface PptxShapeData {
+	name: string;
+	paragraphs: PptxParagraphData[];
+}
+
+/** PPTX slide data sent by the add-in via pptx:sync */
+export interface PptxSlideData {
+	index: number;
+	name: string;
+	shapes: PptxShapeData[];
+}
+
+/** The pptx:sync message payload */
+export interface PptxSyncPayload {
+	sourceLocale: string;
+	slides: PptxSlideData[];
+	/** Translations previously saved inside the .pptx file */
+	savedTranslations?: Record<string, Record<string, Record<string, string>>>;
+	/** Locales previously saved inside the .pptx file */
+	savedLocales?: string[];
 }

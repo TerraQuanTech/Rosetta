@@ -12,6 +12,8 @@ export type {
 	NamespaceCreate,
 	NamespaceDelete,
 	NamespaceNode,
+	PptxSlideData,
+	PptxSyncPayload,
 	ReviewMap,
 	ReviewToggle,
 	RosettaSettings,
@@ -20,6 +22,7 @@ export type {
 	Theme,
 	TranslationMap,
 	TranslationStore,
+	TranslationStoreProvider,
 } from "@terraquantech/rosetta-core";
 
 import type {
@@ -65,6 +68,18 @@ export type RosettaRPC = {
 			installCli: {
 				params: Record<string, never>;
 				response: { success: boolean; message: string };
+			};
+			installPptxAddin: {
+				params: Record<string, never>;
+				response: { success: boolean; message: string };
+			};
+			openPptxFile: {
+				params: Record<string, never>;
+				response: { path: string | null };
+			};
+			exportPptx: {
+				params: { locales: string[]; outputDir: string };
+				response: { ok: boolean; files: string[] };
 			};
 		};
 		messages: Record<string, never>;

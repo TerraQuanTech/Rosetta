@@ -22,6 +22,11 @@ export type {
 	NamespaceCreate,
 	NamespaceDelete,
 	NamespaceNode,
+	PptxParagraphData,
+	PptxRunData,
+	PptxShapeData,
+	PptxSlideData,
+	PptxSyncPayload,
 	ReviewMap,
 	ReviewToggle,
 	RosettaSettings,
@@ -30,4 +35,5 @@ export type {
 	Theme,
 	TranslationMap,
 	TranslationStore,
+	TranslationStoreProvider,
 } from "./types";

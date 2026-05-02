@@ -17,6 +17,7 @@ import {
 	SettingsManager,
 	TranslationFileStore,
 } from "@terraquantech/rosetta-core";
+import { PptxTranslationStore } from "@terraquantech/rosetta-pptx";
 import { ApplicationMenu, BrowserView, BrowserWindow, Updater, Utils } from "electrobun/bun";
 import { ConnectorServer } from "./connector";
 import { buildApplicationMenu } from "./menu";
@@ -67,6 +68,22 @@ connector.onStatusChange((connected, clientCount) => {
 
 connector.onFocusKey((namespace, key) => {
 	mainWindow?.webview.rpc?.send.connectorFocusKey({ namespace, key });
+});
+
+let pptxStore: PptxTranslationStore | null = null;
+
+connector.onPptxSync((payload) => {
+	if (!pptxStore) {
+		pptxStore = new PptxTranslationStore(fs);
+	}
+	const updated = pptxStore.populateFromSync(payload);
+	mainWindow?.webview.rpc?.send.storeUpdated(
+		sanitizeForIpc({
+			...updated,
+			reviews: pptxStore.getStore().reviews,
+		}),
+	);
+	connector.broadcastLocales(updated.locales, payload.sourceLocale);
 });
 
 async function loadLocalesDir(dir: string) {
@@ -159,7 +176,7 @@ const rpc = BrowserView.defineRPC<RosettaRPC>({
 	maxRequestTime: 30000,
 	handlers: {
 		requests: buildRpcHandlers({
-			getStore: () => store,
+			getStore: () => pptxStore ?? store,
 			reviews,
 			connector,
 			settings,

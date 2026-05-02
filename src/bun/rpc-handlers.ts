@@ -7,15 +7,15 @@ import type {
 	NamespaceDelete,
 	ReviewToggle,
 	RosettaSettings,
+	TranslationStoreProvider,
 } from "@shared/types";
 import { Utils } from "electrobun/bun";
 import type { ConnectorServer } from "./connector";
 import type { ReviewManager } from "./reviews";
 import type { SettingsManager } from "./settings";
-import type { TranslationFileStore } from "./store";
 
 export interface RpcHandlersDeps {
-	getStore: () => TranslationFileStore;
+	getStore: () => TranslationStoreProvider;
 	reviews: ReviewManager;
 	connector: ConnectorServer;
 	settings: SettingsManager;
@@ -128,13 +128,17 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 		addLocale: async (params: { locale: string; copyFrom?: string }) => {
 			const ok = await getStore().addLocale(params.locale, params.copyFrom);
 			if (ok) {
+				const store = getStore().getStore();
 				getMainWindow()?.webview.rpc?.send.storeUpdated(
 					sanitizeForIpc({
-						...getStore().getStore(),
+						...store,
 						reviews: reviews.get(),
 						localesDir: getCurrentLocalesDir(),
 					}),
 				);
+				if (store.mode === "pptx") {
+					connector.broadcastLocales(store.locales, store.locales[0]);
+				}
 			}
 			return { ok };
 		},
@@ -143,13 +147,17 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 			const ok = await getStore().removeLocale(params.locale);
 			if (ok) {
 				await reviews.removeLocale(params.locale);
+				const store = getStore().getStore();
 				getMainWindow()?.webview.rpc?.send.storeUpdated(
 					sanitizeForIpc({
-						...getStore().getStore(),
+						...store,
 						reviews: reviews.get(),
 						localesDir: getCurrentLocalesDir(),
 					}),
 				);
+				if (store.mode === "pptx") {
+					connector.broadcastLocales(store.locales, store.locales[0]);
+				}
 			}
 			return { ok };
 		},
@@ -211,6 +219,59 @@ export function buildRpcHandlers(deps: RpcHandlersDeps) {
 				mainWindow.setSize(width, height);
 			}
 			return { ok: true };
+		},
+
+		installPptxAddin: async () => {
+			try {
+				const { homedir, platform } = await import("node:os");
+				const { join } = await import("node:path");
+				const { mkdirSync, writeFileSync, existsSync, readdirSync } = await import("node:fs");
+
+				const home = homedir();
+				const os = platform();
+				let wefDir: string;
+
+				if (os === "darwin") {
+					wefDir = join(home, "Library", "Containers", "com.microsoft.Powerpoint", "Data", "Documents", "wef");
+				} else if (os === "win32") {
+					const officeBase = join(home, "AppData", "Local", "Microsoft", "Office");
+					let version = "16.0";
+					if (existsSync(officeBase)) {
+						const dirs = readdirSync(officeBase)
+							.filter((d) => /^\d+\.\d+$/.test(d))
+							.sort((a, b) => Number.parseFloat(b) - Number.parseFloat(a));
+						if (dirs.length > 0) {
+							version = dirs[0];
+						}
+					}
+					wefDir = join(officeBase, version, "Wef");
+				} else {
+					return { success: false, message: "PowerPoint add-in sideloading is only supported on macOS and Windows." };
+				}
+
+				mkdirSync(wefDir, { recursive: true });
+				const manifest = connector.getManifestXml();
+				writeFileSync(join(wefDir, "rosetta-translate.xml"), manifest, "utf-8");
+
+				return {
+					success: true,
+					message: "Add-in installed. Restart PowerPoint, then go to Insert > Add-ins > My Add-ins to activate it.",
+				};
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				return { success: false, message: `Failed to install add-in: ${msg}` };
+			}
+		},
+
+		openPptxFile: async () => {
+			// PPTX opening is handled via the add-in's pptx:sync message, not file dialog
+			// This is a placeholder for future offline PPTX file opening
+			return { path: null };
+		},
+
+		exportPptx: async (_params: { locales: string[]; outputDir: string }) => {
+			// Export will be implemented in Phase 3 with the PPTX exporter
+			return { ok: false, files: [] };
 		},
 
 		installCli: async () => {
